@@ -83,6 +83,9 @@ service name `app` to the Vanilla Cookbook container on their shared network.
    Vanilla Cookbook first-run flow.
 8. Confirm EC2 still has no inbound HTTP, HTTPS, or public port 3000 rule.
 
+Continue with `docs/operations-runbook.md` for routine operation and
+`docs/backup-restore.md` before storing important data.
+
 ## Troubleshooting
 
 ### Tunnel Token Missing

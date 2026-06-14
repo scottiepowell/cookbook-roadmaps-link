@@ -68,6 +68,9 @@ Store the tunnel token only in the `CLOUDFLARE_TUNNEL_TOKEN` GitHub secret.
 See `docs/cloudflare-tunnel-setup.md` for the dashboard, DNS, validation, and
 troubleshooting runbook.
 
+Follow `docs/operations-runbook.md` for the full day-2 sequence and
+`docs/backup-restore.md` before upgrades or data recovery.
+
 ## Running The Workflow
 
 Open the repository's **Actions** tab, select **Cookbook EC2 Control**, choose

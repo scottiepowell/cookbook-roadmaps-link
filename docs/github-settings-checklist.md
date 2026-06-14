@@ -70,6 +70,8 @@ OLLAMA_BASE_URL=<OPTIONAL_OLLAMA_URL>
 - [ ] Run `start` and confirm EC2 passes AWS status checks.
 - [ ] Confirm the instance is online in Systems Manager.
 - [ ] Run `deploy` with `stop_after_deploy` disabled for first-run diagnosis.
+- [ ] Create and verify an initial local backup using
+      `docs/backup-restore.md` before entering real recipe data.
 - [ ] Verify Docker Compose status and the Cloudflare Tunnel route.
 - [ ] Run `restart` once to validate routine SSM operations.
 - [ ] Run `stop` when testing is complete to control compute cost.

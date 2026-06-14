@@ -86,3 +86,7 @@ Cloudflare terminate public TLS.
 Follow `docs/cloudflare-tunnel-setup.md` for tunnel and DNS setup. After
 deployment, validate EC2 locally with `scripts/verify-local-compose.sh` and the
 public route with `scripts/verify-cloudflare-route.sh`.
+
+Use `docs/backup-restore.md` for runtime-data recovery and
+`docs/operations-runbook.md` for routine start, deploy, verify, backup, and stop
+procedures.
