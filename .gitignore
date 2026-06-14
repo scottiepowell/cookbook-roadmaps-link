@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+db/
+uploads/
+*.pem
+*.key
+*.tfstate
+*.tfstate.*
+.DS_Store
+node_modules/
+__pycache__/
+.pytest_cache/
