@@ -1,0 +1,302 @@
+name: Cookbook EC2 Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: EC2 or deployment action to run
+        required: true
+        type: choice
+        options:
+          - status
+          - start
+          - deploy
+          - restart
+          - stop
+      stop_after_deploy:
+        description: Stop EC2 after a successful deployment
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+      APP_DIR: ${{ vars.APP_DIR || '/opt/cookbook' }}
+      ORIGIN: ${{ vars.ORIGIN }}
+      DOMAIN: ${{ vars.DOMAIN }}
+      OLLAMA_BASE_URL: ${{ vars.OLLAMA_BASE_URL }}
+
+    steps:
+      - name: Validate required settings
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          for name in AWS_ROLE_ARN AWS_REGION EC2_INSTANCE_ID ORIGIN DOMAIN APP_DIR; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Required GitHub setting is missing: ${name}" >&2
+              exit 1
+            fi
+          done
+
+          if [[ "${{ inputs.action }}" == "deploy" && -z "$CLOUDFLARE_TUNNEL_TOKEN" ]]; then
+            echo "Required GitHub secret is missing: CLOUDFLARE_TUNNEL_TOKEN" >&2
+            exit 1
+          fi
+
+          [[ "$AWS_REGION" =~ ^[a-z]{2}(-gov)?-[a-z]+-[0-9]+$ ]] || {
+            echo "AWS_REGION has an invalid format" >&2
+            exit 1
+          }
+          [[ "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]+$ ]] || {
+            echo "EC2_INSTANCE_ID has an invalid format" >&2
+            exit 1
+          }
+          [[ "$APP_DIR" =~ ^/[A-Za-z0-9._/-]+$ ]] || {
+            echo "APP_DIR must be an absolute path containing safe path characters" >&2
+            exit 1
+          }
+          [[ "$ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || {
+            echo "ORIGIN must be an HTTPS origin without a path" >&2
+            exit 1
+          }
+          [[ "$DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || {
+            echo "DOMAIN has an invalid format" >&2
+            exit 1
+          }
+
+          for name in ORIGIN CLOUDFLARE_TUNNEL_TOKEN OPENAI_API_KEY ANTHROPIC_API_KEY GOOGLE_API_KEY OLLAMA_BASE_URL; do
+            value="${!name:-}"
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
+              echo "${name} must not contain line breaks" >&2
+              exit 1
+            fi
+          done
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Show EC2 status
+        if: inputs.action == 'status'
+        run: |
+          set -euo pipefail
+          aws ec2 describe-instances \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].{InstanceId:InstanceId,State:State.Name,StatusReason:StateTransitionReason,PrivateIp:PrivateIpAddress}' \
+            --output table
+
+      - name: Start EC2 when needed
+        if: contains(fromJSON('["start", "deploy", "restart"]'), inputs.action)
+        run: |
+          set -euo pipefail
+          state="$(aws ec2 describe-instances \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].State.Name' \
+            --output text)"
+
+          case "$state" in
+            running)
+              echo "EC2 instance is already running."
+              ;;
+            pending)
+              echo "EC2 instance is already starting."
+              ;;
+            stopped)
+              aws ec2 start-instances --instance-ids "$EC2_INSTANCE_ID" --output json >/dev/null
+              echo "EC2 start requested."
+              ;;
+            stopping)
+              aws ec2 wait instance-stopped --instance-ids "$EC2_INSTANCE_ID"
+              aws ec2 start-instances --instance-ids "$EC2_INSTANCE_ID" --output json >/dev/null
+              echo "EC2 start requested after it finished stopping."
+              ;;
+            *)
+              echo "Cannot start EC2 instance from state: $state" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Wait for EC2 and status checks
+        if: contains(fromJSON('["start", "deploy", "restart"]'), inputs.action)
+        run: |
+          set -euo pipefail
+          aws ec2 wait instance-running --instance-ids "$EC2_INSTANCE_ID"
+          aws ec2 wait instance-status-ok --instance-ids "$EC2_INSTANCE_ID"
+          echo "EC2 instance is running and passed status checks."
+
+      - name: Wait for SSM registration
+        if: contains(fromJSON('["deploy", "restart"]'), inputs.action)
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            ping_status="$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$EC2_INSTANCE_ID" \
+              --query 'InstanceInformationList[0].PingStatus' \
+              --output text)"
+            if [[ "$ping_status" == "Online" ]]; then
+              echo "EC2 instance is online in Systems Manager."
+              exit 0
+            fi
+            echo "Waiting for Systems Manager registration (${attempt}/30)."
+            sleep 10
+          done
+          echo "EC2 instance did not become available in Systems Manager." >&2
+          exit 1
+
+      - name: Deploy with Systems Manager
+        if: inputs.action == 'deploy'
+        env:
+          CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}.git
+        run: |
+          set -euo pipefail
+
+          env_payload="$(printf '%s\n' \
+            "ORIGIN=$ORIGIN" \
+            "CLOUDFLARE_TUNNEL_TOKEN=$CLOUDFLARE_TUNNEL_TOKEN" \
+            'PUID=1000' \
+            'PGID=1000' \
+            "OPENAI_API_KEY=$OPENAI_API_KEY" \
+            "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" \
+            "GOOGLE_API_KEY=$GOOGLE_API_KEY" \
+            "OLLAMA_BASE_URL=$OLLAMA_BASE_URL" | base64 -w 0)"
+
+          remote_command="$(cat <<EOF
+          set -euo pipefail
+          app_dir='$APP_DIR'
+          repository_url='$REPOSITORY_URL'
+          install -d -m 0755 "\$app_dir"
+          if [[ -d "\$app_dir/.git" ]]; then
+            git -C "\$app_dir" remote set-url origin "\$repository_url"
+            git -C "\$app_dir" checkout main
+          elif [[ -z "\$(find "\$app_dir" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+            git clone --branch main --single-branch "\$repository_url" "\$app_dir"
+          else
+            echo "APP_DIR exists but is not an empty directory or Git checkout" >&2
+            exit 1
+          fi
+          git config --global --add safe.directory "\$app_dir"
+          env_tmp="\$(mktemp "\$app_dir/.env.XXXXXX")"
+          trap 'rm -f "\$env_tmp"' EXIT
+          chmod 0600 "\$env_tmp"
+          printf '%s' '$env_payload' | base64 --decode > "\$env_tmp"
+          mv -f "\$env_tmp" "\$app_dir/.env"
+          trap - EXIT
+          chmod 0600 "\$app_dir/.env"
+          cd "\$app_dir"
+          ./deploy.sh
+          EOF
+          )"
+
+          parameters_file="$RUNNER_TEMP/cookbook-ssm-parameters.json"
+          trap 'rm -f "$parameters_file"' EXIT
+          jq -n --arg command "$remote_command" '{commands: [$command]}' > "$parameters_file"
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Deploy Vanilla Cookbook' \
+            --parameters "file://$parameters_file" \
+            --query 'Command.CommandId' \
+            --output text)"
+          echo "SSM command ID: $command_id"
+
+          set +e
+          aws ssm wait command-executed \
+            --command-id "$command_id" \
+            --instance-id "$EC2_INSTANCE_ID"
+          wait_status=$?
+          set -e
+
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$EC2_INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output yaml
+          exit "$wait_status"
+
+      - name: Restart Cookbook with Systems Manager
+        if: inputs.action == 'restart'
+        run: |
+          set -euo pipefail
+
+          remote_command="$(cat <<EOF
+          set -euo pipefail
+          cd '$APP_DIR'
+          test -f docker-compose.yml
+          test -f .env
+          docker compose restart
+          docker compose ps
+          EOF
+          )"
+          parameters_file="$RUNNER_TEMP/cookbook-ssm-parameters.json"
+          trap 'rm -f "$parameters_file"' EXIT
+          jq -n --arg command "$remote_command" '{commands: [$command]}' > "$parameters_file"
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Restart Vanilla Cookbook' \
+            --parameters "file://$parameters_file" \
+            --query 'Command.CommandId' \
+            --output text)"
+          echo "SSM command ID: $command_id"
+
+          set +e
+          aws ssm wait command-executed \
+            --command-id "$command_id" \
+            --instance-id "$EC2_INSTANCE_ID"
+          wait_status=$?
+          set -e
+
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$EC2_INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output yaml
+          exit "$wait_status"
+
+      - name: Stop EC2
+        if: inputs.action == 'stop' || (inputs.action == 'deploy' && inputs.stop_after_deploy && success())
+        run: |
+          set -euo pipefail
+          state="$(aws ec2 describe-instances \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].State.Name' \
+            --output text)"
+          case "$state" in
+            stopped)
+              echo "EC2 instance is already stopped."
+              ;;
+            stopping)
+              echo "EC2 instance is already stopping."
+              ;;
+            running|pending)
+              aws ec2 stop-instances --instance-ids "$EC2_INSTANCE_ID" --output json >/dev/null
+              aws ec2 wait instance-stopped --instance-ids "$EC2_INSTANCE_ID"
+              echo "EC2 instance stopped."
+              ;;
+            *)
+              echo "Cannot stop EC2 instance from state: $state" >&2
+              exit 1
+              ;;
+          esac
