@@ -85,6 +85,10 @@ Later, create a Cloudflare Tunnel public hostname for
 only as the corresponding GitHub Actions secret. Do not open EC2 inbound web
 ports for the tunnel.
 
+Use `docs/cloudflare-tunnel-setup.md` for dashboard and DNS steps. After the
+first deployment, run `scripts/verify-local-compose.sh` on EC2 and
+`scripts/verify-cloudflare-route.sh` from an external machine.
+
 Stop the instance when the lab is not in use. Stopping avoids EC2 compute usage,
 but EBS volumes, snapshots, Elastic IP addresses, and other retained resources
 can continue to incur charges.

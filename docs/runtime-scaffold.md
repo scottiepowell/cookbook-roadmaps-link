@@ -82,3 +82,7 @@ Cloudflare Tunnel makes an outbound connection to Cloudflare and routes
 `cookbook.roadmap.links` to the app service. This avoids opening inbound web
 ports on the EC2 security group, keeps the origin address private, and lets
 Cloudflare terminate public TLS.
+
+Follow `docs/cloudflare-tunnel-setup.md` for tunnel and DNS setup. After
+deployment, validate EC2 locally with `scripts/verify-local-compose.sh` and the
+public route with `scripts/verify-cloudflare-route.sh`.

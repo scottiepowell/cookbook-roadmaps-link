@@ -60,6 +60,9 @@ OLLAMA_BASE_URL=<OPTIONAL_OLLAMA_URL>
 - [ ] The public hostname will route the selected domain to `http://app:3000`.
 - [ ] The tunnel token is stored only in `CLOUDFLARE_TUNNEL_TOKEN`.
 - [ ] DNS and tunnel health can be reviewed in Cloudflare after deployment.
+- [ ] The steps in `docs/cloudflare-tunnel-setup.md` have been reviewed.
+- [ ] `scripts/verify-local-compose.sh` and
+      `scripts/verify-cloudflare-route.sh` are ready for post-deploy checks.
 
 ## First Workflow Run Order
 
