@@ -5,6 +5,10 @@ deploys Vanilla Cookbook without SSH. GitHub Actions obtains short-lived AWS
 credentials through OIDC, and AWS Systems Manager Run Command executes remote
 deployment operations.
 
+Before the first run, prepare and validate the host with
+`docs/ec2-runtime-bootstrap.md`, then complete
+`docs/github-settings-checklist.md`.
+
 ## GitHub Settings
 
 Configure these GitHub Actions secrets:
