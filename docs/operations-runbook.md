@@ -2,6 +2,8 @@
 
 Use the manual **Cookbook EC2 Control** GitHub Actions workflow for routine EC2
 and deployment actions. Use Systems Manager, not SSH, for host diagnostics.
+For initial setup and the first live run, complete
+`docs/first-deploy-guide.md` before using this day-2 sequence.
 
 ## Start And Inspect
 

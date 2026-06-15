@@ -3,6 +3,9 @@
 This repository contains the deployment scaffold for running Vanilla Cookbook on
 an EC2 host and publishing it through Cloudflare Tunnel.
 
+For the complete first-run order across AWS, GitHub, EC2, and Cloudflare, start
+with `docs/first-deploy-guide.md`.
+
 ## Files
 
 - `docker-compose.yml` runs the stable Vanilla Cookbook image and the official

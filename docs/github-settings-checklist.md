@@ -2,6 +2,8 @@
 
 Use placeholders while reviewing this checklist. Add real values only in the
 GitHub and AWS control planes, never in repository files or workflow logs.
+Complete this checklist as phase 4 of the ordered
+`docs/first-deploy-guide.md` process.
 
 ## GitHub Actions Secrets
 
