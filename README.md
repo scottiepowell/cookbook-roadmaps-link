@@ -30,6 +30,7 @@ Coder, Codex, GitHub, GitHub Actions, AWS EC2, AWS Systems Manager, Docker Compo
 Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 
 - [Repository map](docs/repo-map.md)
+- [Repository validation](docs/repo-validation.md)
 - [Runtime scaffold](docs/runtime-scaffold.md)
 - [EC2 bootstrap](docs/ec2-runtime-bootstrap.md)
 - [AWS OIDC policy](docs/aws-github-oidc-policy.md)

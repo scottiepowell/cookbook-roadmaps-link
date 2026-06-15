@@ -10,7 +10,7 @@ git status --short --branch
 git remote -v
 ```
 
-Confirm `main`, expected `origin`, and no unreviewed changes. Review [repo map](repo-map.md), [runtime](runtime-scaffold.md), and [architecture](architecture.md). Confirm no `.env`, credentials, keys, `db/`, or `uploads/` are tracked.
+Confirm `main`, expected `origin`, and no unreviewed changes. Run the [repository validator](repo-validation.md), then review [repo map](repo-map.md), [runtime](runtime-scaffold.md), and [architecture](architecture.md). Confirm no `.env`, credentials, keys, `db/`, or `uploads/` are tracked.
 
 ## 2. Prepare AWS EC2 Host
 
