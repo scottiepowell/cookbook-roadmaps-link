@@ -81,7 +81,7 @@ manual workflow in the documented order.
 ## Cloudflare And Cost Control
 
 Later, create a Cloudflare Tunnel public hostname for
-`cookbook.roadmap.links` that routes to `http://app:3000`, and store its token
+`cookbook.roadmaps.link` that routes to `http://app:3000`, and store its token
 only as the corresponding GitHub Actions secret. Do not open EC2 inbound web
 ports for the tunnel.
 

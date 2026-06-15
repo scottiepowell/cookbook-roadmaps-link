@@ -42,7 +42,7 @@ For app-only local testing, start `app` and browse to `http://127.0.0.1:3000`:
 docker compose up -d app
 ```
 
-The production `ORIGIN` remains `https://cookbook.roadmap.links`. Use
+The production `ORIGIN` remains `https://cookbook.roadmaps.link`. Use
 `ORIGIN=http://localhost:3000` in the untracked `.env` when testing login flows
 locally.
 
@@ -82,7 +82,7 @@ host but not from the public network interface. No inbound HTTP or HTTPS port is
 published by this stack.
 
 Cloudflare Tunnel makes an outbound connection to Cloudflare and routes
-`cookbook.roadmap.links` to the app service. This avoids opening inbound web
+`cookbook.roadmaps.link` to the app service. This avoids opening inbound web
 ports on the EC2 security group, keeps the origin address private, and lets
 Cloudflare terminate public TLS.
 

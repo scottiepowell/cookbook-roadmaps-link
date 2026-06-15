@@ -39,9 +39,9 @@ OLLAMA_BASE_URL
 Recommended values:
 
 ```text
-ORIGIN=https://cookbook.roadmap.links
+ORIGIN=https://cookbook.roadmaps.link
 APP_DIR=/opt/cookbook
-DOMAIN=cookbook.roadmap.links
+DOMAIN=cookbook.roadmaps.link
 ```
 
 `OLLAMA_BASE_URL` is optional. The workflow defaults an unset `APP_DIR` to
@@ -63,7 +63,7 @@ DOMAIN=cookbook.roadmap.links
 ## Cloudflare Requirements
 
 Create a Cloudflare Tunnel and configure its public hostname
-`cookbook.roadmap.links` to route to `http://app:3000` on the Compose network.
+`cookbook.roadmaps.link` to route to `http://app:3000` on the Compose network.
 Store the tunnel token only in the `CLOUDFLARE_TUNNEL_TOKEN` GitHub secret.
 See `docs/cloudflare-tunnel-setup.md` for the dashboard, DNS, validation, and
 troubleshooting runbook.

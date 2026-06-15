@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-domain=${1:-cookbook.roadmap.links}
+domain=${1:-cookbook.roadmaps.link}
 
 if [[ ! $domain =~ ^[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,63}$ ]]; then
   echo "Invalid domain name: $domain" >&2

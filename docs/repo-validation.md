@@ -10,6 +10,7 @@ The validator:
 - copies `.env.example` to a disposable directory and renders the Docker Compose configuration without starting containers;
 - checks working-tree, staged, tracked, and untracked repository files for whitespace errors;
 - verifies that inline local Markdown links point to files that exist;
+- fails active files that reintroduce the former singular-roadmap Cookbook hostname or base domain while preserving historical mailbox records;
 - scans text files for obvious AWS access key IDs, GitHub token prefixes, OpenAI key prefixes, private key headers, and token-like Cloudflare assignments.
 
 Temporary Compose files are removed automatically. The validator never prints `.env` content or matched credential text.

@@ -35,10 +35,10 @@ For initial setup and the first live run, complete
 4. From an external machine, verify the public route:
 
    ```bash
-   bash scripts/verify-cloudflare-route.sh cookbook.roadmap.links
+   bash scripts/verify-cloudflare-route.sh cookbook.roadmaps.link
    ```
 
-5. Check the browser flow at `https://cookbook.roadmap.links`.
+5. Check the browser flow at `https://cookbook.roadmaps.link`.
 
 ## Back Up And Stop
 

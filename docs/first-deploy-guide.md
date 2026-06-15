@@ -1,6 +1,6 @@
 # First Deploy Guide
 
-Use this exact order for the first deployment to `https://cookbook.roadmap.links`. Put live values only in AWS, GitHub, or Cloudflare control planes.
+Use this exact order for the first deployment to `https://cookbook.roadmaps.link`. Put live values only in AWS, GitHub, or Cloudflare control planes.
 
 ## 1. Confirm Repo And Coder Workspace
 
@@ -36,16 +36,16 @@ Secrets: `AWS_ROLE_ARN`, `CLOUDFLARE_TUNNEL_TOKEN`; optional `OPENAI_API_KEY`, `
 ```text
 AWS_REGION=<AWS_REGION>
 EC2_INSTANCE_ID=<EC2_INSTANCE_ID>
-ORIGIN=https://cookbook.roadmap.links
+ORIGIN=https://cookbook.roadmaps.link
 APP_DIR=/opt/cookbook
-DOMAIN=cookbook.roadmap.links
+DOMAIN=cookbook.roadmaps.link
 ```
 
 `OLLAMA_BASE_URL` is optional. Sensitive values belong in secrets.
 
 ## 5. Configure Cloudflare Tunnel
 
-Follow [Cloudflare setup](cloudflare-tunnel-setup.md). Create the tunnel, store its token in `CLOUDFLARE_TUNNEL_TOKEN`, and route `cookbook.roadmap.links` to `http://app:3000`. Confirm proxied DNS. Do not point an A record at EC2 or open web ports.
+Follow [Cloudflare setup](cloudflare-tunnel-setup.md). Create the tunnel, store its token in `CLOUDFLARE_TUNNEL_TOKEN`, and route `cookbook.roadmaps.link` to `http://app:3000`. Confirm proxied DNS. Do not point an A record at EC2 or open web ports.
 
 ## 6. Run GitHub Actions In Order
 
@@ -71,7 +71,7 @@ Run through SSM and resolve local failures first. The script does not print `.en
 
 ```bash
 cd /home/coder/repo
-bash scripts/verify-cloudflare-route.sh cookbook.roadmap.links
+bash scripts/verify-cloudflare-route.sh cookbook.roadmaps.link
 ```
 
 Run outside EC2 and confirm DNS, HTTPS, and final URL.

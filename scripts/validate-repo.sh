@@ -120,6 +120,32 @@ check_markdown_links() {
   fi
 }
 
+
+check_old_domain_references() {
+  local findings="$temp_dir/old-domain-files"
+  git ls-files --cached --others --exclude-standard -z |
+    perl -0ne '
+      chomp;
+      my $path = $_;
+      next if $path =~ m{^(?:inbox|outbox)/};
+      next unless -f $path;
+      open my $fh, "<", $path or die "Cannot read $path: $!";
+      local $/;
+      my $data = <$fh>;
+      close $fh;
+      next if index($data, "\0") >= 0;
+      my $old_host = "cookbook" . ".roadmap" . ".links";
+      my $old_base = "roadmap" . ".links";
+      print "$path\n" if index($data, $old_host) >= 0 || index($data, $old_base) >= 0;
+    ' | sort -u > "$findings"
+
+  if [[ -s $findings ]]; then
+    echo "Old domain reference found in active files:" >&2
+    sed 's/^/  /' "$findings" >&2
+    return 1
+  fi
+}
+
 check_secret_patterns() {
   local findings="$temp_dir/secret-findings"
   git ls-files --cached --others --exclude-standard -z |
@@ -176,6 +202,9 @@ pass "whitespace"
 
 check_markdown_links || fail "local Markdown links"
 pass "local Markdown links"
+
+check_old_domain_references || fail "old-domain guard"
+pass "old-domain guard"
 
 check_secret_patterns || fail "secret-pattern scan"
 pass "secret-pattern scan"

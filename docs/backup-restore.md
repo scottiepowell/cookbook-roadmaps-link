@@ -82,7 +82,7 @@ the services cannot write data.
    cd /opt/cookbook
    docker compose up -d
    APP_DIR=/opt/cookbook bash scripts/verify-local-compose.sh
-   bash scripts/verify-cloudflare-route.sh cookbook.roadmap.links
+   bash scripts/verify-cloudflare-route.sh cookbook.roadmaps.link
    ```
 
 Open the app and verify recipes and images. Keep the pre-restore safety archive

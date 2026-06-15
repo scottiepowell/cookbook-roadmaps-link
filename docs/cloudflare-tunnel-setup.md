@@ -12,14 +12,14 @@ Browser -> Cloudflare edge -> Cloudflare Tunnel -> cloudflared -> app:3000
 Expected configuration:
 
 ```text
-Public hostname: cookbook.roadmap.links
+Public hostname: cookbook.roadmaps.link
 Service target:  http://app:3000
 ```
 
 ## Create The Tunnel
 
 1. Sign in to the Cloudflare Zero Trust dashboard for the account containing
-   the `roadmap.links` zone.
+   the `roadmaps.link` zone.
 2. Open **Networks** > **Tunnels** and create a Cloudflared tunnel.
 3. Give the tunnel a recognizable name such as `<COOKBOOK_TUNNEL_NAME>`.
 4. Choose the Docker connector instructions and copy the generated tunnel token
@@ -37,13 +37,13 @@ In the tunnel's **Public Hostnames** configuration, add:
 
 ```text
 Subdomain: cookbook
-Domain:    roadmap.links
+Domain:    roadmaps.link
 Type:      HTTP
 URL:       app:3000
 ```
 
 Cloudflare should create or manage the proxied DNS route for
-`cookbook.roadmap.links` to the tunnel. Confirm the hostname appears under the
+`cookbook.roadmaps.link` to the tunnel. Confirm the hostname appears under the
 tunnel and in the zone's DNS records. Do not replace it with an A record that
 points directly to the EC2 public IP.
 
@@ -64,7 +64,7 @@ service name `app` to the Vanilla Cookbook container on their shared network.
 
 1. Confirm the EC2 bootstrap preflight has no failures.
 2. Confirm the tunnel hostname is configured with `http://app:3000`.
-3. Confirm `ORIGIN` is `https://cookbook.roadmap.links` in GitHub Actions
+3. Confirm `ORIGIN` is `https://cookbook.roadmaps.link` in GitHub Actions
    variables.
 4. Run the GitHub Actions `deploy` action with `stop_after_deploy` disabled.
 5. On EC2 through Systems Manager, run:
@@ -76,10 +76,10 @@ service name `app` to the Vanilla Cookbook container on their shared network.
 6. From a machine outside EC2, run:
 
    ```bash
-   bash scripts/verify-cloudflare-route.sh cookbook.roadmap.links
+   bash scripts/verify-cloudflare-route.sh cookbook.roadmaps.link
    ```
 
-7. Open `https://cookbook.roadmap.links` in a browser and complete or verify the
+7. Open `https://cookbook.roadmaps.link` in a browser and complete or verify the
    Vanilla Cookbook first-run flow.
 8. Confirm EC2 still has no inbound HTTP, HTTPS, or public port 3000 rule.
 
@@ -99,7 +99,7 @@ token into logs while diagnosing it.
 
 DNS may not resolve, or Cloudflare may return a route error. In Zero Trust,
 confirm the public hostname belongs to the correct tunnel and is exactly
-`cookbook.roadmap.links`. In Cloudflare DNS, confirm the tunnel-managed proxied
+`cookbook.roadmaps.link`. In Cloudflare DNS, confirm the tunnel-managed proxied
 record exists and there is no conflicting A, AAAA, or CNAME record.
 
 ### Compose Service Not Healthy
@@ -119,5 +119,5 @@ back into the `cloudflared` container and cannot reach the app service.
 
 Login, redirects, or browser requests can fail when Vanilla Cookbook's `ORIGIN`
 does not match the public URL. Set the GitHub Actions variable `ORIGIN` to
-`https://cookbook.roadmap.links`, deploy again so `.env` is rendered, and verify
+`https://cookbook.roadmaps.link`, deploy again so `.env` is rendered, and verify
 the browser is using that exact scheme and hostname.

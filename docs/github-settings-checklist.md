@@ -28,9 +28,9 @@ Use placeholders during setup planning, for example:
 ```text
 AWS_REGION=<AWS_REGION>
 EC2_INSTANCE_ID=<EC2_INSTANCE_ID>
-ORIGIN=<HTTPS_ORIGIN>
-APP_DIR=<APP_DIR>
-DOMAIN=<DOMAIN>
+ORIGIN=https://cookbook.roadmaps.link
+APP_DIR=/opt/cookbook
+DOMAIN=cookbook.roadmaps.link
 OLLAMA_BASE_URL=<OPTIONAL_OLLAMA_URL>
 ```
 
