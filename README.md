@@ -30,6 +30,9 @@ Coder, Codex, GitHub, GitHub Actions, AWS EC2, AWS Systems Manager, Docker Compo
 Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 
 - [Repository map](docs/repo-map.md)
+- [Resume from Windows clone](docs/resume-from-windows-clone.md)
+- [Current deployment state](docs/current-deployment-state.md)
+- [Codex mailbox continuation](docs/codex-mailbox-continuation.md)
 - [Repository validation](docs/repo-validation.md)
 - [Runtime scaffold](docs/runtime-scaffold.md)
 - [EC2 bootstrap](docs/ec2-runtime-bootstrap.md)

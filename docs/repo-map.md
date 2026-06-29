@@ -12,3 +12,9 @@
 | `deploy.sh` | Updates `/opt/cookbook`, prepares data, pulls images, reconciles Compose. |
 
 Start with the [README](../README.md), then the [First Deploy Guide](first-deploy-guide.md).
+
+Resume and readiness references:
+
+- [Resume from Windows clone](resume-from-windows-clone.md)
+- [Current deployment state](current-deployment-state.md)
+- [Codex mailbox continuation](codex-mailbox-continuation.md)

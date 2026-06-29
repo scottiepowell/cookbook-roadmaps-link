@@ -12,6 +12,8 @@ git remote -v
 
 Confirm `main`, expected `origin`, and no unreviewed changes. Run the [repository validator](repo-validation.md), then review [repo map](repo-map.md), [runtime](runtime-scaffold.md), and [architecture](architecture.md). Confirm no `.env`, credentials, keys, `db/`, or `uploads/` are tracked.
 
+If resuming after a Windows re-clone or Coder restart, first review [Resume From A Windows Clone](resume-from-windows-clone.md) and [Current Deployment State](current-deployment-state.md).
+
 ## 2. Prepare AWS EC2 Host
 
 Create current Ubuntu Server with encrypted EBS and outbound HTTPS. Do not open inbound HTTP/HTTPS. Restrict temporary SSH to your IP and remove it after SSM works. Follow [EC2 Bootstrap](ec2-runtime-bootstrap.md):
