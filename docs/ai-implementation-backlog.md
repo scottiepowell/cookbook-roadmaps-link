@@ -4,6 +4,8 @@ This backlog breaks the medium-path AI design into follow-on mailbox tasks. Task
 
 ## 0016: Scaffold AI FastAPI Sidecar
 
+Status: complete.
+
 Goal: Add the minimal `ai-api` FastAPI service without AI features.
 
 Files likely touched:

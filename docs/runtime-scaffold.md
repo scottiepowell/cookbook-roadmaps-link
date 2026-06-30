@@ -9,8 +9,8 @@ with `docs/first-deploy-guide.md`.
 ## Files
 
 - `docker-compose.yml` runs the stable Vanilla Cookbook image and the official
-  Cloudflare Tunnel client. It persists the SQLite database in `db/` and uploads
-  in `uploads/`.
+  Cloudflare Tunnel client, plus the minimal `ai-api` FastAPI sidecar scaffold.
+  Cookbook persists the SQLite database in `db/` and uploads in `uploads/`.
 - `.env.example` documents the runtime configuration without containing usable
   credentials.
 - `.gitignore` prevents local secrets, runtime data, private keys, Terraform
@@ -41,6 +41,10 @@ For app-only local testing, start `app` and browse to `http://127.0.0.1:3000`:
 ```bash
 docker compose up -d app
 ```
+
+The `ai-api` service is wired into the Compose network without a host port. It
+currently exposes `GET /health` and `GET /ai/config` only to other Compose
+services. It does not read the cookbook database or call live AI providers yet.
 
 The production `ORIGIN` remains `https://cookbook.roadmaps.link`. Use
 `ORIGIN=http://localhost:3000` in the untracked `.env` when testing login flows
@@ -74,6 +78,8 @@ DOMAIN
 `ANTHROPIC_API_KEY` and `GOOGLE_API_KEY` are also sensitive if enabled and must
 be stored as GitHub Actions secrets. `OLLAMA_BASE_URL` is configuration and can
 be a GitHub Actions variable unless its value discloses private infrastructure.
+The AI sidecar reports only whether provider settings are configured; it does
+not return secret values.
 
 ## Network Model
 

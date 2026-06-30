@@ -3,6 +3,7 @@
 | Path | Purpose |
 | --- | --- |
 | `.github/workflows/` | Manual EC2 control/deployment through OIDC and SSM. |
+| `ai-api/` | Minimal FastAPI AI sidecar scaffold with health/config endpoints and offline tests. |
 | `docs/` | Architecture, deploy, configuration, backup, restore, and operations guides. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
 | `outbox/` | Matching implementation and validation reports. |

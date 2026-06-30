@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: proposed Python/FastAPI sidecar for search, RAG, importer, meal planner, and config inspection.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health` and `GET /ai/config`. Search, RAG, importer, meal planner, and DB reading are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -40,25 +40,32 @@ The sidecar may read upload metadata later, but should not parse or mutate uploa
 
 ## API Endpoint Proposal
 
+Current endpoints:
+
 ```text
 GET  /health
+GET  /ai/config
+```
+
+Future endpoints:
+
+```text
 GET  /recipes/search?q=
 POST /recipes/search
 POST /ai/ask
 POST /ai/import-recipe
 POST /ai/meal-plan
-GET  /ai/config
 ```
 
 Endpoint notes:
 
 - `GET /health`: process health, version, and dependency status without secrets.
+- `GET /ai/config`: non-secret provider availability booleans only.
 - `GET /recipes/search?q=`: simple browser-friendly deterministic search.
 - `POST /recipes/search`: structured search options such as tags, ingredients, and limit.
 - `POST /ai/ask`: retrieval-augmented answer over saved recipes with cited recipe IDs/titles.
 - `POST /ai/import-recipe`: schema-constrained parse of pasted recipe text into a draft recipe JSON object.
 - `POST /ai/meal-plan`: structured meal plan and shopping list from saved recipes.
-- `GET /ai/config`: non-secret provider availability, feature flags, and model names if safe to show.
 
 ## Provider Abstraction
 

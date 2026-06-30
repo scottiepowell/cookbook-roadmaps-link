@@ -8,6 +8,7 @@ The validator:
 
 - runs `bash -n` on `deploy.sh` and every shell script directly under `scripts/`;
 - copies `.env.example` to a disposable directory and renders the Docker Compose configuration without starting containers;
+- runs `ai-api` tests in a temporary Python virtual environment when the sidecar exists;
 - checks working-tree, staged, tracked, and untracked repository files for whitespace errors;
 - verifies that inline local Markdown links point to files that exist;
 - fails active files that reintroduce the former singular-roadmap Cookbook hostname or base domain while preserving historical mailbox records;
@@ -17,7 +18,8 @@ Temporary Compose files are removed automatically. The validator never prints `.
 
 ## Run Locally
 
-Docker with the Compose plugin, Git, Bash, and Perl are required:
+Docker with the Compose plugin, Git, Bash, Perl, Python, and network access for
+Python package installation are required:
 
 ```bash
 cd /home/coder/repo
@@ -35,7 +37,7 @@ For a false positive, first confirm the value is non-sensitive. Prefer replacing
 
 ## CI Scope
 
-This workflow does not deploy, start containers, contact cloud APIs, or require AWS, Cloudflare, OpenAI, or application credentials. It only validates repository content and local Compose parsing, keeping pull request checks fast and safe.
+This workflow does not deploy, start containers, contact cloud APIs, or require AWS, Cloudflare, OpenAI, or application credentials. It validates repository content, local Compose parsing, and offline AI sidecar tests.
 
 ## GitOps Mailbox Support
 

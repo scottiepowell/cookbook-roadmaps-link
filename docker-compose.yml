@@ -10,6 +10,13 @@ services:
       - .env
     restart: unless-stopped
 
+  ai-api:
+    build:
+      context: ./ai-api
+    env_file:
+      - .env
+    restart: unless-stopped
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     depends_on:

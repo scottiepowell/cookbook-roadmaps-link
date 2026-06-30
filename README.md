@@ -15,7 +15,7 @@ See [Architecture](docs/architecture.md).
 
 ## Technology
 
-Coder, Codex, GitHub, GitHub Actions, AWS EC2, AWS Systems Manager, Docker Compose, and Cloudflare Tunnel.
+Coder, Codex, GitHub, GitHub Actions, AWS EC2, AWS Systems Manager, Docker Compose, Cloudflare Tunnel, and a minimal FastAPI AI sidecar scaffold.
 
 ## Security Model
 
@@ -50,6 +50,10 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 ## GitOps Mailbox Workflow
 
 Numbered `inbox/` specifications drive work. Codex inspects, implements, validates, writes a matching `outbox/` report, and commits reviewed state. GitHub is the source of truth; deployments pull `main` onto EC2. Never put credentials, tokens, private keys, or host `.env` content in mailbox files.
+
+## AI Sidecar Status
+
+The `ai-api` service currently provides only `GET /health` and `GET /ai/config`. It does not yet implement recipe search, RAG, recipe import, meal planning, cookbook DB reading, or live provider calls. Its config endpoint reports provider availability as booleans and never returns keys or environment values.
 
 ## Status
 

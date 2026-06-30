@@ -45,12 +45,47 @@ check_compose_config() {
   mkdir -p "$compose_dir"
   cp docker-compose.yml "$compose_dir/docker-compose.yml"
   cp .env.example "$compose_dir/.env"
+  if [[ -d ai-api ]]; then
+    cp -R ai-api "$compose_dir/ai-api"
+  fi
 
   docker compose \
     --project-directory "$compose_dir" \
     --env-file "$compose_dir/.env" \
     -f "$compose_dir/docker-compose.yml" \
     config --quiet
+}
+
+check_ai_api_tests() {
+  [[ -d ai-api ]] || return 0
+
+  local python_cmd
+  if [[ -n "${AI_API_PYTHON:-}" ]]; then
+    python_cmd="$AI_API_PYTHON"
+  elif command -v python >/dev/null 2>&1; then
+    python_cmd=python
+  elif command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
+    python_cmd=python3
+  else
+    echo "Python is required for AI API tests." >&2
+    return 1
+  fi
+
+  local venv_dir="$temp_dir/ai-api-venv"
+  $python_cmd -m venv "$venv_dir"
+
+  local venv_python
+  if [[ -x "$venv_dir/bin/python" ]]; then
+    venv_python="$venv_dir/bin/python"
+  elif [[ -x "$venv_dir/Scripts/python.exe" ]]; then
+    venv_python="$venv_dir/Scripts/python.exe"
+  else
+    echo "Could not find Python inside temporary AI API virtual environment." >&2
+    return 1
+  fi
+
+  "$venv_python" -m pip install --disable-pip-version-check -r ai-api/requirements.txt >/dev/null
+  PYTHONPATH=ai-api "$venv_python" -m pytest ai-api/tests
 }
 
 check_whitespace() {
@@ -196,6 +231,9 @@ pass "shell script syntax"
 
 check_compose_config || fail "Docker Compose configuration"
 pass "Docker Compose configuration"
+
+check_ai_api_tests || fail "AI API tests"
+pass "AI API tests"
 
 check_whitespace || fail "whitespace"
 pass "whitespace"
