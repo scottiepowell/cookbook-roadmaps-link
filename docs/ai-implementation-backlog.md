@@ -32,6 +32,8 @@ Done criteria:
 
 ## 0017: Add DB Schema Inspection And Read-Only Recipe Reader
 
+Status: complete.
+
 Goal: Inspect the cookbook SQLite schema safely and add a read-only recipe reader.
 
 Files likely touched:

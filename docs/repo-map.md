@@ -3,7 +3,7 @@
 | Path | Purpose |
 | --- | --- |
 | `.github/workflows/` | Manual EC2 control/deployment through OIDC and SSM. |
-| `ai-api/` | Minimal FastAPI AI sidecar scaffold with health/config endpoints and offline tests. |
+| `ai-api/` | Minimal FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, and offline tests. |
 | `docs/` | Architecture, deploy, configuration, backup, restore, and operations guides. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
 | `outbox/` | Matching implementation and validation reports. |
@@ -24,5 +24,6 @@ AI design references:
 
 - [AI medium-path roadmap](ai-medium-path-roadmap.md)
 - [AI sidecar architecture](ai-sidecar-architecture.md)
+- [AI schema notes](ai-schema-notes.md)
 - [AI evals plan](ai-evals-plan.md)
 - [AI implementation backlog](ai-implementation-backlog.md)

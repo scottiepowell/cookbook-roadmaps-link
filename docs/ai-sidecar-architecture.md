@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health` and `GET /ai/config`. Search, RAG, importer, meal planner, and DB reading are not implemented yet.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, an internal SQLite schema inspector, and a read-only recipe reader. Search, RAG, importer, and meal planner are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -34,7 +34,9 @@ flowchart LR
 
 ## Data Access
 
-The sidecar should mount the cookbook SQLite database read-only. It should start with a read-only recipe reader and deterministic search. If write-back is ever needed, it should be a later reviewed task with backup, migration, and rollback rules.
+The sidecar reader opens SQLite databases with URI `mode=ro`. Production Compose DB mounting is deferred until the real Vanilla Cookbook schema is inspected; when added, the mount should be read-only, such as `./db:/data/cookbook-db:ro`. The future path is configurable with `COOKBOOK_DB_PATH`.
+
+The current reader is tested against generated fixture databases. It conservatively detects recipe-like tables and returns normalized `RecipeDocument` objects. Deterministic search is still a future task. If write-back is ever needed, it should be a later reviewed task with backup, migration, and rollback rules.
 
 The sidecar may read upload metadata later, but should not parse or mutate uploaded files in the first reader task.
 
@@ -124,7 +126,7 @@ Do not open inbound EC2 HTTP/HTTPS ports. Keep the Cloudflare Tunnel as the publ
 
 ## Risks And Unknowns
 
-- Cookbook SQLite schema is not documented in this repo yet.
+- Cookbook production SQLite schema is not documented in this repo yet.
 - Concurrent reads must not interfere with cookbook writes.
 - Recipe ingredient/instruction fields may need normalization.
 - Hosted AI calls add cost, latency, and provider failure modes.
