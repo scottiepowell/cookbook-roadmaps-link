@@ -182,6 +182,17 @@ jobs:
 
           remote_script="$(cat <<EOF
           set -euo pipefail
+          if [[ -z "\${HOME:-}" ]]; then
+            home_from_passwd="\$(getent passwd "\$(id -u)" | cut -d: -f6 || true)"
+            if [[ -n "\$home_from_passwd" ]]; then
+              export HOME="\$home_from_passwd"
+            else
+              export HOME=/root
+            fi
+          fi
+          export XDG_CONFIG_HOME="\${XDG_CONFIG_HOME:-\$HOME/.config}"
+          mkdir -p "\$HOME" "\$XDG_CONFIG_HOME"
+          echo "Remote runtime: user=\$(id -un 2>/dev/null || id -u), home=\$HOME"
           app_dir='$APP_DIR'
           repository_url='$REPOSITORY_URL'
           install -d -m 0755 "\$app_dir"
@@ -251,6 +262,17 @@ jobs:
 
           remote_script="$(cat <<EOF
           set -euo pipefail
+          if [[ -z "\${HOME:-}" ]]; then
+            home_from_passwd="\$(getent passwd "\$(id -u)" | cut -d: -f6 || true)"
+            if [[ -n "\$home_from_passwd" ]]; then
+              export HOME="\$home_from_passwd"
+            else
+              export HOME=/root
+            fi
+          fi
+          export XDG_CONFIG_HOME="\${XDG_CONFIG_HOME:-\$HOME/.config}"
+          mkdir -p "\$HOME" "\$XDG_CONFIG_HOME"
+          echo "Remote runtime: user=\$(id -un 2>/dev/null || id -u), home=\$HOME"
           cd '$APP_DIR'
           test -f docker-compose.yml
           test -f .env

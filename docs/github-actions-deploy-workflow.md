@@ -115,3 +115,8 @@ under `/bin/sh` instead of Bash. If it shows
 Bash received the payload. The deploy and restart workflow actions avoid both
 failure modes by base64 transporting the Bash script body, decoding it to a
 temporary file on the instance, and executing that file with `bash`.
+
+If SSM output shows `fatal: $HOME not set` during `git clone`, `git config`,
+or similar commands, the remote command session has a sparse environment. The
+workflow initializes `HOME` and `XDG_CONFIG_HOME` inside the remote Bash
+payload before Git, Docker, or config-path-sensitive commands run.
