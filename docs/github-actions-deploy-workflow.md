@@ -106,3 +106,11 @@ environment payload needed to construct `.env`.
 Review workflow changes before running a deployment. Do not print generated
 SSM parameter files, shell environment variables, GitHub contexts, or the
 remote `.env` during troubleshooting.
+
+## Troubleshooting SSM Shell Errors
+
+If SSM output shows `set: Illegal option -o pipefail`, the remote payload ran
+under `/bin/sh` instead of Bash. The deploy and restart workflow actions wrap
+their remote payloads with `bash -lc` before sending them to
+`AWS-RunShellScript`, so Bash-only options and conditionals are interpreted by
+Bash on the instance.

@@ -180,7 +180,7 @@ jobs:
             "GOOGLE_API_KEY=$GOOGLE_API_KEY" \
             "OLLAMA_BASE_URL=$OLLAMA_BASE_URL" | base64 -w 0)"
 
-          remote_command="$(cat <<EOF
+          remote_script="$(cat <<EOF
           set -euo pipefail
           app_dir='$APP_DIR'
           repository_url='$REPOSITORY_URL'
@@ -206,6 +206,7 @@ jobs:
           ./deploy.sh
           EOF
           )"
+          remote_command="$(printf 'bash -lc %q' "$remote_script")"
 
           parameters_file="$RUNNER_TEMP/cookbook-ssm-parameters.json"
           trap 'rm -f "$parameters_file"' EXIT
@@ -239,7 +240,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          remote_command="$(cat <<EOF
+          remote_script="$(cat <<EOF
           set -euo pipefail
           cd '$APP_DIR'
           test -f docker-compose.yml
@@ -248,6 +249,8 @@ jobs:
           docker compose ps
           EOF
           )"
+          remote_command="$(printf 'bash -lc %q' "$remote_script")"
+
           parameters_file="$RUNNER_TEMP/cookbook-ssm-parameters.json"
           trap 'rm -f "$parameters_file"' EXIT
           jq -n --arg command "$remote_command" '{commands: [$command]}' > "$parameters_file"
