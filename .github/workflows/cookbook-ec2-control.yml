@@ -196,6 +196,7 @@ jobs:
           app_dir='$APP_DIR'
           repository_url='$REPOSITORY_URL'
           install -d -m 0755 "\$app_dir"
+          git config --global --add safe.directory "\$app_dir" || true
           if [[ -d "\$app_dir/.git" ]]; then
             git -C "\$app_dir" remote set-url origin "\$repository_url"
             git -C "\$app_dir" checkout main
@@ -205,7 +206,7 @@ jobs:
             echo "APP_DIR exists but is not an empty directory or Git checkout" >&2
             exit 1
           fi
-          git config --global --add safe.directory "\$app_dir"
+          git config --global --add safe.directory "\$app_dir" || true
           env_tmp="\$(mktemp "\$app_dir/.env.XXXXXX")"
           trap 'rm -f "\$env_tmp"' EXIT
           chmod 0600 "\$env_tmp"

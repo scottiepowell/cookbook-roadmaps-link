@@ -120,3 +120,9 @@ If SSM output shows `fatal: $HOME not set` during `git clone`, `git config`,
 or similar commands, the remote command session has a sparse environment. The
 workflow initializes `HOME` and `XDG_CONFIG_HOME` inside the remote Bash
 payload before Git, Docker, or config-path-sensitive commands run.
+
+If SSM output shows `fatal: detected dubious ownership` for `/opt/cookbook`,
+Git is protecting a checkout owned by a different user than the SSM command
+session. The deploy workflow adds a scoped `safe.directory` exception for the
+configured app directory before any Git command touches an existing checkout.
+It does not use a wildcard safe-directory exception.
