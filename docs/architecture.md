@@ -25,6 +25,10 @@ Local backup: db/ + uploads/ -> /opt/cookbook-backups/*.tar.gz + checksum
 - Docker Compose: Vanilla Cookbook and `cloudflared`.
 - Cloudflare: public TLS and routing to `http://app:3000`.
 
+The proposed AI expansion keeps Vanilla Cookbook as a black-box service and
+adds a FastAPI sidecar. See [AI Sidecar Architecture](ai-sidecar-architecture.md)
+and [AI Medium-Path Roadmap](ai-medium-path-roadmap.md).
+
 ## Runtime Flow
 
 Browser traffic reaches Cloudflare, crosses the outbound tunnel, and is routed by `cloudflared` to Compose service `app:3000`. Cookbook persists SQLite data and uploads in host-mounted `db/` and `uploads/`. The host mapping `127.0.0.1:3000:3000` supports local checks without public exposure.

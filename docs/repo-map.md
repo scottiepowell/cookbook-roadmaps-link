@@ -18,3 +18,10 @@ Resume and readiness references:
 - [Resume from Windows clone](resume-from-windows-clone.md)
 - [Current deployment state](current-deployment-state.md)
 - [Codex mailbox continuation](codex-mailbox-continuation.md)
+
+AI design references:
+
+- [AI medium-path roadmap](ai-medium-path-roadmap.md)
+- [AI sidecar architecture](ai-sidecar-architecture.md)
+- [AI evals plan](ai-evals-plan.md)
+- [AI implementation backlog](ai-implementation-backlog.md)
