@@ -110,7 +110,8 @@ remote `.env` during troubleshooting.
 ## Troubleshooting SSM Shell Errors
 
 If SSM output shows `set: Illegal option -o pipefail`, the remote payload ran
-under `/bin/sh` instead of Bash. The deploy and restart workflow actions wrap
-their remote payloads with `bash -lc` before sending them to
-`AWS-RunShellScript`, so Bash-only options and conditionals are interpreted by
-Bash on the instance.
+under `/bin/sh` instead of Bash. If it shows
+`Syntax error: Unterminated quoted string`, inline script quoting broke before
+Bash received the payload. The deploy and restart workflow actions avoid both
+failure modes by base64 transporting the Bash script body, decoding it to a
+temporary file on the instance, and executing that file with `bash`.
