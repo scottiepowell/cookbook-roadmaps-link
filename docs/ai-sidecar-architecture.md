@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, an internal SQLite schema inspector, a read-only recipe reader, and an AI provider harness. RAG, embeddings, importer, and meal planner are not implemented yet.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, a structured recipe import draft endpoint, an internal SQLite schema inspector, a read-only recipe reader, and an AI provider harness. RAG, embeddings, and meal planner are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -49,13 +49,13 @@ GET  /health
 GET  /ai/config
 GET  /recipes/search?q=
 POST /recipes/search
+POST /ai/import-recipe
 ```
 
 Future endpoints:
 
 ```text
 POST /ai/ask
-POST /ai/import-recipe
 POST /ai/meal-plan
 ```
 
@@ -65,8 +65,8 @@ Endpoint notes:
 - `GET /ai/config`: non-secret provider availability booleans only.
 - `GET /recipes/search?q=`: simple browser-friendly deterministic keyword search.
 - `POST /recipes/search`: JSON-body deterministic search with query and limit.
+- `POST /ai/import-recipe`: schema-constrained parse of pasted recipe text into a draft recipe JSON object; no database write-back.
 - `POST /ai/ask`: retrieval-augmented answer over saved recipes with cited recipe IDs/titles.
-- `POST /ai/import-recipe`: schema-constrained parse of pasted recipe text into a draft recipe JSON object.
 - `POST /ai/meal-plan`: structured meal plan and shopping list from saved recipes.
 
 ## Provider Abstraction
@@ -102,12 +102,13 @@ Cost controls:
 - keep automated tests on the mock provider;
 - require opt-in manual live tests for OpenAI.
 
+The importer uses the provider harness for structured output, validates the provider response with Pydantic, and returns a draft only. It does not write to Vanilla Cookbook tables or files.
+
 ## Secrets And Config
 
-Secrets stay in GitHub Actions secrets and the deployed `.env` file:
+Secrets stay in GitHub Actions secrets and the deployed `.env` file. Provider keys are configured outside the repository and are never returned by `/ai/config`.
 
 ```text
-OPENAI_API_KEY
 ANTHROPIC_API_KEY
 GOOGLE_API_KEY
 ```
@@ -152,4 +153,4 @@ Do not open inbound EC2 HTTP/HTTPS ports. Keep the Cloudflare Tunnel as the publ
 - OpenAI live calls are manual-only until cost controls and endpoint-specific prompts are reviewed.
 - t3.micro memory and CPU limit local indexing and local LLM use.
 - RAG answers can hallucinate unless retrieval, citations, and no-match behavior are tested.
-- Importer write-back is risky and intentionally out of scope for the first version.
+- Importer write-back is risky and intentionally out of scope; the current importer returns draft JSON only.

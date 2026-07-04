@@ -4,7 +4,7 @@
 | --- | --- |
 | `.github/workflows/` | Manual EC2 control/deployment through OIDC and SSM. |
 | `.gitattributes` | Repository text normalization rules, including LF checkout for shell scripts. |
-| `ai-api/` | Minimal FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, mock/OpenAI provider harness, and offline tests. |
+| `ai-api/` | Minimal FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, structured recipe import drafts, mock/OpenAI provider harness, and offline tests. |
 | `docs/` | Architecture, deploy, configuration, backup, restore, and operations guides. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
 | `outbox/` | Matching implementation and validation reports. |

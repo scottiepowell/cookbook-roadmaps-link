@@ -21,7 +21,7 @@ class MockProvider(LLMProvider):
         )
 
     def generate_structured(self, request: StructuredLLMRequest) -> StructuredLLMResponse:
-        data = _fixture_for_schema(request.schema)
+        data = _fixture_for_schema(request.schema, request.schema)
         data["_mock"] = {
             "schema_name": request.schema_name,
             "prompt_preview": " ".join(request.prompt.split())[:80],
@@ -34,7 +34,8 @@ class MockProvider(LLMProvider):
         )
 
 
-def _fixture_for_schema(schema: dict[str, Any]) -> dict[str, Any]:
+def _fixture_for_schema(schema: dict[str, Any], root_schema: dict[str, Any] | None = None) -> dict[str, Any]:
+    root = root_schema or schema
     properties = schema.get("properties")
     if not isinstance(properties, dict):
         return {}
@@ -42,15 +43,18 @@ def _fixture_for_schema(schema: dict[str, Any]) -> dict[str, Any]:
     required = schema.get("required")
     required_fields = set(required if isinstance(required, list) else properties.keys())
     return {
-        key: _fixture_value(value)
+        key: _fixture_value(value, root)
         for key, value in properties.items()
         if key in required_fields
     }
 
 
-def _fixture_value(schema: Any) -> Any:
+def _fixture_value(schema: Any, root_schema: dict[str, Any]) -> Any:
     if not isinstance(schema, dict):
         return None
+
+    if "$ref" in schema:
+        schema = _resolve_ref(schema["$ref"], root_schema)
 
     value_type = schema.get("type")
     if isinstance(value_type, list):
@@ -65,7 +69,18 @@ def _fixture_value(schema: Any) -> Any:
     if value_type == "boolean":
         return False
     if value_type == "array":
-        return [_fixture_value(schema.get("items", {"type": "string"}))]
+        return [_fixture_value(schema.get("items", {"type": "string"}), root_schema)]
     if value_type == "object":
-        return _fixture_for_schema(schema)
+        return _fixture_for_schema(schema, root_schema)
     return None
+
+
+def _resolve_ref(ref: str, root_schema: dict[str, Any]) -> dict[str, Any]:
+    prefix = "#/$defs/"
+    if not ref.startswith(prefix):
+        return {}
+    defs = root_schema.get("$defs")
+    if not isinstance(defs, dict):
+        return {}
+    value = defs.get(ref.removeprefix(prefix))
+    return value if isinstance(value, dict) else {}

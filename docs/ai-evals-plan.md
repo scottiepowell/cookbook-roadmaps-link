@@ -22,8 +22,8 @@ Use FastAPI `TestClient`:
 - `GET /health`;
 - `GET /recipes/search?q=`;
 - `POST /recipes/search`;
-- `POST /ai/ask` with a mock provider;
 - `POST /ai/import-recipe` with a mock structured output;
+- `POST /ai/ask` with a mock provider;
 - `POST /ai/meal-plan` with a mock structured output;
 - `GET /ai/config` without secret leakage.
 
@@ -108,3 +108,4 @@ evals/
 - Fail if `/ai/config` or any response includes secret-like values.
 - Keep live provider evals manual or optional until cost and rate limits are documented.
 - Use `gpt-5.4-nano` as the default OpenAI manual-smoke model and `gpt-5.4-mini` only as an explicitly selected fallback.
+- Importer tests must validate draft JSON and must not write to the cookbook database.

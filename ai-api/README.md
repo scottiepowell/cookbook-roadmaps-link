@@ -8,6 +8,7 @@ Current endpoints:
 - `GET /ai/config`: returns non-secret provider availability booleans.
 - `GET /recipes/search?q=<query>&limit=<n>`: deterministic keyword search over read-only recipe documents.
 - `POST /recipes/search`: deterministic keyword search with a JSON body.
+- `POST /ai/import-recipe`: converts pasted recipe text into a validated draft JSON object.
 
 Internal reader modules:
 
@@ -15,8 +16,9 @@ Internal reader modules:
 - `app.recipe_reader`: opens SQLite with URI `mode=ro` and normalizes recipe-like rows into `RecipeDocument`.
 - `app.search`: ranks `RecipeDocument` objects with deterministic keyword matching.
 - `app.providers`: selects deterministic mock generation by default and contains the first OpenAI provider path.
+- `app.importer`: calls the provider harness for structured recipe draft extraction and validates the result.
 
-This scaffold does not implement RAG, embeddings, recipe import, meal planning, live provider calls during validation, or write-back to Vanilla Cookbook.
+This scaffold does not implement RAG, embeddings, meal planning, live provider calls during validation, or write-back to Vanilla Cookbook.
 
 ## Recipe Search
 
@@ -40,9 +42,44 @@ Search is intentionally deterministic and offline. It lowercases and tokenizes s
 
 Title and tag matches rank above ingredient and instruction matches. Equal scores keep fixture/input ordering stable. Empty or no-match queries return an empty result list.
 
+## Structured Recipe Import
+
+`POST /ai/import-recipe` accepts messy pasted recipe text and returns a draft only. It does not write to the Vanilla Cookbook database, modify recipes, search, plan meals, generate shopping lists, or create embeddings.
+
+Example request:
+
+```json
+{
+  "text": "Lemon beans: simmer beans with lemon and olive oil. Serve warm.",
+  "source": "family notes"
+}
+```
+
+The response contains validated draft fields:
+
+```json
+{
+  "draft": {
+    "title": "mock-value",
+    "description": null,
+    "ingredients": [{"name": "mock-value", "quantity": null, "unit": null, "note": null}],
+    "instructions": [{"step": 1, "text": "mock-value"}],
+    "tags": [],
+    "source": null,
+    "notes": null
+  },
+  "provider": "mock",
+  "model": "mock-basic",
+  "warnings": [],
+  "usage": {"input_tokens": 10, "output_tokens": 4}
+}
+```
+
+The mock provider is the default for local validation and CI. Optional OpenAI manual testing can use `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`, `OPENAI_MODEL=gpt-5.4-nano`, and a locally configured provider key, but no live OpenAI calls are part of automated validation.
+
 ## AI Provider Harness
 
-The provider harness is present for later importer, RAG, and meal-planning tasks. It is not called by the current search endpoints.
+The provider harness is used by the structured importer and is available for later RAG and meal-planning tasks. It is not called by the search endpoints.
 
 Default local configuration:
 
@@ -61,10 +98,10 @@ OPENAI_ENABLE_LIVE_TESTS=false
 Manual live smoke tests are opt-in only and were not added to automated validation:
 
 ```bash
-AI_PROVIDER=openai OPENAI_ENABLE_LIVE_TESTS=true OPENAI_API_KEY=... pytest ai-api/tests/test_openai_live.py
+AI_PROVIDER=openai OPENAI_ENABLE_LIVE_TESTS=true pytest ai-api/tests/test_openai_live.py
 ```
 
-There is no live test file yet. Future live smoke tests should stay skipped unless `OPENAI_ENABLE_LIVE_TESTS=true` and `OPENAI_API_KEY` are both present.
+There is no live test file yet. Future live smoke tests should stay skipped unless `OPENAI_ENABLE_LIVE_TESTS=true` and a local provider key are both present.
 
 ## Cookbook DB Path
 

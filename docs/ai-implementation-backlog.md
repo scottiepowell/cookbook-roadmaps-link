@@ -107,7 +107,9 @@ Done criteria:
 - Mock provider supports deterministic responses.
 - `/ai/config` reports non-secret provider availability only.
 
-## 0020: Add Structured Recipe Importer
+## 0021: Add Structured Recipe Importer
+
+Status: complete.
 
 Goal: Parse pasted recipe text into schema-constrained draft recipe JSON.
 
@@ -132,7 +134,7 @@ Done criteria:
 - Invalid or incomplete input returns a controlled response.
 - No direct cookbook DB write-back exists.
 
-## 0021: Add RAG Ask Endpoint
+## 0022: Add RAG Ask Endpoint
 
 Goal: Answer questions over saved recipes with retrieval, grounding, and citations.
 
@@ -157,7 +159,7 @@ Done criteria:
 - No-match questions say the system does not know.
 - Secret-probe tests pass.
 
-## 0022: Add Meal Planner And Shopping List Endpoint
+## 0023: Add Meal Planner And Shopping List Endpoint
 
 Goal: Generate a structured meal plan and grouped shopping list from saved recipes.
 
@@ -181,7 +183,7 @@ Done criteria:
 - Plans cite saved recipes unless external suggestions are explicitly allowed.
 - Medical/nutrition certainty claims are avoided.
 
-## 0023: Add Evals And CI Validation
+## 0024: Add Evals And CI Validation
 
 Goal: Wire offline AI evals into local validation and GitHub Actions.
 
@@ -204,7 +206,7 @@ Done criteria:
 - Offline evals fail on invalid schemas, missing citations, or secret leakage.
 - Documentation explains how to run evals locally.
 
-## 0024: Add Screenshots, Demo Docs, And Portfolio README Polish
+## 0025: Add Screenshots, Demo Docs, And Portfolio README Polish
 
 Goal: Make the AI layer presentation-ready.
 

@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class HealthResponse(BaseModel):
@@ -44,3 +44,45 @@ class RecipeSearchResponse(BaseModel):
     query: str
     count: int
     results: list[RecipeSearchResult] = Field(default_factory=list)
+
+
+class RecipeImportRequest(BaseModel):
+    text: str = Field(min_length=1)
+    source: str | None = None
+
+    @field_validator("text")
+    @classmethod
+    def text_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Recipe text must not be empty.")
+        return value
+
+
+class RecipeIngredientDraft(BaseModel):
+    name: str = Field(min_length=1)
+    quantity: str | None = None
+    unit: str | None = None
+    note: str | None = None
+
+
+class RecipeInstructionDraft(BaseModel):
+    step: int = Field(ge=1)
+    text: str = Field(min_length=1)
+
+
+class RecipeImportDraft(BaseModel):
+    title: str = Field(min_length=1)
+    description: str | None = None
+    ingredients: list[RecipeIngredientDraft] = Field(min_length=1)
+    instructions: list[RecipeInstructionDraft] = Field(min_length=1)
+    tags: list[str] = Field(default_factory=list)
+    source: str | None = None
+    notes: str | None = None
+
+
+class RecipeImportResponse(BaseModel):
+    draft: RecipeImportDraft
+    provider: str
+    model: str
+    warnings: list[str] = Field(default_factory=list)
+    usage: dict[str, int] | None = None

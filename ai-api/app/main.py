@@ -1,11 +1,14 @@
 from fastapi import FastAPI, HTTPException, Query
 
 from app.config import get_provider_config
+from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.recipe_reader import NoRecipeTableFoundError, RecipeReaderError, load_recipe_documents
 from app.schemas import (
     ConfigResponse,
     HealthResponse,
     ProviderConfig,
+    RecipeImportRequest,
+    RecipeImportResponse,
     RecipeSearchRequest,
     RecipeSearchResponse,
 )
@@ -39,6 +42,16 @@ def search_recipes_get(
 @app.post("/recipes/search", response_model=RecipeSearchResponse)
 def search_recipes_post(request: RecipeSearchRequest) -> RecipeSearchResponse:
     return _search_response(query=request.query, limit=request.limit)
+
+
+@app.post("/ai/import-recipe", response_model=RecipeImportResponse)
+def import_recipe(request: RecipeImportRequest) -> RecipeImportResponse:
+    try:
+        return import_recipe_text(request)
+    except RecipeImportProviderError as exc:
+        raise HTTPException(status_code=503, detail="Recipe importer provider is not available.") from exc
+    except RecipeImportValidationError as exc:
+        raise HTTPException(status_code=502, detail="Recipe importer returned an invalid draft.") from exc
 
 
 def _search_response(query: str, limit: int) -> RecipeSearchResponse:
