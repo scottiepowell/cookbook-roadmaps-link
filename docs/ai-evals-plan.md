@@ -109,3 +109,4 @@ evals/
 - Keep live provider evals manual or optional until cost and rate limits are documented.
 - Use `gpt-5.4-nano` as the default OpenAI manual-smoke model and `gpt-5.4-mini` only as an explicitly selected fallback.
 - Importer tests must validate draft JSON and must not write to the cookbook database.
+- Ask tests must retrieve deterministically, cite recipe IDs/titles/snippets, return controlled no-match answers, and avoid database write-back.

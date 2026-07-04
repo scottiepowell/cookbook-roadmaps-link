@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, a structured recipe import draft endpoint, an internal SQLite schema inspector, a read-only recipe reader, and an AI provider harness. RAG, embeddings, and meal planner are not implemented yet.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, a structured recipe import draft endpoint, Ask My Cookbook RAG endpoint, an internal SQLite schema inspector, a read-only recipe reader, and an AI provider harness. Embeddings and meal planner are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -50,12 +50,12 @@ GET  /ai/config
 GET  /recipes/search?q=
 POST /recipes/search
 POST /ai/import-recipe
+POST /ai/ask
 ```
 
 Future endpoints:
 
 ```text
-POST /ai/ask
 POST /ai/meal-plan
 ```
 
@@ -66,7 +66,7 @@ Endpoint notes:
 - `GET /recipes/search?q=`: simple browser-friendly deterministic keyword search.
 - `POST /recipes/search`: JSON-body deterministic search with query and limit.
 - `POST /ai/import-recipe`: schema-constrained parse of pasted recipe text into a draft recipe JSON object; no database write-back.
-- `POST /ai/ask`: retrieval-augmented answer over saved recipes with cited recipe IDs/titles.
+- `POST /ai/ask`: retrieval-augmented answer over saved recipes with cited recipe IDs/titles/snippets.
 - `POST /ai/meal-plan`: structured meal plan and shopping list from saved recipes.
 
 ## Provider Abstraction
@@ -103,6 +103,8 @@ Cost controls:
 - require opt-in manual live tests for OpenAI.
 
 The importer uses the provider harness for structured output, validates the provider response with Pydantic, and returns a draft only. It does not write to Vanilla Cookbook tables or files.
+
+Ask My Cookbook runs deterministic keyword retrieval first, sends only the retrieved recipe context to the provider, and returns citations with recipe IDs, titles, and snippets. No-match questions return a controlled no-match answer without calling the provider or inventing recipes. It does not add embeddings, vector storage, meal planning, shopping lists, bulk ingestion, or write-back.
 
 ## Secrets And Config
 
@@ -152,5 +154,5 @@ Do not open inbound EC2 HTTP/HTTPS ports. Keep the Cloudflare Tunnel as the publ
 - Hosted AI calls add cost, latency, and provider failure modes.
 - OpenAI live calls are manual-only until cost controls and endpoint-specific prompts are reviewed.
 - t3.micro memory and CPU limit local indexing and local LLM use.
-- RAG answers can hallucinate unless retrieval, citations, and no-match behavior are tested.
+- RAG answers can hallucinate unless retrieval, citations, and no-match behavior are tested; current tests cover these behaviors with the mock provider.
 - Importer write-back is risky and intentionally out of scope; the current importer returns draft JSON only.

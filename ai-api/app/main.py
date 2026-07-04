@@ -3,7 +3,10 @@ from fastapi import FastAPI, HTTPException, Query
 from app.config import get_provider_config
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.recipe_reader import NoRecipeTableFoundError, RecipeReaderError, load_recipe_documents
+from app.rag import AskProviderError, ask_cookbook
 from app.schemas import (
+    AskRequest,
+    AskResponse,
     ConfigResponse,
     HealthResponse,
     ProviderConfig,
@@ -52,6 +55,18 @@ def import_recipe(request: RecipeImportRequest) -> RecipeImportResponse:
         raise HTTPException(status_code=503, detail="Recipe importer provider is not available.") from exc
     except RecipeImportValidationError as exc:
         raise HTTPException(status_code=502, detail="Recipe importer returned an invalid draft.") from exc
+
+
+@app.post("/ai/ask", response_model=AskResponse)
+def ask_my_cookbook(request: AskRequest) -> AskResponse:
+    try:
+        return ask_cookbook(request)
+    except NoRecipeTableFoundError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RecipeReaderError as exc:
+        raise HTTPException(status_code=500, detail="Recipe database could not be read.") from exc
+    except AskProviderError as exc:
+        raise HTTPException(status_code=503, detail="Ask provider is not available.") from exc
 
 
 def _search_response(query: str, limit: int) -> RecipeSearchResponse:

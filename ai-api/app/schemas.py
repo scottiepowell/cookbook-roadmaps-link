@@ -86,3 +86,38 @@ class RecipeImportResponse(BaseModel):
     model: str
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1)
+    limit: int = Field(default=3, ge=1, le=10)
+
+    @field_validator("question")
+    @classmethod
+    def question_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Question must not be empty.")
+        return value
+
+
+class AskCitation(BaseModel):
+    recipe_id: str
+    title: str
+    snippet: str
+
+
+class AskRetrievalMetadata(BaseModel):
+    query: str
+    retrieved_count: int
+    limit: int
+    matched_recipe_ids: list[str] = Field(default_factory=list)
+
+
+class AskResponse(BaseModel):
+    answer: str
+    citations: list[AskCitation] = Field(default_factory=list)
+    provider: str
+    model: str
+    retrieval: AskRetrievalMetadata
+    warnings: list[str] = Field(default_factory=list)
+    usage: dict[str, int] | None = None

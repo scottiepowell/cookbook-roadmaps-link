@@ -9,6 +9,7 @@ Current endpoints:
 - `GET /recipes/search?q=<query>&limit=<n>`: deterministic keyword search over read-only recipe documents.
 - `POST /recipes/search`: deterministic keyword search with a JSON body.
 - `POST /ai/import-recipe`: converts pasted recipe text into a validated draft JSON object.
+- `POST /ai/ask`: answers questions over saved recipes using deterministic retrieval plus grounded provider synthesis.
 
 Internal reader modules:
 
@@ -17,8 +18,9 @@ Internal reader modules:
 - `app.search`: ranks `RecipeDocument` objects with deterministic keyword matching.
 - `app.providers`: selects deterministic mock generation by default and contains the first OpenAI provider path.
 - `app.importer`: calls the provider harness for structured recipe draft extraction and validates the result.
+- `app.rag`: retrieves matching recipe documents and asks the provider to answer only from that retrieved context.
 
-This scaffold does not implement RAG, embeddings, meal planning, live provider calls during validation, or write-back to Vanilla Cookbook.
+This scaffold does not implement embeddings, meal planning, live provider calls during validation, or write-back to Vanilla Cookbook.
 
 ## Recipe Search
 
@@ -77,9 +79,45 @@ The response contains validated draft fields:
 
 The mock provider is the default for local validation and CI. Optional OpenAI manual testing can use `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`, `OPENAI_MODEL=gpt-5.4-nano`, and a locally configured provider key, but no live OpenAI calls are part of automated validation.
 
+## Ask My Cookbook
+
+`POST /ai/ask` answers questions over saved recipes. It first runs deterministic keyword retrieval over `RecipeDocument` objects, then sends only the retrieved recipe context to the configured provider. It never sends the full cookbook corpus to the provider.
+
+Example request:
+
+```json
+{
+  "question": "What can I make with lemon?",
+  "limit": 3
+}
+```
+
+The response includes an answer, citations, provider/model metadata, retrieval metadata, warnings, and optional usage:
+
+```json
+{
+  "answer": "Mock response from mock-basic: Question: What can I make with lemon?...",
+  "citations": [
+    {"recipe_id": "1", "title": "Lemon Beans", "snippet": "Lemon Beans"}
+  ],
+  "provider": "mock",
+  "model": "mock-basic",
+  "retrieval": {
+    "query": "What can I make with lemon?",
+    "retrieved_count": 1,
+    "limit": 3,
+    "matched_recipe_ids": ["1"]
+  },
+  "warnings": [],
+  "usage": {"input_tokens": 30, "output_tokens": 6}
+}
+```
+
+If retrieval finds no saved recipe match, the endpoint returns a controlled no-match answer, empty citations, a warning, and no provider call. The endpoint does not write to the Vanilla Cookbook database and does not add embeddings, meal planning, shopping lists, or bulk ingestion.
+
 ## AI Provider Harness
 
-The provider harness is used by the structured importer and is available for later RAG and meal-planning tasks. It is not called by the search endpoints.
+The provider harness is used by the structured importer and Ask My Cookbook. It is not called by the search endpoints.
 
 Default local configuration:
 

@@ -136,6 +136,8 @@ Done criteria:
 
 ## 0022: Add RAG Ask Endpoint
 
+Status: complete.
+
 Goal: Answer questions over saved recipes with retrieval, grounding, and citations.
 
 Files likely touched:
