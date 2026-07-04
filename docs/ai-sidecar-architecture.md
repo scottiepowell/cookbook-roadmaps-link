@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, an internal SQLite schema inspector, and a read-only recipe reader. RAG, embeddings, importer, and meal planner are not implemented yet.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, an internal SQLite schema inspector, a read-only recipe reader, and an AI provider harness. RAG, embeddings, importer, and meal planner are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -71,14 +71,21 @@ Endpoint notes:
 
 ## Provider Abstraction
 
-Use a small provider interface so endpoint logic is not tied to one SDK.
+Use a small provider interface so endpoint logic is not tied to one SDK. The default provider is `mock`, so local validation and CI stay offline and deterministic. OpenAI is the first real provider path for later manual smoke testing.
 
 Provider order:
 
-1. OpenAI first for the initial hosted implementation.
-2. Anthropic and Google later behind the same interface.
-3. Ollama as optional homelab mode through `OLLAMA_BASE_URL`.
-4. Mock provider for tests and offline evals.
+1. Mock provider for tests and offline evals.
+2. OpenAI first for the initial hosted implementation.
+3. Anthropic and Google later behind the same interface.
+4. Ollama as optional homelab mode through `OLLAMA_BASE_URL`.
+
+OpenAI defaults:
+
+```text
+OPENAI_MODEL=gpt-5.4-nano
+OPENAI_FALLBACK_MODEL=gpt-5.4-mini
+```
 
 The abstraction should support:
 
@@ -86,6 +93,14 @@ The abstraction should support:
 - structured output for importer and meal-plan schemas;
 - deterministic fake responses for tests;
 - provider timeout and error normalization.
+
+Cost controls:
+
+- run deterministic recipe search before any future model call;
+- keep prompts small and task-specific;
+- cap output with `AI_MAX_OUTPUT_TOKENS`;
+- keep automated tests on the mock provider;
+- require opt-in manual live tests for OpenAI.
 
 ## Secrets And Config
 
@@ -103,14 +118,18 @@ Non-secret config can stay in variables or `.env`:
 OLLAMA_BASE_URL
 AI_PROVIDER
 AI_MODEL
-AI_REQUEST_TIMEOUT_SECONDS
+AI_MAX_OUTPUT_TOKENS
+AI_TIMEOUT_SECONDS
+OPENAI_MODEL
+OPENAI_FALLBACK_MODEL
+OPENAI_ENABLE_LIVE_TESTS
 AI_MAX_RETRIEVED_RECIPES
 ```
 
 Rules:
 
 - Do not log provider keys.
-- Do not return raw environment values from `/ai/config`.
+- Do not return raw environment values, model strings, base URLs, token fragments, or provider keys from `/ai/config`.
 - CI must pass without live provider secrets.
 - The sidecar should detect provider availability without making startup depend on paid APIs.
 
@@ -130,6 +149,7 @@ Do not open inbound EC2 HTTP/HTTPS ports. Keep the Cloudflare Tunnel as the publ
 - Concurrent reads must not interfere with cookbook writes.
 - Recipe ingredient/instruction fields may need normalization.
 - Hosted AI calls add cost, latency, and provider failure modes.
+- OpenAI live calls are manual-only until cost controls and endpoint-specific prompts are reviewed.
 - t3.micro memory and CPU limit local indexing and local LLM use.
 - RAG answers can hallucinate unless retrieval, citations, and no-match behavior are tested.
 - Importer write-back is risky and intentionally out of scope for the first version.

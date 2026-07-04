@@ -82,6 +82,8 @@ Done criteria:
 
 ## 0019: Add AI Provider Abstraction And Mock Provider
 
+Status: complete.
+
 Goal: Add a provider interface that supports hosted providers later while keeping tests offline.
 
 Files likely touched:
@@ -101,7 +103,7 @@ Validation:
 
 Done criteria:
 
-- OpenAI config path exists but is optional.
+- OpenAI config path exists but is optional, defaults to `gpt-5.4-nano`, and records `gpt-5.4-mini` as the configured fallback.
 - Mock provider supports deterministic responses.
 - `/ai/config` reports non-secret provider availability only.
 

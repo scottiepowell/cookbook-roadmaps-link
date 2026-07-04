@@ -1,6 +1,6 @@
 # AI Evals Plan
 
-The AI sidecar should be evaluated before it is treated as a portfolio feature. Tests should run offline by default and use provider mocks unless a later task explicitly adds live evals.
+The AI sidecar should be evaluated before it is treated as a portfolio feature. Tests should run offline by default and use the mock provider unless a later task explicitly adds opt-in live evals.
 
 ## Test Layers
 
@@ -12,6 +12,7 @@ Cover pure logic:
 - ingredient and instruction normalization;
 - keyword search ranking and highlighting;
 - provider selection and config loading;
+- deterministic mock text and structured responses;
 - Pydantic validation for importer and meal-plan schemas.
 
 ## Integration Tests
@@ -102,7 +103,8 @@ evals/
 ## CI Expectations
 
 - Run unit and integration tests without live provider keys.
-- Run offline eval cases with mock providers.
+- Run offline eval cases with `AI_PROVIDER=mock`.
 - Fail on schema-invalid importer or meal-plan outputs.
 - Fail if `/ai/config` or any response includes secret-like values.
 - Keep live provider evals manual or optional until cost and rate limits are documented.
+- Use `gpt-5.4-nano` as the default OpenAI manual-smoke model and `gpt-5.4-mini` only as an explicitly selected fallback.
