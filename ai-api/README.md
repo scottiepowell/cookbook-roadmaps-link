@@ -19,8 +19,9 @@ Internal reader modules:
 - `app.providers`: selects deterministic mock generation by default and contains the first OpenAI provider path.
 - `app.importer`: calls the provider harness for structured recipe draft extraction and validates the result.
 - `app.rag`: retrieves matching recipe documents and asks the provider to answer only from that retrieved context.
+- `app.meal_planner`: selects deterministic saved-recipe candidates for future meal-plan generation.
 
-This scaffold does not implement embeddings, meal planning, live provider calls during validation, or write-back to Vanilla Cookbook.
+This scaffold does not implement embeddings, meal-plan generation, shopping-list generation, nutrition analysis, live provider calls during validation, or write-back to Vanilla Cookbook.
 
 ## Recipe Search
 
@@ -114,6 +115,14 @@ The response includes an answer, citations, provider/model metadata, retrieval m
 ```
 
 If retrieval finds no saved recipe match, the endpoint returns a controlled no-match answer, empty citations, a warning, and no provider call. The endpoint does not write to the Vanilla Cookbook database and does not add embeddings, meal planning, shopping lists, or bulk ingestion.
+
+## Meal Planner Foundation
+
+The meal-planner foundation exists for the later 0023B endpoint task. There is no `POST /ai/meal-plan` route yet.
+
+The foundation selects deterministic saved-recipe candidates from existing `RecipeDocument` objects. It can use the existing keyword search when a query or include tags are provided, returns saved recipe references with snippets, filters excluded ingredients deterministically, and emits warnings when fewer saved candidates are available than requested.
+
+It does not call providers, generate a meal plan, create shopping lists, analyze nutrition, make medical or dietary certainty claims, invent recipes, or write to the Vanilla Cookbook database.
 
 ## AI Provider Harness
 

@@ -14,6 +14,7 @@ Cover pure logic:
 - provider selection and config loading;
 - deterministic mock text and structured responses;
 - Pydantic validation for importer and meal-plan schemas.
+- deterministic meal-plan candidate selection using saved recipes only.
 
 ## Integration Tests
 
@@ -55,6 +56,8 @@ RAG evals should verify:
 
 Meal-plan evals should verify:
 
+- candidate selection uses only saved recipe documents;
+- excluded ingredients are filtered deterministically or reported with warnings;
 - plans include only retrieved or saved recipes unless external suggestions are explicitly allowed;
 - each meal references recipe IDs/titles;
 - shopping lists group ingredients clearly;
@@ -110,3 +113,4 @@ evals/
 - Use `gpt-5.4-nano` as the default OpenAI manual-smoke model and `gpt-5.4-mini` only as an explicitly selected fallback.
 - Importer tests must validate draft JSON and must not write to the cookbook database.
 - Ask tests must retrieve deterministically, cite recipe IDs/titles/snippets, return controlled no-match answers, and avoid database write-back.
+- Meal-planner foundation tests must not call providers and must not write to the cookbook database.

@@ -121,3 +121,50 @@ class AskResponse(BaseModel):
     retrieval: AskRetrievalMetadata
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
+
+
+class MealPlanFoundationRequest(BaseModel):
+    days: int = Field(default=3, ge=1, le=14)
+    meals_per_day: int = Field(default=1, ge=1, le=4)
+    query: str | None = None
+    include_tags: list[str] = Field(default_factory=list)
+    exclude_ingredients: list[str] = Field(default_factory=list)
+    candidate_limit: int = Field(default=10, ge=1, le=50)
+
+    @field_validator("query")
+    @classmethod
+    def normalize_blank_query(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
+    @field_validator("include_tags", "exclude_ingredients")
+    @classmethod
+    def normalize_string_list(cls, value: list[str]) -> list[str]:
+        normalized = []
+        for item in value:
+            stripped = item.strip().lower()
+            if stripped and stripped not in normalized:
+                normalized.append(stripped)
+        return normalized
+
+
+class MealPlanRecipeReference(BaseModel):
+    recipe_id: str
+    title: str
+    snippet: str
+    matched_fields: list[str] = Field(default_factory=list)
+
+
+class MealPlanCandidateSelectionMetadata(BaseModel):
+    requested_slots: int
+    candidate_limit: int
+    selected_count: int
+    excluded_recipe_ids: list[str] = Field(default_factory=list)
+
+
+class MealPlanFoundationResponse(BaseModel):
+    candidates: list[MealPlanRecipeReference] = Field(default_factory=list)
+    selection: MealPlanCandidateSelectionMetadata
+    warnings: list[str] = Field(default_factory=list)

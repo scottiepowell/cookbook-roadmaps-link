@@ -32,6 +32,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Repository map](docs/repo-map.md)
 - [AI medium-path roadmap](docs/ai-medium-path-roadmap.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
+- [Meal planner foundation](docs/meal-planner-foundation.md)
 - [AI evals plan](docs/ai-evals-plan.md)
 - [AI implementation backlog](docs/ai-implementation-backlog.md)
 - [Resume from Windows clone](docs/resume-from-windows-clone.md)

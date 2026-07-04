@@ -161,7 +161,35 @@ Done criteria:
 - No-match questions say the system does not know.
 - Secret-probe tests pass.
 
-## 0023: Add Meal Planner And Shopping List Endpoint
+## 0023A: Add Meal Planner Foundation
+
+Status: complete.
+
+Goal: Add deterministic saved-recipe candidate selection and meal-plan foundation schemas without adding the meal-plan endpoint.
+
+Files likely touched:
+
+- `ai-api/app/meal_planner.py`
+- `ai-api/app/schemas.py`
+- `ai-api/tests/test_meal_planner.py`
+
+Validation:
+
+- schema tests;
+- saved-recipe candidate selection tests;
+- excluded ingredient filtering tests;
+- no provider calls;
+- no database write-back;
+- repo validation.
+
+Done criteria:
+
+- Foundation schemas exist.
+- Candidate selection returns only saved recipe references.
+- Excluded ingredients produce deterministic filtering or warnings.
+- No `POST /ai/meal-plan` route exists yet.
+
+## 0023B: Add Meal Planner Endpoint
 
 Goal: Generate a structured meal plan and grouped shopping list from saved recipes.
 
