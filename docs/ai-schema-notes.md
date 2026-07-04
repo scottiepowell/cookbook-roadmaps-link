@@ -1,6 +1,6 @@
 # AI Schema Notes
 
-Task 0017 adds fixture-driven SQLite schema inspection and a read-only recipe reader for the AI sidecar. It does not inspect or depend on a live production cookbook database.
+Task 0017 added fixture-driven SQLite schema inspection and a read-only recipe reader for the AI sidecar. Task 0018 uses those normalized documents for deterministic keyword search. These tasks do not inspect or depend on a live production cookbook database.
 
 ## Fixture-Driven Testing
 
@@ -24,6 +24,7 @@ Fixture rows cover:
 
 - a complete recipe with JSON-array ingredients, newline-separated instructions, newline-separated tags, and a source URL;
 - a minimal recipe with only required fields and missing optional fields.
+- search fixture rows that exercise title, ingredient, tag, empty-query, no-match, and limit behavior.
 
 ## Read-Only Access
 
@@ -56,6 +57,12 @@ raw: dict[str, Any]
 
 List fields default to empty lists, and `raw` keeps the original row values for later debugging and search work.
 
+## Deterministic Search
+
+The search layer reads `RecipeDocument` objects and does not access SQLite directly. It lowercases and tokenizes simple words, searches title, tags, ingredients, instructions, description, and source, and returns minimal result data: ID, title, score, matched fields, and a short snippet.
+
+This is not RAG, embeddings, semantic retrieval, importing, meal planning, provider-backed generation, or write-back.
+
 ## Conservative Table Detection
 
 The reader looks for a table with a title-like column and either recipe-body columns or a recipe-like table name. It currently recognizes common column names such as:
@@ -72,7 +79,7 @@ If no conservative match is found, the reader raises a controlled `NoRecipeTable
 
 ## Production Schema Unknowns
 
-The real Vanilla Cookbook SQLite schema is still unknown in this repo. Before task 0018 adds deterministic search, inspect a copy or read-only mount of the production DB and confirm:
+The real Vanilla Cookbook SQLite schema is still unknown in this repo. Before production use or semantic retrieval, inspect a copy or read-only mount of the production DB and confirm:
 
 - actual recipe table names;
 - primary key type and stability;

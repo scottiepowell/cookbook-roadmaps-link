@@ -6,13 +6,38 @@ Current endpoints:
 
 - `GET /health`: returns service health.
 - `GET /ai/config`: returns non-secret provider availability booleans.
+- `GET /recipes/search?q=<query>&limit=<n>`: deterministic keyword search over read-only recipe documents.
+- `POST /recipes/search`: deterministic keyword search with a JSON body.
 
 Internal reader modules:
 
 - `app.schema_inspector`: lists SQLite user tables and columns as structured objects.
 - `app.recipe_reader`: opens SQLite with URI `mode=ro` and normalizes recipe-like rows into `RecipeDocument`.
+- `app.search`: ranks `RecipeDocument` objects with deterministic keyword matching.
 
-This scaffold does not implement recipe search endpoints, RAG, recipe import, meal planning, live provider calls, or write-back to Vanilla Cookbook.
+This scaffold does not implement RAG, embeddings, recipe import, meal planning, live provider calls, or write-back to Vanilla Cookbook.
+
+## Recipe Search
+
+Search is intentionally deterministic and offline. It lowercases and tokenizes simple words, searches recipe title, tags, ingredients, instructions, description, and source, and returns minimal result fields:
+
+```json
+{
+  "query": "beans",
+  "count": 1,
+  "results": [
+    {
+      "id": "1",
+      "title": "Lemon Beans",
+      "score": 10,
+      "matched_fields": ["title"],
+      "snippet": "Lemon Beans"
+    }
+  ]
+}
+```
+
+Title and tag matches rank above ingredient and instruction matches. Equal scores keep fixture/input ordering stable. Empty or no-match queries return an empty result list.
 
 ## Cookbook DB Path
 

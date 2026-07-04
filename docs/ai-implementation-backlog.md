@@ -57,6 +57,8 @@ Done criteria:
 
 ## 0018: Add Deterministic Recipe Search API
 
+Status: complete.
+
 Goal: Add keyword search before embeddings or model-based retrieval.
 
 Files likely touched:

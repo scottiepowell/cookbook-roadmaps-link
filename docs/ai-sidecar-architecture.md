@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, an internal SQLite schema inspector, and a read-only recipe reader. Search, RAG, importer, and meal planner are not implemented yet.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, an internal SQLite schema inspector, and a read-only recipe reader. RAG, embeddings, importer, and meal planner are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -36,7 +36,7 @@ flowchart LR
 
 The sidecar reader opens SQLite databases with URI `mode=ro`. Production Compose DB mounting is deferred until the real Vanilla Cookbook schema is inspected; when added, the mount should be read-only, such as `./db:/data/cookbook-db:ro`. The future path is configurable with `COOKBOOK_DB_PATH`.
 
-The current reader is tested against generated fixture databases. It conservatively detects recipe-like tables and returns normalized `RecipeDocument` objects. Deterministic search is still a future task. If write-back is ever needed, it should be a later reviewed task with backup, migration, and rollback rules.
+The current reader is tested against generated fixture databases. It conservatively detects recipe-like tables and returns normalized `RecipeDocument` objects. Deterministic search operates over those documents in memory and does not write to the cookbook database. If write-back is ever needed, it should be a later reviewed task with backup, migration, and rollback rules.
 
 The sidecar may read upload metadata later, but should not parse or mutate uploaded files in the first reader task.
 
@@ -47,13 +47,13 @@ Current endpoints:
 ```text
 GET  /health
 GET  /ai/config
+GET  /recipes/search?q=
+POST /recipes/search
 ```
 
 Future endpoints:
 
 ```text
-GET  /recipes/search?q=
-POST /recipes/search
 POST /ai/ask
 POST /ai/import-recipe
 POST /ai/meal-plan
@@ -63,8 +63,8 @@ Endpoint notes:
 
 - `GET /health`: process health, version, and dependency status without secrets.
 - `GET /ai/config`: non-secret provider availability booleans only.
-- `GET /recipes/search?q=`: simple browser-friendly deterministic search.
-- `POST /recipes/search`: structured search options such as tags, ingredients, and limit.
+- `GET /recipes/search?q=`: simple browser-friendly deterministic keyword search.
+- `POST /recipes/search`: JSON-body deterministic search with query and limit.
 - `POST /ai/ask`: retrieval-augmented answer over saved recipes with cited recipe IDs/titles.
 - `POST /ai/import-recipe`: schema-constrained parse of pasted recipe text into a draft recipe JSON object.
 - `POST /ai/meal-plan`: structured meal plan and shopping list from saved recipes.
