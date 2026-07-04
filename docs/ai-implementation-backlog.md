@@ -216,7 +216,32 @@ Done criteria:
 - Medical/nutrition certainty claims are avoided.
 - No shopping-list generation, indexing, embeddings, or database write-back is added.
 
-## 0023C: Add Dataset And Indexing Foundation
+## 0024A: Add Local Recipe Dataset Adapter
+
+Status: complete.
+
+Goal: Inspect local Kaggle recipe dataset files without committing raw data or building an index.
+
+Files likely touched:
+
+- `ai-api/app/dataset_adapter.py`
+- `ai-api/tests/test_dataset_adapter.py`
+- `docs/local-recipe-dataset-adapter.md`
+
+Validation:
+
+- generated temporary CSV/SQLite/metadata fixtures;
+- no raw `recipe-dataset/` files staged;
+- repo validation.
+
+Done criteria:
+
+- `RECIPE_DATASET_DIR` can point at a local dataset directory.
+- Expected files are detected with safe warnings.
+- CSV, SQLite, and metadata previews return structured objects.
+- No embeddings, vector DB, RAG over the dataset, image ingestion, provider calls, or write-back are added.
+
+## 0024B: Add Dataset And Indexing Foundation
 
 Goal: Decide how to use the local recipe dataset without committing raw data.
 
@@ -237,7 +262,7 @@ Done criteria:
 - raw `recipe-dataset/` files remain ignored;
 - no production data is mutated.
 
-## 0024: Add Evals And CI Validation
+## 0025: Add Evals And CI Validation
 
 Goal: Wire offline AI evals into local validation and GitHub Actions.
 
@@ -260,7 +285,7 @@ Done criteria:
 - Offline evals fail on invalid schemas, missing citations, or secret leakage.
 - Documentation explains how to run evals locally.
 
-## 0025: Add Screenshots, Demo Docs, And Portfolio README Polish
+## 0026: Add Screenshots, Demo Docs, And Portfolio README Polish
 
 Goal: Make the AI layer presentation-ready.
 

@@ -4,8 +4,8 @@
 | --- | --- |
 | `.github/workflows/` | Manual EC2 control/deployment through OIDC and SSM. |
 | `.gitattributes` | Repository text normalization rules, including LF checkout for shell scripts. |
-| `ai-api/` | Minimal FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, structured recipe import drafts, Ask My Cookbook RAG, saved-recipe meal planner, mock/OpenAI provider harness, and offline tests. |
-| `recipe-dataset/` | Ignored local dataset directory for later indexing work; raw files are not committed. |
+| `ai-api/` | FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, structured recipe import drafts, Ask My Cookbook RAG, saved-recipe meal planner, local dataset inspection adapter, mock/OpenAI provider harness, and offline tests. |
+| `recipe-dataset/` | Ignored local Kaggle dataset directory for later indexing work; raw files and generated indexes are not committed. |
 | `docs/` | Architecture, deploy, configuration, backup, restore, and operations guides. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
 | `outbox/` | Matching implementation and validation reports. |
@@ -28,6 +28,7 @@ AI design references:
 - [AI medium-path roadmap](ai-medium-path-roadmap.md)
 - [AI sidecar architecture](ai-sidecar-architecture.md)
 - [AI schema notes](ai-schema-notes.md)
+- [Local recipe dataset adapter](local-recipe-dataset-adapter.md)
 - [Meal planner foundation](meal-planner-foundation.md)
 - [AI evals plan](ai-evals-plan.md)
 - [AI implementation backlog](ai-implementation-backlog.md)

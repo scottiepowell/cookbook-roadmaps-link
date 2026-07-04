@@ -24,6 +24,7 @@ DEFAULT_AI_MAX_OUTPUT_TOKENS = 700
 DEFAULT_AI_TIMEOUT_SECONDS = 20.0
 DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
 DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-5.4-mini"
+DEFAULT_RECIPE_DATASET_DIR = "recipe-dataset"
 
 PROVIDER_ENV_VARS = {
     "mock": None,
@@ -51,6 +52,10 @@ def get_provider_config() -> dict[str, ProviderAvailability]:
 
 def get_cookbook_db_path() -> str:
     return os.getenv("COOKBOOK_DB_PATH", DEFAULT_COOKBOOK_DB_PATH)
+
+
+def get_recipe_dataset_dir() -> str:
+    return os.getenv("RECIPE_DATASET_DIR", DEFAULT_RECIPE_DATASET_DIR)
 
 
 def get_ai_settings() -> AISettings:

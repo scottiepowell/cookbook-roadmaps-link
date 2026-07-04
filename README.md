@@ -15,7 +15,7 @@ See [Architecture](docs/architecture.md).
 
 ## Technology
 
-Coder, Codex, GitHub, GitHub Actions, AWS EC2, AWS Systems Manager, Docker Compose, Cloudflare Tunnel, and a minimal FastAPI AI sidecar scaffold.
+Coder, Codex, GitHub, GitHub Actions, AWS EC2, AWS Systems Manager, Docker Compose, Cloudflare Tunnel, and a FastAPI AI sidecar with deterministic offline-first AI features.
 
 ## Security Model
 
@@ -32,6 +32,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Repository map](docs/repo-map.md)
 - [AI medium-path roadmap](docs/ai-medium-path-roadmap.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
+- [Local recipe dataset adapter](docs/local-recipe-dataset-adapter.md)
 - [Meal planner foundation](docs/meal-planner-foundation.md)
 - [AI evals plan](docs/ai-evals-plan.md)
 - [AI implementation backlog](docs/ai-implementation-backlog.md)
@@ -55,7 +56,7 @@ Numbered `inbox/` specifications drive work. Codex inspects, implements, validat
 
 ## AI Sidecar Status
 
-The `ai-api` service currently provides only `GET /health` and `GET /ai/config`. It does not yet implement recipe search, RAG, recipe import, meal planning, cookbook DB reading, or live provider calls. Its config endpoint reports provider availability as booleans and never returns keys or environment values.
+The `ai-api` service provides health/config endpoints, deterministic saved-recipe search, structured recipe import drafts, Ask My Cookbook RAG over saved recipes, a saved-recipe meal-plan endpoint, read-only cookbook DB inspection, and a local-only Kaggle recipe dataset adapter for future indexing work. Automated validation uses the mock provider and generated fixtures; it does not require provider keys, live AI calls, the Vanilla Cookbook database, or committed raw dataset files.
 
 ## Status
 

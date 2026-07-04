@@ -22,6 +22,7 @@ Internal reader modules:
 - `app.rag`: retrieves matching recipe documents and asks the provider to answer only from that retrieved context.
 - `app.meal_planner`: selects deterministic saved-recipe candidates for meal-plan generation.
 - `app.meal_plan_endpoint`: validates provider meal-plan output against saved recipe candidates.
+- `app.dataset_adapter`: inspects local Kaggle recipe dataset files under `RECIPE_DATASET_DIR` for future indexing work.
 
 This scaffold does not implement embeddings, shopping-list generation, nutrition analysis, live provider calls during validation, or write-back to Vanilla Cookbook.
 
@@ -126,6 +127,12 @@ The meal-planner foundation selects deterministic saved-recipe candidates from e
 
 It does not create shopping lists, analyze nutrition, make medical or dietary certainty claims, invent recipes, ingest the local recipe dataset, index recipes, or write to the Vanilla Cookbook database.
 
+## Local Recipe Dataset Adapter
+
+`app.dataset_adapter.inspect_recipe_dataset()` inspects the ignored local `recipe-dataset/` directory, or the path configured by `RECIPE_DATASET_DIR`. It detects expected Kaggle dataset files, previews `13k-recipes.csv` columns and sample rows, inspects `13k-recipes.db` and `5k-recipes.db` schemas with read-only SQLite access, parses `metadata.json`, and returns warnings for missing or unreadable files.
+
+The expected source is the Kaggle "Food Ingredients and Recipes Dataset with Images" dataset by `pes12017000148`, licensed CC BY-SA 3.0. Raw dataset files, generated indexes, and images must stay out of Git. The adapter is setup only; it does not index recipes, build embeddings, add endpoints, import data into Vanilla Cookbook, ingest images, call providers, or write to any database.
+
 ## AI Provider Harness
 
 The provider harness is used by the structured importer and Ask My Cookbook. It is not called by the search endpoints.
@@ -140,6 +147,7 @@ AI_TIMEOUT_SECONDS=20
 OPENAI_MODEL=gpt-5.4-nano
 OPENAI_FALLBACK_MODEL=gpt-5.4-mini
 OPENAI_ENABLE_LIVE_TESTS=false
+RECIPE_DATASET_DIR=recipe-dataset
 ```
 
 `mock` is the default provider and returns deterministic text and structured JSON-shaped responses for offline tests. `openai` is the first real provider path and uses the official OpenAI Python SDK lazily, with `gpt-5.4-nano` as the default model and `gpt-5.4-mini` configured as a fallback for future explicit use.
