@@ -35,6 +35,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [AI evals plan](docs/ai-evals-plan.md)
 - [AI implementation backlog](docs/ai-implementation-backlog.md)
 - [Resume from Windows clone](docs/resume-from-windows-clone.md)
+- [Windows local development](docs/windows-local-development.md)
 - [Current deployment state](docs/current-deployment-state.md)
 - [Codex mailbox continuation](docs/codex-mailbox-continuation.md)
 - [Repository validation](docs/repo-validation.md)

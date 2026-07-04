@@ -3,6 +3,7 @@
 | Path | Purpose |
 | --- | --- |
 | `.github/workflows/` | Manual EC2 control/deployment through OIDC and SSM. |
+| `.gitattributes` | Repository text normalization rules, including LF checkout for shell scripts. |
 | `ai-api/` | Minimal FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, mock/OpenAI provider harness, and offline tests. |
 | `docs/` | Architecture, deploy, configuration, backup, restore, and operations guides. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
@@ -17,6 +18,7 @@ Start with the [README](../README.md), then the [First Deploy Guide](first-deplo
 Resume and readiness references:
 
 - [Resume from Windows clone](resume-from-windows-clone.md)
+- [Windows local development](windows-local-development.md)
 - [Current deployment state](current-deployment-state.md)
 - [Codex mailbox continuation](codex-mailbox-continuation.md)
 

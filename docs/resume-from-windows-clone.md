@@ -105,6 +105,8 @@ Get-ChildItem outbox | Sort-Object Name | Select-Object -Last 5
 
 Confirm the branch, remote, latest task files, and clean working tree before asking Codex to continue.
 
+For Windows shell, Python, and line-ending details, see [Windows local development](windows-local-development.md).
+
 ## Coder Workspace Quick Check
 
 Run this inside the Coder Linux workspace:
