@@ -4,7 +4,8 @@
 | --- | --- |
 | `.github/workflows/` | Manual EC2 control/deployment through OIDC and SSM. |
 | `.gitattributes` | Repository text normalization rules, including LF checkout for shell scripts. |
-| `ai-api/` | Minimal FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, structured recipe import drafts, Ask My Cookbook RAG, meal-planner candidate foundation, mock/OpenAI provider harness, and offline tests. |
+| `ai-api/` | Minimal FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, structured recipe import drafts, Ask My Cookbook RAG, saved-recipe meal planner, mock/OpenAI provider harness, and offline tests. |
+| `recipe-dataset/` | Ignored local dataset directory for later indexing work; raw files are not committed. |
 | `docs/` | Architecture, deploy, configuration, backup, restore, and operations guides. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
 | `outbox/` | Matching implementation and validation reports. |

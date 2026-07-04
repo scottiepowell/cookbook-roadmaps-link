@@ -10,6 +10,7 @@ Current endpoints:
 - `POST /recipes/search`: deterministic keyword search with a JSON body.
 - `POST /ai/import-recipe`: converts pasted recipe text into a validated draft JSON object.
 - `POST /ai/ask`: answers questions over saved recipes using deterministic retrieval plus grounded provider synthesis.
+- `POST /ai/meal-plan`: creates a validated meal plan from selected saved recipe candidates.
 
 Internal reader modules:
 
@@ -19,9 +20,10 @@ Internal reader modules:
 - `app.providers`: selects deterministic mock generation by default and contains the first OpenAI provider path.
 - `app.importer`: calls the provider harness for structured recipe draft extraction and validates the result.
 - `app.rag`: retrieves matching recipe documents and asks the provider to answer only from that retrieved context.
-- `app.meal_planner`: selects deterministic saved-recipe candidates for future meal-plan generation.
+- `app.meal_planner`: selects deterministic saved-recipe candidates for meal-plan generation.
+- `app.meal_plan_endpoint`: validates provider meal-plan output against saved recipe candidates.
 
-This scaffold does not implement embeddings, meal-plan generation, shopping-list generation, nutrition analysis, live provider calls during validation, or write-back to Vanilla Cookbook.
+This scaffold does not implement embeddings, shopping-list generation, nutrition analysis, live provider calls during validation, or write-back to Vanilla Cookbook.
 
 ## Recipe Search
 
@@ -118,11 +120,11 @@ If retrieval finds no saved recipe match, the endpoint returns a controlled no-m
 
 ## Meal Planner Foundation
 
-The meal-planner foundation exists for the later 0023B endpoint task. There is no `POST /ai/meal-plan` route yet.
+The meal-planner foundation selects deterministic saved-recipe candidates from existing `RecipeDocument` objects. It can use the existing keyword search when a query or include tags are provided, returns saved recipe references with snippets, filters excluded ingredients deterministically, and emits warnings when fewer saved candidates are available than requested.
 
-The foundation selects deterministic saved-recipe candidates from existing `RecipeDocument` objects. It can use the existing keyword search when a query or include tags are provided, returns saved recipe references with snippets, filters excluded ingredients deterministically, and emits warnings when fewer saved candidates are available than requested.
+`POST /ai/meal-plan` builds on that foundation. The endpoint sends only selected saved recipe candidate context to the provider, validates structured output, coerces meals back to saved recipe IDs/titles, and returns citations. No-match requests return an empty plan with warnings and no provider call.
 
-It does not call providers, generate a meal plan, create shopping lists, analyze nutrition, make medical or dietary certainty claims, invent recipes, or write to the Vanilla Cookbook database.
+It does not create shopping lists, analyze nutrition, make medical or dietary certainty claims, invent recipes, ingest the local recipe dataset, index recipes, or write to the Vanilla Cookbook database.
 
 ## AI Provider Harness
 

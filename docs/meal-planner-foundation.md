@@ -1,6 +1,6 @@
 # Meal Planner Foundation
 
-Task 0023A adds only the deterministic foundation for a future meal-planner endpoint. It does not add `POST /ai/meal-plan`.
+Task 0023A added the deterministic foundation for the meal-planner endpoint. Task 0023B added `POST /ai/meal-plan` on top of that foundation.
 
 ## What Exists
 
@@ -19,13 +19,22 @@ The schemas live in `ai-api/app/schemas.py`:
 - `MealPlanCandidateSelectionMetadata`
 - `MealPlanFoundationResponse`
 
-## What Does Not Exist Yet
+## Endpoint
 
-Task 0023A intentionally does not add:
+`POST /ai/meal-plan` now:
 
-- `POST /ai/meal-plan`;
-- provider-backed plan synthesis;
-- OpenAI calls;
+- runs deterministic saved-recipe candidate selection first;
+- sends only selected candidate context to the provider;
+- validates structured provider output;
+- returns saved recipe citations;
+- returns controlled no-match and partial-plan warnings;
+- uses mock by default in automated tests.
+
+## Non-Goals
+
+The meal-planner feature intentionally does not add:
+
+- live OpenAI calls during validation;
 - shopping-list generation;
 - nutrition analysis;
 - medical or dietary certainty claims;
@@ -33,6 +42,6 @@ Task 0023A intentionally does not add:
 - bulk ebook ingestion;
 - recipe database write-back.
 
-## 0023B Direction
+## Dataset And Indexing
 
-Task 0023B can build a provider-backed meal-plan endpoint on top of these saved-recipe candidates. It should keep prompts small by sending only selected saved recipe references and should require citations to saved recipes. Any generated plan should avoid external recipe invention and avoid medical or nutrition certainty claims.
+The local `recipe-dataset/` directory is intentionally ignored and not ingested. Dataset and indexing work is deferred to a later task.

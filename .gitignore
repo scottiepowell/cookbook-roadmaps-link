@@ -3,6 +3,7 @@
 !.env.example
 db/
 uploads/
+recipe-dataset/
 *.pem
 *.key
 *.tfstate

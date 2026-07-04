@@ -60,9 +60,9 @@ Meal-plan evals should verify:
 - excluded ingredients are filtered deterministically or reported with warnings;
 - plans include only retrieved or saved recipes unless external suggestions are explicitly allowed;
 - each meal references recipe IDs/titles;
-- shopping lists group ingredients clearly;
 - estimates are labeled as estimates;
 - responses avoid medical, allergy, or nutrition certainty claims.
+- no shopping-list generation is expected until a later scoped task.
 
 ## Proposed Directory Layout
 
@@ -114,3 +114,4 @@ evals/
 - Importer tests must validate draft JSON and must not write to the cookbook database.
 - Ask tests must retrieve deterministically, cite recipe IDs/titles/snippets, return controlled no-match answers, and avoid database write-back.
 - Meal-planner foundation tests must not call providers and must not write to the cookbook database.
+- Meal-plan endpoint tests must use mock/offline behavior, send only selected candidates to the provider, cite saved recipes, and avoid database write-back.

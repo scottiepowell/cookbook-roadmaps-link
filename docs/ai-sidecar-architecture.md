@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, a structured recipe import draft endpoint, Ask My Cookbook RAG endpoint, meal-planner candidate selection foundation, an internal SQLite schema inspector, a read-only recipe reader, and an AI provider harness. Embeddings and the meal-plan endpoint are not implemented yet.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, a structured recipe import draft endpoint, Ask My Cookbook RAG endpoint, saved-recipe meal-plan endpoint, an internal SQLite schema inspector, a read-only recipe reader, and an AI provider harness. Embeddings and indexing are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -51,11 +51,6 @@ GET  /recipes/search?q=
 POST /recipes/search
 POST /ai/import-recipe
 POST /ai/ask
-```
-
-Future endpoints:
-
-```text
 POST /ai/meal-plan
 ```
 
@@ -67,7 +62,7 @@ Endpoint notes:
 - `POST /recipes/search`: JSON-body deterministic search with query and limit.
 - `POST /ai/import-recipe`: schema-constrained parse of pasted recipe text into a draft recipe JSON object; no database write-back.
 - `POST /ai/ask`: retrieval-augmented answer over saved recipes with cited recipe IDs/titles/snippets.
-- `POST /ai/meal-plan`: structured meal plan and shopping list from saved recipes.
+- `POST /ai/meal-plan`: structured meal plan from selected saved recipes with citations; no shopping-list generation.
 
 ## Provider Abstraction
 
@@ -106,7 +101,9 @@ The importer uses the provider harness for structured output, validates the prov
 
 Ask My Cookbook runs deterministic keyword retrieval first, sends only the retrieved recipe context to the provider, and returns citations with recipe IDs, titles, and snippets. No-match questions return a controlled no-match answer without calling the provider or inventing recipes. It does not add embeddings, vector storage, meal planning, shopping lists, bulk ingestion, or write-back.
 
-Meal-planner work is split into 0023A and 0023B. Task 0023A adds Pydantic schemas and deterministic saved-recipe candidate selection only. It returns saved recipe references, handles excluded ingredients with filtering and warnings, and does not call providers. Task 0023B can add `POST /ai/meal-plan` on top of this foundation.
+Meal-planner work was split into 0023A and 0023B. Task 0023A added Pydantic schemas and deterministic saved-recipe candidate selection. Task 0023B added `POST /ai/meal-plan` on top of that foundation. The endpoint sends only selected saved recipe candidates to the provider, validates structured output, returns saved recipe citations, and avoids external recipe invention.
+
+The local `recipe-dataset/` folder is ignored and intentionally not ingested. Dataset indexing is deferred to a later task.
 
 ## Secrets And Config
 

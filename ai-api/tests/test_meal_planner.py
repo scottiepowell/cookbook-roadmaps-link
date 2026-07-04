@@ -139,9 +139,3 @@ def test_selection_does_not_write_to_database(tmp_path):
     rows = connection.execute("SELECT id, title FROM recipes ORDER BY id").fetchall()
     connection.close()
     assert rows == [(1, "Existing")]
-
-
-def test_meal_plan_endpoint_is_not_added_in_foundation_task():
-    response = TestClient(app).post("/ai/meal-plan", json={})
-
-    assert response.status_code == 404

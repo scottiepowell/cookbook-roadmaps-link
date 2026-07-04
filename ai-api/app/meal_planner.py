@@ -1,8 +1,14 @@
 from app.schemas import (
     MealPlanCandidateSelectionMetadata,
+    MealPlanDay,
+    MealPlanDraft,
     MealPlanFoundationRequest,
     MealPlanFoundationResponse,
+    MealPlanRequest,
+    MealPlanResponse,
     MealPlanRecipeReference,
+    MealPlanSelectionMetadata,
+    MealPlanSlot,
     RecipeDocument,
 )
 from app.search import search_recipes
@@ -48,6 +54,52 @@ def select_meal_plan_candidates(
         ),
         warnings=warnings,
     )
+
+
+def build_no_match_meal_plan_response(
+    request: MealPlanRequest,
+    foundation: MealPlanFoundationResponse,
+) -> MealPlanResponse:
+    warnings = [*foundation.warnings]
+    warnings.append("No saved recipe candidates matched the meal-plan request; no provider call was made.")
+    return MealPlanResponse(
+        plan=MealPlanDraft(days=[]),
+        citations=[],
+        provider="none",
+        model="none",
+        selection=MealPlanSelectionMetadata(
+            candidate_count=0,
+            matched_recipe_ids=[],
+            requested_slots=request.days * request.meals_per_day,
+        ),
+        warnings=warnings,
+        usage=None,
+    )
+
+
+def deterministic_partial_meal_plan(
+    request: MealPlanRequest,
+    candidates: list[MealPlanRecipeReference],
+) -> MealPlanDraft:
+    days: list[MealPlanDay] = []
+    candidate_index = 0
+    for day_number in range(1, request.days + 1):
+        meals: list[MealPlanSlot] = []
+        for meal_number in range(1, request.meals_per_day + 1):
+            if candidate_index >= len(candidates):
+                break
+            candidate = candidates[candidate_index]
+            meals.append(
+                MealPlanSlot(
+                    slot=f"meal {meal_number}",
+                    recipe_id=candidate.recipe_id,
+                    title=candidate.title,
+                    reason="Selected from saved recipe candidates.",
+                )
+            )
+            candidate_index += 1
+        days.append(MealPlanDay(day=day_number, meals=meals))
+    return MealPlanDraft(days=days)
 
 
 def _rank_recipes(

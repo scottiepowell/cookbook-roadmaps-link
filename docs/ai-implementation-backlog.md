@@ -191,7 +191,9 @@ Done criteria:
 
 ## 0023B: Add Meal Planner Endpoint
 
-Goal: Generate a structured meal plan and grouped shopping list from saved recipes.
+Status: complete.
+
+Goal: Generate a structured meal plan from selected saved recipes.
 
 Files likely touched:
 
@@ -212,6 +214,28 @@ Done criteria:
 - `POST /ai/meal-plan` returns validated JSON.
 - Plans cite saved recipes unless external suggestions are explicitly allowed.
 - Medical/nutrition certainty claims are avoided.
+- No shopping-list generation, indexing, embeddings, or database write-back is added.
+
+## 0023C: Add Dataset And Indexing Foundation
+
+Goal: Decide how to use the local recipe dataset without committing raw data.
+
+Files likely touched:
+
+- `docs/`
+- future indexing scripts or fixtures
+
+Validation:
+
+- no raw dataset files committed;
+- deterministic offline tests;
+- repo validation.
+
+Done criteria:
+
+- dataset ingestion/indexing design is documented;
+- raw `recipe-dataset/` files remain ignored;
+- no production data is mutated.
 
 ## 0024: Add Evals And CI Validation
 

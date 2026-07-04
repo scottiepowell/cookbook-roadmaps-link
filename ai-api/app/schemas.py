@@ -168,3 +168,58 @@ class MealPlanFoundationResponse(BaseModel):
     candidates: list[MealPlanRecipeReference] = Field(default_factory=list)
     selection: MealPlanCandidateSelectionMetadata
     warnings: list[str] = Field(default_factory=list)
+
+
+class MealPlanRequest(MealPlanFoundationRequest):
+    preferences: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+    @field_validator("preferences")
+    @classmethod
+    def normalize_blank_preferences(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
+    @field_validator("tags")
+    @classmethod
+    def normalize_tags(cls, value: list[str]) -> list[str]:
+        normalized = []
+        for item in value:
+            stripped = item.strip().lower()
+            if stripped and stripped not in normalized:
+                normalized.append(stripped)
+        return normalized
+
+
+class MealPlanSlot(BaseModel):
+    slot: str = Field(min_length=1)
+    recipe_id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+
+class MealPlanDay(BaseModel):
+    day: int = Field(ge=1)
+    meals: list[MealPlanSlot] = Field(default_factory=list)
+
+
+class MealPlanDraft(BaseModel):
+    days: list[MealPlanDay] = Field(default_factory=list)
+
+
+class MealPlanSelectionMetadata(BaseModel):
+    candidate_count: int
+    matched_recipe_ids: list[str] = Field(default_factory=list)
+    requested_slots: int
+
+
+class MealPlanResponse(BaseModel):
+    plan: MealPlanDraft
+    citations: list[MealPlanRecipeReference] = Field(default_factory=list)
+    provider: str
+    model: str
+    selection: MealPlanSelectionMetadata
+    warnings: list[str] = Field(default_factory=list)
+    usage: dict[str, int] | None = None

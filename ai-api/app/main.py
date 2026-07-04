@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Query
 
 from app.config import get_provider_config
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
+from app.meal_plan_endpoint import MealPlanProviderError, MealPlanValidationError, create_meal_plan
 from app.recipe_reader import NoRecipeTableFoundError, RecipeReaderError, load_recipe_documents
 from app.rag import AskProviderError, ask_cookbook
 from app.schemas import (
@@ -9,6 +10,8 @@ from app.schemas import (
     AskResponse,
     ConfigResponse,
     HealthResponse,
+    MealPlanRequest,
+    MealPlanResponse,
     ProviderConfig,
     RecipeImportRequest,
     RecipeImportResponse,
@@ -67,6 +70,20 @@ def ask_my_cookbook(request: AskRequest) -> AskResponse:
         raise HTTPException(status_code=500, detail="Recipe database could not be read.") from exc
     except AskProviderError as exc:
         raise HTTPException(status_code=503, detail="Ask provider is not available.") from exc
+
+
+@app.post("/ai/meal-plan", response_model=MealPlanResponse)
+def meal_plan(request: MealPlanRequest) -> MealPlanResponse:
+    try:
+        return create_meal_plan(request)
+    except NoRecipeTableFoundError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RecipeReaderError as exc:
+        raise HTTPException(status_code=500, detail="Recipe database could not be read.") from exc
+    except MealPlanProviderError as exc:
+        raise HTTPException(status_code=503, detail="Meal-plan provider is not available.") from exc
+    except MealPlanValidationError as exc:
+        raise HTTPException(status_code=502, detail="Meal-plan provider returned an invalid plan.") from exc
 
 
 def _search_response(query: str, limit: int) -> RecipeSearchResponse:
