@@ -1,0 +1,58 @@
+[
+  {
+    "name": "grounded_dataset_ask_with_citation",
+    "question": "What recipe uses lemon?",
+    "limit": 2,
+    "dataset_limit": 3,
+    "rows": [
+      {
+        "recipe_id": "abc",
+        "title": "Lemon Beans",
+        "ingredients": "beans; lemon",
+        "instructions": "Warm beans",
+        "cuisine": "dinner"
+      },
+      {
+        "recipe_id": "def",
+        "title": "Toast",
+        "ingredients": "bread",
+        "instructions": "Toast bread",
+        "cuisine": "breakfast"
+      }
+    ],
+    "expect_provider": "mock",
+    "expected_source_ids": ["abc"],
+    "forbidden_source_ids": ["def"],
+    "must_include_citations": true
+  },
+  {
+    "name": "no_match_returns_controlled_response",
+    "question": "Which indexed recipe uses saffron?",
+    "limit": 2,
+    "dataset_limit": 2,
+    "rows": [
+      {
+        "recipe_id": "abc",
+        "title": "Lemon Beans",
+        "ingredients": "beans; lemon",
+        "instructions": "Warm beans",
+        "cuisine": "dinner"
+      }
+    ],
+    "expect_provider": "none",
+    "expected_source_ids": [],
+    "must_include_citations": false,
+    "expected_warning": "No matching indexed dataset recipes were found; no provider call was made."
+  },
+  {
+    "name": "missing_dataset_returns_warning",
+    "question": "What recipe uses lemon?",
+    "limit": 2,
+    "dataset_limit": 2,
+    "missing_dataset": true,
+    "expect_provider": "none",
+    "expected_source_ids": [],
+    "must_include_citations": false,
+    "expected_warning": "Configured recipe dataset directory does not exist."
+  }
+]

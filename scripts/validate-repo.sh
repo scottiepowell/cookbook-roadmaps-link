@@ -86,6 +86,9 @@ check_ai_api_tests() {
 
   "$venv_python" -m pip install --disable-pip-version-check -r ai-api/requirements.txt >/dev/null
   PYTHONPATH=ai-api "$venv_python" -m pytest ai-api/tests
+  if [[ -f evals/ai_cookbook/run_evals.py ]]; then
+    PYTHONPATH=ai-api "$venv_python" evals/ai_cookbook/run_evals.py
+  fi
 }
 
 check_whitespace() {

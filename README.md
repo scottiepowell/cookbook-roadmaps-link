@@ -33,6 +33,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [AI medium-path roadmap](docs/ai-medium-path-roadmap.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [Local recipe dataset adapter](docs/local-recipe-dataset-adapter.md)
+- [Shared infrastructure data boundaries](docs/shared-infrastructure-data-boundaries.md)
 - [Meal planner foundation](docs/meal-planner-foundation.md)
 - [AI evals plan](docs/ai-evals-plan.md)
 - [AI implementation backlog](docs/ai-implementation-backlog.md)
@@ -56,7 +57,7 @@ Numbered `inbox/` specifications drive work. Codex inspects, implements, validat
 
 ## AI Sidecar Status
 
-The `ai-api` service provides health/config endpoints, deterministic saved-recipe search, structured recipe import drafts, Ask My Cookbook RAG over saved recipes, a saved-recipe meal-plan endpoint, read-only cookbook DB inspection, and a local-only Kaggle recipe dataset adapter for future indexing work. Automated validation uses the mock provider and generated fixtures; it does not require provider keys, live AI calls, the Vanilla Cookbook database, or committed raw dataset files.
+The `ai-api` service provides health/config endpoints, deterministic saved-recipe search, structured recipe import drafts, Ask My Cookbook RAG over saved recipes, a saved-recipe meal-plan endpoint, read-only cookbook DB inspection, local-only Kaggle recipe dataset search/RAG, and offline evals. Automated validation uses the mock provider and generated fixtures; it does not require provider keys, live AI calls, the Vanilla Cookbook database, or committed raw dataset files.
 
 ## Status
 

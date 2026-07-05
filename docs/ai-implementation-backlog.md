@@ -329,7 +329,38 @@ Done criteria:
 - no-match and missing-dataset cases do not call the provider;
 - no embeddings, vector DB, generated index artifacts, image ingestion, Vanilla Cookbook imports/write-back, or deployment changes are added.
 
-## 0025: Add Evals And CI Validation
+## 0025A: Add Offline Evals And Validation Hygiene
+
+Status: complete.
+
+Goal: Add offline evals for the AI cookbook sidecar and document Windows validation hygiene.
+
+Files likely touched:
+
+- `evals/ai_cookbook/`
+- `scripts/validate-repo.sh`
+- `scripts/validate-repo.ps1`
+- `docs/ai-evals-plan.md`
+- `docs/repo-validation.md`
+- `docs/shared-infrastructure-data-boundaries.md`
+
+Validation:
+
+- offline eval command;
+- repository validator;
+- generated fixtures only;
+- no live provider keys;
+- no raw dataset files or generated indexes committed.
+
+Done criteria:
+
+- eval harness returns non-zero on failure;
+- evals cover dataset ask grounding, citations, no-match, missing-dataset, and secret-like output leakage;
+- Bash validation runs offline evals;
+- Windows temp-directory pytest issue is documented with a PowerShell wrapper;
+- shared infrastructure/data-boundary note exists.
+
+## 0025B: Add Evals And CI Validation
 
 Goal: Wire offline AI evals into local validation and GitHub Actions.
 

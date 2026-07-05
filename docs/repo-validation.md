@@ -9,6 +9,7 @@ The validator:
 - runs `bash -n` on `deploy.sh` and every shell script directly under `scripts/`;
 - copies `.env.example` to a disposable directory and renders the Docker Compose configuration without starting containers;
 - runs `ai-api` tests in a temporary Python virtual environment when the sidecar exists;
+- runs offline AI cookbook evals when `evals/ai_cookbook/run_evals.py` exists;
 - checks working-tree, staged, tracked, and untracked repository files for whitespace errors;
 - verifies that inline local Markdown links point to files that exist;
 - fails active files that reintroduce the former singular-roadmap Cookbook hostname or base domain while preserving historical mailbox records;
@@ -26,6 +27,20 @@ cd /home/coder/repo
 bash -n scripts/validate-repo.sh
 bash scripts/validate-repo.sh
 ```
+
+On Windows, Git Bash validation is the main parity check:
+
+```powershell
+& "C:\Program Files\Git\bin\bash.exe" scripts/validate-repo.sh
+```
+
+For local venv checks, `scripts/validate-repo.ps1` sets `TMP`/`TEMP` to `.tmp-pytest/` and uses an explicit pytest base temp directory:
+
+```powershell
+.\scripts\validate-repo.ps1
+```
+
+If direct `.\.venv\Scripts\python.exe -m pytest ai-api\tests` fails with a Windows temp-directory `PermissionError`, the PowerShell wrapper falls back to the Git Bash validator. Document the direct-run failure in the mailbox result when it occurs.
 
 Run validation before committing a mailbox result and before using deployment-related changes.
 
