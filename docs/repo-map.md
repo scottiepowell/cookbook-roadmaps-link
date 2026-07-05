@@ -4,12 +4,12 @@
 | --- | --- |
 | `.github/workflows/` | Manual EC2 control/deployment through OIDC and SSM. |
 | `.gitattributes` | Repository text normalization rules, including LF checkout for shell scripts. |
-| `ai-api/` | FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, structured recipe import drafts, Ask My Cookbook RAG, saved-recipe meal planner, local dataset inspection adapter, mock/OpenAI provider harness, and offline tests. |
+| `ai-api/` | FastAPI AI sidecar with health/config endpoints, read-only recipe reader modules, deterministic recipe search, structured recipe import drafts, Ask My Cookbook RAG, saved-recipe meal planner, local dataset inspection/index foundation, mock/OpenAI provider harness, and offline tests. |
 | `recipe-dataset/` | Ignored local Kaggle dataset directory for later indexing work; raw files and generated indexes are not committed. |
 | `docs/` | Architecture, deploy, configuration, backup, restore, and operations guides. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
 | `outbox/` | Matching implementation and validation reports. |
-| `scripts/` | Bootstrap, preflight, repository validation, verification, backup, restore, and listing helpers. |
+| `scripts/` | Bootstrap, preflight, repository validation, verification, backup, restore, local dataset index inspection, and listing helpers. |
 | `.env.example` | Non-secret template; real host `.env` stays untracked. |
 | `docker-compose.yml` | Runs Cookbook and `cloudflared`, persists data, binds app to loopback. |
 | `deploy.sh` | Updates `/opt/cookbook`, prepares data, pulls images, reconciles Compose. |

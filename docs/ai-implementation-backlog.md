@@ -241,25 +241,34 @@ Done criteria:
 - CSV, SQLite, and metadata previews return structured objects.
 - No embeddings, vector DB, RAG over the dataset, image ingestion, provider calls, or write-back are added.
 
-## 0024B: Add Dataset And Indexing Foundation
+## 0024B: Build Local Deterministic Recipe Index
 
-Goal: Decide how to use the local recipe dataset without committing raw data.
+Status: complete.
+
+Goal: Build a bounded, local-only deterministic keyword index over records read through the 0024A dataset adapter.
 
 Files likely touched:
 
-- `docs/`
-- future indexing scripts or fixtures
+- `ai-api/app/dataset_adapter.py`
+- `ai-api/app/dataset_index.py`
+- `ai-api/tests/test_dataset_index.py`
+- `scripts/inspect-recipe-index.py`
+- `docs/local-recipe-dataset-adapter.md`
 
 Validation:
 
 - no raw dataset files committed;
+- no generated index artifacts committed;
 - deterministic offline tests;
 - repo validation.
 
 Done criteria:
 
-- dataset ingestion/indexing design is documented;
+- bounded CSV/SQLite record reading exists;
+- local in-memory keyword index exists;
+- deterministic search/ranking returns matched fields and snippets;
 - raw `recipe-dataset/` files remain ignored;
+- no API endpoint, RAG over the dataset, embeddings, vector DB, provider calls, or write-back are added;
 - no production data is mutated.
 
 ## 0025: Add Evals And CI Validation

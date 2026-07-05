@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from app.config import get_recipe_dataset_dir
-from app.schema_inspector import TableInfo, inspect_schema
+from app.schema_inspector import TableInfo, inspect_schema, open_read_only_sqlite
 
 
 EXPECTED_FILES = (
@@ -17,6 +17,12 @@ EXPECTED_FILES = (
     "README.md",
     "tutorial.md",
 )
+
+ID_FIELDS = ("id", "recipe_id", "source_id", "index", "unnamed: 0", "")
+TITLE_FIELDS = ("title", "name", "recipe_name")
+INGREDIENT_FIELDS = ("ingredients", "cleaned_ingredients", "ingredient")
+INSTRUCTION_FIELDS = ("instructions", "directions", "steps", "method")
+TAG_FIELDS = ("tags", "tag", "category", "categories", "cuisine")
 
 
 @dataclass(frozen=True)
@@ -56,6 +62,18 @@ class NormalizedRecipePreview:
     ingredients: str | None
     instructions: str | None
     source_file: str
+
+
+@dataclass(frozen=True)
+class ExternalRecipeRecord:
+    source_id: str
+    title: str
+    ingredients: list[str]
+    instructions: list[str]
+    tags: list[str]
+    source_file: str
+    source_table: str | None = None
+    raw: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -110,6 +128,36 @@ def inspect_recipe_dataset(dataset_dir: str | Path | None = None) -> DatasetInsp
         normalized_preview=normalized_preview,
         warnings=warnings,
     )
+
+
+def iter_recipe_dataset_records(
+    dataset_dir: str | Path | None = None,
+    limit: int = 100,
+) -> list[ExternalRecipeRecord]:
+    if limit <= 0:
+        return []
+
+    root = Path(dataset_dir or get_recipe_dataset_dir())
+    records: list[ExternalRecipeRecord] = []
+
+    csv_path = root / "13k-recipes.csv"
+    if csv_path.is_file():
+        records.extend(_read_csv_records(csv_path, limit))
+
+    remaining = limit - len(records)
+    if remaining <= 0:
+        return records
+
+    for file_name in ("13k-recipes.db", "5k-recipes.db"):
+        db_path = root / file_name
+        if not db_path.is_file():
+            continue
+        records.extend(_read_sqlite_records(db_path, remaining))
+        remaining = limit - len(records)
+        if remaining <= 0:
+            break
+
+    return records
 
 
 def _file_status(root: Path, name: str) -> DatasetFileStatus:
@@ -192,6 +240,129 @@ def _normalized_preview(csv_preview: CsvSchemaPreview) -> NormalizedRecipePrevie
 def _first_value(row: dict[str, str], columns: dict[str, str], candidates: tuple[str, ...]) -> str | None:
     for candidate in candidates:
         original = columns.get(candidate)
-        if original and row.get(original):
+        if original is not None and row.get(original):
             return row[original]
     return None
+
+
+def _read_csv_records(path: Path, limit: int) -> list[ExternalRecipeRecord]:
+    records: list[ExternalRecipeRecord] = []
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        columns = list(reader.fieldnames or [])
+        lower_to_original = {_normalize_column(column): column for column in columns}
+        for index, row in enumerate(reader):
+            record = _record_from_row(
+                row={key: value or "" for key, value in row.items() if key is not None},
+                lower_to_original=lower_to_original,
+                fallback_id=str(index),
+                source_file=path.name,
+                source_table=None,
+            )
+            if record is not None:
+                records.append(record)
+            if len(records) >= limit:
+                break
+    return records
+
+
+def _read_sqlite_records(path: Path, limit: int) -> list[ExternalRecipeRecord]:
+    records: list[ExternalRecipeRecord] = []
+    try:
+        tables = inspect_schema(path)
+    except (OSError, sqlite3.Error):
+        return records
+
+    recipe_table = _find_recipe_table(tables)
+    if recipe_table is None:
+        return records
+
+    with open_read_only_sqlite(path) as connection:
+        column_names = [column.name for column in recipe_table.columns]
+        lower_to_original = {_normalize_column(column): column for column in column_names}
+        quoted_columns = ", ".join(_quote_identifier(column) for column in column_names)
+        rows = connection.execute(
+            f"SELECT {quoted_columns} FROM {_quote_identifier(recipe_table.name)} LIMIT ?",
+            (limit,),
+        ).fetchall()
+
+    for index, row_values in enumerate(rows):
+        row = {column: "" if value is None else str(value) for column, value in zip(column_names, row_values, strict=True)}
+        record = _record_from_row(
+            row=row,
+            lower_to_original=lower_to_original,
+            fallback_id=str(index),
+            source_file=path.name,
+            source_table=recipe_table.name,
+        )
+        if record is not None:
+            records.append(record)
+
+    return records
+
+
+def _find_recipe_table(tables: list[TableInfo]) -> TableInfo | None:
+    for table in tables:
+        normalized = {_normalize_column(column.name) for column in table.columns}
+        has_title = any(field in normalized for field in TITLE_FIELDS)
+        has_ingredients = any(field in normalized for field in INGREDIENT_FIELDS)
+        has_instructions = any(field in normalized for field in INSTRUCTION_FIELDS)
+        if has_title and (has_ingredients or has_instructions):
+            return table
+    return None
+
+
+def _record_from_row(
+    row: dict[str, str],
+    lower_to_original: dict[str, str],
+    fallback_id: str,
+    source_file: str,
+    source_table: str | None,
+) -> ExternalRecipeRecord | None:
+    title = _first_value(row, lower_to_original, TITLE_FIELDS)
+    if not title:
+        return None
+
+    source_id = _first_value(row, lower_to_original, ID_FIELDS) or fallback_id
+    ingredients = _split_values(_first_value(row, lower_to_original, INGREDIENT_FIELDS))
+    instructions = _split_values(_first_value(row, lower_to_original, INSTRUCTION_FIELDS))
+    tags = _split_values(_first_value(row, lower_to_original, TAG_FIELDS))
+
+    return ExternalRecipeRecord(
+        source_id=str(source_id),
+        title=title,
+        ingredients=ingredients,
+        instructions=instructions,
+        tags=tags,
+        source_file=source_file,
+        source_table=source_table,
+        raw=dict(row),
+    )
+
+
+def _split_values(value: str | None) -> list[str]:
+    if not value:
+        return []
+    cleaned = value.strip()
+    if not cleaned:
+        return []
+    if cleaned.startswith("[") and cleaned.endswith("]"):
+        try:
+            parsed = json.loads(cleaned.replace("'", '"'))
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+        except json.JSONDecodeError:
+            pass
+    parts = [part.strip(" .") for part in cleaned.replace("\r", "\n").split("\n")]
+    if len(parts) == 1:
+        parts = [part.strip(" .") for part in cleaned.replace(";", "|").split("|")]
+    return [part for part in parts if part]
+
+
+def _normalize_column(column: str) -> str:
+    lowered = column.strip().lower()
+    return lowered.replace(" ", "_")
+
+
+def _quote_identifier(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'

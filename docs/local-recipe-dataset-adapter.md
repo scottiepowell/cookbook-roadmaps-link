@@ -50,13 +50,42 @@ It returns structured objects for:
 
 SQLite inspection reuses the existing read-only schema inspector. Missing or unreadable files produce warnings instead of failing the whole inspection.
 
+Task 0024B adds a bounded record reader:
+
+```text
+iter_recipe_dataset_records(dataset_dir=None, limit=100)
+```
+
+The reader uses the 0024A adapter conventions and reads at most `limit` normalized records from local CSV and SQLite files. It maps likely source ID, title/name, ingredients, instructions/directions, tags/category/cuisine, source file, and source table fields into `ExternalRecipeRecord` objects. SQLite reads use the existing read-only connection helper.
+
+## Deterministic Local Index
+
+`ai-api/app/dataset_index.py` builds an in-memory keyword index from `ExternalRecipeRecord` objects. The index lowercases and tokenizes consistently, records document counts, source counts, indexed fields, token totals, warnings, and deterministic build metadata, and supports deterministic search with stable tie ordering.
+
+Ranking is field weighted:
+
+- title/name matches rank highest;
+- tags/category/cuisine rank below title;
+- ingredients rank above instruction/body matches;
+- source file/table matches rank lowest.
+
+Search results include recipe ID, source ID, title, score, matched fields, snippets, and source file/table metadata.
+
+The optional local helper script prints a compact summary only:
+
+```powershell
+python scripts/inspect-recipe-index.py --dataset-dir recipe-dataset --limit 25 --query beans
+```
+
+The script does not write index artifacts and must not be used to commit raw dataset output.
+
 ## Testing
 
 Tests generate tiny temporary CSV, SQLite, and metadata fixtures. They do not require local Kaggle files, provider keys, a real cookbook DB, or network access.
 
 ## Deferred Work
 
-Later indexing tasks can use this adapter to decide how to map the local Kaggle files into a deterministic index. The following remain intentionally out of scope for 0024A:
+Later tasks can expose or expand this index after review. The following remain intentionally out of scope:
 
 - embeddings;
 - vector databases;
@@ -64,4 +93,5 @@ Later indexing tasks can use this adapter to decide how to map the local Kaggle 
 - RAG over the 13K dataset;
 - imports into Vanilla Cookbook;
 - image ingestion;
+- generated index artifacts;
 - provider calls.

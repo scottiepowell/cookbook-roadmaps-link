@@ -21,7 +21,7 @@ flowchart LR
 
 - `app`: existing `jt196/vanilla-cookbook:stable` container. It owns the user-facing cookbook UI and writes to `./db` and `./uploads`.
 - `cloudflared`: existing outbound tunnel. It keeps EC2 web ports closed.
-- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, a structured recipe import draft endpoint, Ask My Cookbook RAG endpoint, saved-recipe meal-plan endpoint, an internal SQLite schema inspector, a read-only recipe reader, a local recipe dataset inspection adapter, and an AI provider harness. Embeddings and indexing are not implemented yet.
+- `ai-api`: current Python/FastAPI sidecar scaffold with `GET /health`, `GET /ai/config`, deterministic recipe search endpoints, a structured recipe import draft endpoint, Ask My Cookbook RAG endpoint, saved-recipe meal-plan endpoint, an internal SQLite schema inspector, a read-only recipe reader, a local recipe dataset inspection/indexing foundation, and an AI provider harness. Embeddings and vector indexing are not implemented yet.
 - `ai-index`: optional volume for a future search or embeddings index. It should be rebuildable from cookbook data.
 
 ## Why Sidecar First
@@ -103,7 +103,7 @@ Ask My Cookbook runs deterministic keyword retrieval first, sends only the retri
 
 Meal-planner work was split into 0023A and 0023B. Task 0023A added Pydantic schemas and deterministic saved-recipe candidate selection. Task 0023B added `POST /ai/meal-plan` on top of that foundation. The endpoint sends only selected saved recipe candidates to the provider, validates structured output, returns saved recipe citations, and avoids external recipe invention.
 
-The local `recipe-dataset/` folder is ignored and intentionally not ingested. Task 0024A adds `app.dataset_adapter.inspect_recipe_dataset()` to inspect expected Kaggle files locally: `13k-recipes.csv`, `13k-recipes.db`, `5k-recipes.db`, `metadata.json`, `README.md`, and `tutorial.md`. The adapter previews CSV columns/sample rows, SQLite schemas, and metadata, but it does not build indexes, ingest images, add search endpoints, call providers, or write to Vanilla Cookbook. Dataset indexing is deferred to a later task.
+The local `recipe-dataset/` folder is ignored and intentionally not ingested. Task 0024A adds `app.dataset_adapter.inspect_recipe_dataset()` to inspect expected Kaggle files locally: `13k-recipes.csv`, `13k-recipes.db`, `5k-recipes.db`, `metadata.json`, `README.md`, and `tutorial.md`. Task 0024B adds bounded record reading plus an in-memory deterministic keyword index over sampled local records. The index ranks title/name matches above ingredients and ingredients above instructions, returns matched field/snippet metadata, and writes no generated index artifacts. No API endpoint, RAG over the Kaggle dataset, embeddings, vector DB, image ingestion, provider call, or Vanilla Cookbook write-back is added.
 
 ## Secrets And Config
 

@@ -23,6 +23,7 @@ Internal reader modules:
 - `app.meal_planner`: selects deterministic saved-recipe candidates for meal-plan generation.
 - `app.meal_plan_endpoint`: validates provider meal-plan output against saved recipe candidates.
 - `app.dataset_adapter`: inspects local Kaggle recipe dataset files under `RECIPE_DATASET_DIR` for future indexing work.
+- `app.dataset_index`: builds an in-memory deterministic keyword index from bounded local dataset records.
 
 This scaffold does not implement embeddings, shopping-list generation, nutrition analysis, live provider calls during validation, or write-back to Vanilla Cookbook.
 
@@ -131,7 +132,9 @@ It does not create shopping lists, analyze nutrition, make medical or dietary ce
 
 `app.dataset_adapter.inspect_recipe_dataset()` inspects the ignored local `recipe-dataset/` directory, or the path configured by `RECIPE_DATASET_DIR`. It detects expected Kaggle dataset files, previews `13k-recipes.csv` columns and sample rows, inspects `13k-recipes.db` and `5k-recipes.db` schemas with read-only SQLite access, parses `metadata.json`, and returns warnings for missing or unreadable files.
 
-The expected source is the Kaggle "Food Ingredients and Recipes Dataset with Images" dataset by `pes12017000148`, licensed CC BY-SA 3.0. Raw dataset files, generated indexes, and images must stay out of Git. The adapter is setup only; it does not index recipes, build embeddings, add endpoints, import data into Vanilla Cookbook, ingest images, call providers, or write to any database.
+`app.dataset_adapter.iter_recipe_dataset_records()` reads a bounded sample of normalized records from local CSV/SQLite files. `app.dataset_index` builds an in-memory deterministic keyword index from those records, reports summary metadata, and supports local search/ranking with matched fields and snippets. No API endpoint uses this index yet.
+
+The expected source is the Kaggle "Food Ingredients and Recipes Dataset with Images" dataset by `pes12017000148`, licensed CC BY-SA 3.0. Raw dataset files, generated indexes, and images must stay out of Git. The local index layer does not build embeddings, add endpoints, import data into Vanilla Cookbook, ingest images, call providers, persist index artifacts, or write to any database.
 
 ## AI Provider Harness
 
