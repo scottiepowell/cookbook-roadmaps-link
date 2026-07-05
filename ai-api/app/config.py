@@ -25,6 +25,7 @@ DEFAULT_AI_TIMEOUT_SECONDS = 20.0
 DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
 DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-5.4-mini"
 DEFAULT_RECIPE_DATASET_DIR = "recipe-dataset"
+DEFAULT_RECIPE_DATASET_INDEX_LIMIT = 100
 
 PROVIDER_ENV_VARS = {
     "mock": None,
@@ -56,6 +57,15 @@ def get_cookbook_db_path() -> str:
 
 def get_recipe_dataset_dir() -> str:
     return os.getenv("RECIPE_DATASET_DIR", DEFAULT_RECIPE_DATASET_DIR)
+
+
+def get_recipe_dataset_index_limit() -> int:
+    raw_value = os.getenv("RECIPE_DATASET_INDEX_LIMIT", str(DEFAULT_RECIPE_DATASET_INDEX_LIMIT))
+    try:
+        value = int(raw_value)
+    except ValueError:
+        return DEFAULT_RECIPE_DATASET_INDEX_LIMIT
+    return max(1, min(value, 5000))
 
 
 def get_ai_settings() -> AISettings:

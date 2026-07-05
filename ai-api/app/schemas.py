@@ -46,6 +46,52 @@ class RecipeSearchResponse(BaseModel):
     results: list[RecipeSearchResult] = Field(default_factory=list)
 
 
+class DatasetSearchRequest(BaseModel):
+    query: str
+    limit: int = Field(default=10, ge=1, le=50)
+    dataset_limit: int | None = Field(default=None, ge=1, le=5000)
+
+
+class DatasetIndexSummaryResponse(BaseModel):
+    document_count: int
+    source_counts: dict[str, int] = Field(default_factory=dict)
+    fields_indexed: list[str] = Field(default_factory=list)
+    token_count: int
+    build_metadata: dict[str, str | int] = Field(default_factory=dict)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class DatasetSearchProvenance(BaseModel):
+    dataset: str = "Food Ingredients and Recipes Dataset with Images"
+    creator: str = "pes12017000148"
+    license: str = "CC BY-SA 3.0"
+    license_url: str = "https://creativecommons.org/licenses/by-sa/3.0/"
+    source_url: str = "https://www.kaggle.com/datasets/pes12017000148/food-ingredients-and-recipe-dataset-with-images"
+    source_file: str
+    source_table: str | None = None
+    source_id: str
+
+
+class DatasetSearchResult(BaseModel):
+    id: str
+    source_id: str
+    title: str
+    score: int
+    matched_fields: list[str] = Field(default_factory=list)
+    snippet: str | None = None
+    source_file: str
+    source_table: str | None = None
+    provenance: DatasetSearchProvenance
+
+
+class DatasetSearchResponse(BaseModel):
+    query: str
+    count: int
+    results: list[DatasetSearchResult] = Field(default_factory=list)
+    index: DatasetIndexSummaryResponse
+    warnings: list[str] = Field(default_factory=list)
+
+
 class RecipeImportRequest(BaseModel):
     text: str = Field(min_length=1)
     source: str | None = None

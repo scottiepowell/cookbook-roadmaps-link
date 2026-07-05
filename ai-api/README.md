@@ -8,6 +8,8 @@ Current endpoints:
 - `GET /ai/config`: returns non-secret provider availability booleans.
 - `GET /recipes/search?q=<query>&limit=<n>`: deterministic keyword search over read-only recipe documents.
 - `POST /recipes/search`: deterministic keyword search with a JSON body.
+- `GET /dataset/search?q=<query>&limit=<n>`: deterministic keyword search over the bounded local Kaggle dataset index.
+- `POST /dataset/search`: deterministic dataset index search with a JSON body.
 - `POST /ai/import-recipe`: converts pasted recipe text into a validated draft JSON object.
 - `POST /ai/ask`: answers questions over saved recipes using deterministic retrieval plus grounded provider synthesis.
 - `POST /ai/meal-plan`: creates a validated meal plan from selected saved recipe candidates.
@@ -24,6 +26,7 @@ Internal reader modules:
 - `app.meal_plan_endpoint`: validates provider meal-plan output against saved recipe candidates.
 - `app.dataset_adapter`: inspects local Kaggle recipe dataset files under `RECIPE_DATASET_DIR` for future indexing work.
 - `app.dataset_index`: builds an in-memory deterministic keyword index from bounded local dataset records.
+- `app.dataset_retrieval`: exposes local dataset index retrieval responses without provider calls.
 
 This scaffold does not implement embeddings, shopping-list generation, nutrition analysis, live provider calls during validation, or write-back to Vanilla Cookbook.
 
@@ -132,9 +135,11 @@ It does not create shopping lists, analyze nutrition, make medical or dietary ce
 
 `app.dataset_adapter.inspect_recipe_dataset()` inspects the ignored local `recipe-dataset/` directory, or the path configured by `RECIPE_DATASET_DIR`. It detects expected Kaggle dataset files, previews `13k-recipes.csv` columns and sample rows, inspects `13k-recipes.db` and `5k-recipes.db` schemas with read-only SQLite access, parses `metadata.json`, and returns warnings for missing or unreadable files.
 
-`app.dataset_adapter.iter_recipe_dataset_records()` reads a bounded sample of normalized records from local CSV/SQLite files. `app.dataset_index` builds an in-memory deterministic keyword index from those records, reports summary metadata, and supports local search/ranking with matched fields and snippets. No API endpoint uses this index yet.
+`app.dataset_adapter.iter_recipe_dataset_records()` reads a bounded sample of normalized records from local CSV/SQLite files. `app.dataset_index` builds an in-memory deterministic keyword index from those records, reports summary metadata, and supports local search/ranking with matched fields and snippets.
 
-The expected source is the Kaggle "Food Ingredients and Recipes Dataset with Images" dataset by `pes12017000148`, licensed CC BY-SA 3.0. Raw dataset files, generated indexes, and images must stay out of Git. The local index layer does not build embeddings, add endpoints, import data into Vanilla Cookbook, ingest images, call providers, persist index artifacts, or write to any database.
+`GET /dataset/search` and `POST /dataset/search` expose deterministic retrieval over that bounded local index. Responses include result scores, matched fields, snippets, source file/table, source ID, safe provenance metadata, index summary metadata, and warnings. `dataset_limit` can bound the number of local records indexed for a request, and `RECIPE_DATASET_INDEX_LIMIT` provides the default. If the local dataset directory is missing, the endpoint returns controlled warnings and empty results without exposing full local filesystem paths.
+
+The expected source is the Kaggle "Food Ingredients and Recipes Dataset with Images" dataset by `pes12017000148`, licensed CC BY-SA 3.0. Raw dataset files, generated indexes, and images must stay out of Git. The local index layer does not build embeddings, add RAG over the dataset, import data into Vanilla Cookbook, ingest images, call providers, persist index artifacts, or write to any database.
 
 ## AI Provider Harness
 
@@ -151,6 +156,7 @@ OPENAI_MODEL=gpt-5.4-nano
 OPENAI_FALLBACK_MODEL=gpt-5.4-mini
 OPENAI_ENABLE_LIVE_TESTS=false
 RECIPE_DATASET_DIR=recipe-dataset
+RECIPE_DATASET_INDEX_LIMIT=100
 ```
 
 `mock` is the default provider and returns deterministic text and structured JSON-shaped responses for offline tests. `openai` is the first real provider path and uses the official OpenAI Python SDK lazily, with `gpt-5.4-nano` as the default model and `gpt-5.4-mini` configured as a fallback for future explicit use.

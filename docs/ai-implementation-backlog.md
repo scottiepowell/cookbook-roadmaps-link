@@ -271,6 +271,34 @@ Done criteria:
 - no API endpoint, RAG over the dataset, embeddings, vector DB, provider calls, or write-back are added;
 - no production data is mutated.
 
+## 0024C: Add Indexed Dataset Retrieval Endpoint
+
+Status: complete.
+
+Goal: Expose deterministic retrieval over the bounded local Kaggle dataset index.
+
+Files likely touched:
+
+- `ai-api/app/dataset_retrieval.py`
+- `ai-api/app/main.py`
+- `ai-api/app/schemas.py`
+- `ai-api/tests/test_dataset_search_api.py`
+- `docs/local-recipe-dataset-adapter.md`
+
+Validation:
+
+- generated temporary CSV fixtures;
+- missing dataset directory warning case;
+- no raw dataset files or generated index artifacts committed;
+- repo validation.
+
+Done criteria:
+
+- `GET /dataset/search` and `POST /dataset/search` exist;
+- responses include ranked results, matched fields, snippets, provenance, index summary, and warnings;
+- missing local dataset path is controlled;
+- no RAG over the indexed dataset, embeddings, vector DB, provider calls, generated index artifacts, or write-back are added.
+
 ## 0025: Add Evals And CI Validation
 
 Goal: Wire offline AI evals into local validation and GitHub Actions.

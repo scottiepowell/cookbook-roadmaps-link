@@ -32,6 +32,7 @@ The adapter defaults to `recipe-dataset` relative to the repository root. Overri
 
 ```text
 RECIPE_DATASET_DIR=recipe-dataset
+RECIPE_DATASET_INDEX_LIMIT=100
 ```
 
 This setting is local-only. It is not a deployment requirement and does not change Cloudflare routing or Compose behavior.
@@ -78,6 +79,19 @@ python scripts/inspect-recipe-index.py --dataset-dir recipe-dataset --limit 25 -
 ```
 
 The script does not write index artifacts and must not be used to commit raw dataset output.
+
+## Indexed Dataset Retrieval
+
+Task 0024C adds deterministic retrieval endpoints over the bounded in-memory index:
+
+```text
+GET  /dataset/search?q=<query>&limit=<n>
+POST /dataset/search
+```
+
+The endpoints build an in-memory index from a bounded number of local dataset records for each request. `RECIPE_DATASET_INDEX_LIMIT` provides the default record bound, and callers may pass `dataset_limit` for a lower or explicit per-request bound. They return ranked results with score, matched fields, snippets, source file/table, source ID, and safe provenance metadata for the Kaggle dataset and CC BY-SA 3.0 license. Responses also include index summary metadata and warnings.
+
+If `recipe-dataset/` or `RECIPE_DATASET_DIR` is missing, the endpoint returns controlled warnings and empty results without exposing full local filesystem paths. It does not call providers, persist generated index artifacts, import records into Vanilla Cookbook, write to any database, ingest images, add embeddings, add a vector database, or perform RAG over the indexed dataset.
 
 ## Testing
 

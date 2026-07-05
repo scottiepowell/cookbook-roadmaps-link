@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 
 from app.config import get_provider_config
+from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.meal_plan_endpoint import MealPlanProviderError, MealPlanValidationError, create_meal_plan
 from app.recipe_reader import NoRecipeTableFoundError, RecipeReaderError, load_recipe_documents
@@ -9,6 +10,8 @@ from app.schemas import (
     AskRequest,
     AskResponse,
     ConfigResponse,
+    DatasetSearchRequest,
+    DatasetSearchResponse,
     HealthResponse,
     MealPlanRequest,
     MealPlanResponse,
@@ -48,6 +51,20 @@ def search_recipes_get(
 @app.post("/recipes/search", response_model=RecipeSearchResponse)
 def search_recipes_post(request: RecipeSearchRequest) -> RecipeSearchResponse:
     return _search_response(query=request.query, limit=request.limit)
+
+
+@app.get("/dataset/search", response_model=DatasetSearchResponse)
+def search_dataset_get(
+    q: str = "",
+    limit: int = Query(default=10, ge=1, le=50),
+    dataset_limit: int | None = Query(default=None, ge=1, le=5000),
+) -> DatasetSearchResponse:
+    return search_dataset_recipes(query=q, limit=limit, dataset_limit=dataset_limit)
+
+
+@app.post("/dataset/search", response_model=DatasetSearchResponse)
+def search_dataset_post(request: DatasetSearchRequest) -> DatasetSearchResponse:
+    return search_dataset_recipes(query=request.query, limit=request.limit, dataset_limit=request.dataset_limit)
 
 
 @app.post("/ai/import-recipe", response_model=RecipeImportResponse)
