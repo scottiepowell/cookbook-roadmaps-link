@@ -92,6 +92,47 @@ class DatasetSearchResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class DatasetAskRequest(BaseModel):
+    question: str = Field(min_length=1)
+    limit: int = Field(default=3, ge=1, le=10)
+    dataset_limit: int | None = Field(default=None, ge=1, le=5000)
+
+    @field_validator("question")
+    @classmethod
+    def question_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Question must not be empty.")
+        return value
+
+
+class DatasetAskCitation(BaseModel):
+    id: str
+    source_id: str
+    title: str
+    snippet: str
+    matched_fields: list[str] = Field(default_factory=list)
+    provenance: DatasetSearchProvenance
+
+
+class DatasetAskRetrievalMetadata(BaseModel):
+    query: str
+    retrieved_count: int
+    limit: int
+    dataset_limit: int
+    matched_result_ids: list[str] = Field(default_factory=list)
+    index: DatasetIndexSummaryResponse
+
+
+class DatasetAskResponse(BaseModel):
+    answer: str
+    citations: list[DatasetAskCitation] = Field(default_factory=list)
+    provider: str
+    model: str
+    retrieval: DatasetAskRetrievalMetadata
+    warnings: list[str] = Field(default_factory=list)
+    usage: dict[str, int] | None = None
+
+
 class RecipeImportRequest(BaseModel):
     text: str = Field(min_length=1)
     source: str | None = None

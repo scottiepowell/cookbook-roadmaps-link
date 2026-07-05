@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 
 from app.config import get_provider_config
+from app.dataset_rag import DatasetAskProviderError, ask_dataset_recipes
 from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.meal_plan_endpoint import MealPlanProviderError, MealPlanValidationError, create_meal_plan
@@ -10,6 +11,8 @@ from app.schemas import (
     AskRequest,
     AskResponse,
     ConfigResponse,
+    DatasetAskRequest,
+    DatasetAskResponse,
     DatasetSearchRequest,
     DatasetSearchResponse,
     HealthResponse,
@@ -65,6 +68,14 @@ def search_dataset_get(
 @app.post("/dataset/search", response_model=DatasetSearchResponse)
 def search_dataset_post(request: DatasetSearchRequest) -> DatasetSearchResponse:
     return search_dataset_recipes(query=request.query, limit=request.limit, dataset_limit=request.dataset_limit)
+
+
+@app.post("/dataset/ask", response_model=DatasetAskResponse)
+def ask_dataset(request: DatasetAskRequest) -> DatasetAskResponse:
+    try:
+        return ask_dataset_recipes(request)
+    except DatasetAskProviderError as exc:
+        raise HTTPException(status_code=503, detail="Dataset ask provider is not available.") from exc
 
 
 @app.post("/ai/import-recipe", response_model=RecipeImportResponse)

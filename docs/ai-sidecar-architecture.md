@@ -51,6 +51,7 @@ GET  /recipes/search?q=
 POST /recipes/search
 GET  /dataset/search?q=
 POST /dataset/search
+POST /dataset/ask
 POST /ai/import-recipe
 POST /ai/ask
 POST /ai/meal-plan
@@ -64,6 +65,7 @@ Endpoint notes:
 - `POST /recipes/search`: JSON-body deterministic search with query and limit.
 - `GET /dataset/search?q=`: local deterministic search over the bounded Kaggle dataset index with provenance metadata.
 - `POST /dataset/search`: JSON-body dataset index search with query and limit.
+- `POST /dataset/ask`: retrieval-augmented answer over retrieved local Kaggle dataset results with dataset provenance citations.
 - `POST /ai/import-recipe`: schema-constrained parse of pasted recipe text into a draft recipe JSON object; no database write-back.
 - `POST /ai/ask`: retrieval-augmented answer over saved recipes with cited recipe IDs/titles/snippets.
 - `POST /ai/meal-plan`: structured meal plan from selected saved recipes with citations; no shopping-list generation.
@@ -107,7 +109,7 @@ Ask My Cookbook runs deterministic keyword retrieval first, sends only the retri
 
 Meal-planner work was split into 0023A and 0023B. Task 0023A added Pydantic schemas and deterministic saved-recipe candidate selection. Task 0023B added `POST /ai/meal-plan` on top of that foundation. The endpoint sends only selected saved recipe candidates to the provider, validates structured output, returns saved recipe citations, and avoids external recipe invention.
 
-The local `recipe-dataset/` folder is ignored and intentionally not ingested. Task 0024A adds `app.dataset_adapter.inspect_recipe_dataset()` to inspect expected Kaggle files locally: `13k-recipes.csv`, `13k-recipes.db`, `5k-recipes.db`, `metadata.json`, `README.md`, and `tutorial.md`. Task 0024B adds bounded record reading plus an in-memory deterministic keyword index over sampled local records. Task 0024C exposes that bounded index through `/dataset/search`, returning ranked results, source file/table, source ID, safe provenance metadata, index summary metadata, and warnings. No RAG over the Kaggle dataset, embeddings, vector DB, image ingestion, provider call, generated index artifact, or Vanilla Cookbook write-back is added.
+The local `recipe-dataset/` folder is ignored and intentionally not ingested. Task 0024A adds `app.dataset_adapter.inspect_recipe_dataset()` to inspect expected Kaggle files locally: `13k-recipes.csv`, `13k-recipes.db`, `5k-recipes.db`, `metadata.json`, `README.md`, and `tutorial.md`. Task 0024B adds bounded record reading plus an in-memory deterministic keyword index over sampled local records. Task 0024C exposes that bounded index through `/dataset/search`, returning ranked results, source file/table, source ID, safe provenance metadata, index summary metadata, and warnings. Task 0024D adds `/dataset/ask`, which retrieves through that deterministic index and sends only retrieved result context to the provider. No embeddings, vector DB, image ingestion, generated index artifact, Vanilla Cookbook import, or write-back is added.
 
 ## Secrets And Config
 

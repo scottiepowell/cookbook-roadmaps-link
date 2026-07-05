@@ -91,7 +91,30 @@ POST /dataset/search
 
 The endpoints build an in-memory index from a bounded number of local dataset records for each request. `RECIPE_DATASET_INDEX_LIMIT` provides the default record bound, and callers may pass `dataset_limit` for a lower or explicit per-request bound. They return ranked results with score, matched fields, snippets, source file/table, source ID, and safe provenance metadata for the Kaggle dataset and CC BY-SA 3.0 license. Responses also include index summary metadata and warnings.
 
-If `recipe-dataset/` or `RECIPE_DATASET_DIR` is missing, the endpoint returns controlled warnings and empty results without exposing full local filesystem paths. It does not call providers, persist generated index artifacts, import records into Vanilla Cookbook, write to any database, ingest images, add embeddings, add a vector database, or perform RAG over the indexed dataset.
+If `recipe-dataset/` or `RECIPE_DATASET_DIR` is missing, the endpoint returns controlled warnings and empty results without exposing full local filesystem paths. It does not call providers, persist generated index artifacts, import records into Vanilla Cookbook, write to any database, ingest images, add embeddings, or add a vector database.
+
+## RAG Over Indexed Dataset
+
+Task 0024D adds:
+
+```text
+POST /dataset/ask
+```
+
+The endpoint retrieves through the deterministic local dataset index first, then sends only the retrieved dataset results to the configured provider. The mock provider remains the default for tests and validation; OpenAI remains optional/manual through the existing provider harness.
+
+Responses include:
+
+- answer;
+- citations with dataset title, source file/table, source ID, title, snippet, license, and source URL metadata;
+- provider/model metadata;
+- retrieval metadata with index summary;
+- warnings;
+- optional usage.
+
+No-match and missing-dataset cases return controlled responses with empty citations and no provider call. Prompt instructions require answers only from retrieved dataset context, source ID/title citations, no invented records, insufficient-context language when needed, and no medical/nutrition certainty claims.
+
+The endpoint does not send the full 13K corpus to the provider, expose full local filesystem paths, persist generated indexes, ingest images, import records into Vanilla Cookbook, write to any database, add embeddings, or add a vector database.
 
 ## Testing
 
@@ -104,7 +127,7 @@ Later tasks can expose or expand this index after review. The following remain i
 - embeddings;
 - vector databases;
 - hybrid search endpoints;
-- RAG over the 13K dataset;
+- richer evals for dataset RAG;
 - imports into Vanilla Cookbook;
 - image ingestion;
 - generated index artifacts;

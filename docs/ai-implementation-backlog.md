@@ -299,6 +299,36 @@ Done criteria:
 - missing local dataset path is controlled;
 - no RAG over the indexed dataset, embeddings, vector DB, provider calls, generated index artifacts, or write-back are added.
 
+## 0024D: Add RAG Over Indexed Dataset
+
+Status: complete.
+
+Goal: Answer questions over retrieved local Kaggle dataset results with provider synthesis and dataset provenance citations.
+
+Files likely touched:
+
+- `ai-api/app/dataset_rag.py`
+- `ai-api/app/main.py`
+- `ai-api/app/schemas.py`
+- `ai-api/tests/test_dataset_ask.py`
+- `docs/local-recipe-dataset-adapter.md`
+
+Validation:
+
+- generated temporary CSV fixtures;
+- no-match and missing-dataset no-provider-call tests;
+- mock provider endpoint test;
+- no raw dataset files or generated index artifacts committed;
+- repo validation.
+
+Done criteria:
+
+- `POST /dataset/ask` exists;
+- provider receives only retrieved dataset result context;
+- responses include answer, citations/provenance, provider/model, retrieval metadata, warnings, and optional usage;
+- no-match and missing-dataset cases do not call the provider;
+- no embeddings, vector DB, generated index artifacts, image ingestion, Vanilla Cookbook imports/write-back, or deployment changes are added.
+
 ## 0025: Add Evals And CI Validation
 
 Goal: Wire offline AI evals into local validation and GitHub Actions.

@@ -10,6 +10,7 @@ Current endpoints:
 - `POST /recipes/search`: deterministic keyword search with a JSON body.
 - `GET /dataset/search?q=<query>&limit=<n>`: deterministic keyword search over the bounded local Kaggle dataset index.
 - `POST /dataset/search`: deterministic dataset index search with a JSON body.
+- `POST /dataset/ask`: answers questions over retrieved local Kaggle dataset results using grounded provider synthesis.
 - `POST /ai/import-recipe`: converts pasted recipe text into a validated draft JSON object.
 - `POST /ai/ask`: answers questions over saved recipes using deterministic retrieval plus grounded provider synthesis.
 - `POST /ai/meal-plan`: creates a validated meal plan from selected saved recipe candidates.
@@ -27,6 +28,7 @@ Internal reader modules:
 - `app.dataset_adapter`: inspects local Kaggle recipe dataset files under `RECIPE_DATASET_DIR` for future indexing work.
 - `app.dataset_index`: builds an in-memory deterministic keyword index from bounded local dataset records.
 - `app.dataset_retrieval`: exposes local dataset index retrieval responses without provider calls.
+- `app.dataset_rag`: retrieves local dataset results first and asks the provider to answer only from those results.
 
 This scaffold does not implement embeddings, shopping-list generation, nutrition analysis, live provider calls during validation, or write-back to Vanilla Cookbook.
 
@@ -139,11 +141,13 @@ It does not create shopping lists, analyze nutrition, make medical or dietary ce
 
 `GET /dataset/search` and `POST /dataset/search` expose deterministic retrieval over that bounded local index. Responses include result scores, matched fields, snippets, source file/table, source ID, safe provenance metadata, index summary metadata, and warnings. `dataset_limit` can bound the number of local records indexed for a request, and `RECIPE_DATASET_INDEX_LIMIT` provides the default. If the local dataset directory is missing, the endpoint returns controlled warnings and empty results without exposing full local filesystem paths.
 
-The expected source is the Kaggle "Food Ingredients and Recipes Dataset with Images" dataset by `pes12017000148`, licensed CC BY-SA 3.0. Raw dataset files, generated indexes, and images must stay out of Git. The local index layer does not build embeddings, add RAG over the dataset, import data into Vanilla Cookbook, ingest images, call providers, persist index artifacts, or write to any database.
+`POST /dataset/ask` retrieves through the same deterministic index before provider generation. It sends only retrieved dataset results to the provider, returns answer text, citations/provenance, provider/model metadata, retrieval metadata, warnings, and optional usage. No-match and missing-dataset cases return controlled responses with no provider call.
+
+The expected source is the Kaggle "Food Ingredients and Recipes Dataset with Images" dataset by `pes12017000148`, licensed CC BY-SA 3.0. Raw dataset files, generated indexes, and images must stay out of Git. The local dataset RAG path does not build embeddings, add vector storage, import data into Vanilla Cookbook, ingest images, persist index artifacts, or write to any database.
 
 ## AI Provider Harness
 
-The provider harness is used by the structured importer and Ask My Cookbook. It is not called by the search endpoints.
+The provider harness is used by the structured importer, Ask My Cookbook, dataset ask, and meal-plan endpoint. It is not called by the search endpoints.
 
 Default local configuration:
 
