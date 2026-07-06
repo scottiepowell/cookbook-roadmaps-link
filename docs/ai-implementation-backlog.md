@@ -524,25 +524,59 @@ Done criteria:
 - feature status matrix and five-minute talk track exist.
 - README links to the demo docs.
 
-## 0026B: Add Screenshots And Portfolio README Polish
+## 0026B: Add AI Portfolio README Polish
 
-Goal: Make the AI layer presentation-ready.
+Status: complete.
+
+Goal: Polish the AI cookbook feature set into a portfolio-ready README and supporting showcase docs.
 
 Files likely touched:
 
 - `README.md`
-- `docs/ai-demo-plan.md`
-- `docs/ai-medium-path-roadmap.md`
-- screenshot assets if approved in a later task.
+- `docs/ai-portfolio-showcase.md`
+- `docs/ai-screenshot-capture-guide.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-demo-walkthrough.md`
+- `docs/repo-map.md`
 
 Validation:
 
-- link validation;
+- offline eval command;
+- AI API pytest suite;
 - repo validation;
-- no committed secrets or private recipe data.
+- mock demo script;
+- live smoke wrapper skip behavior;
+- no committed secrets, raw datasets, generated artifacts, or provider keys.
 
 Done criteria:
 
-- README explains the AI sidecar, RAG, importer, meal planner, and evals.
-- Demo script covers the core user flow.
-- Screenshots avoid secrets and private personal data.
+- README has a clear AI showcase section.
+- Portfolio showcase doc exists.
+- Screenshot capture guide exists and screenshots are deferred until safe mock captures are explicitly requested.
+- Feature status is accurate and portfolio-readable.
+- Normal validation remains offline and mock-only.
+
+## 0026C: Final AI Feature Completion Review
+
+Goal: Perform an acceptance review of the completed AI cookbook feature set and produce a final feature-completion matrix without adding new infrastructure.
+
+Files likely touched:
+
+- `docs/ai-feature-status.md`
+- `docs/ai-portfolio-showcase.md`
+- `docs/ai-demo-walkthrough.md`
+- `outbox/0026C-final-ai-feature-completion-review-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior.
+
+Done criteria:
+
+- final acceptance matrix confirms completed importer, saved-recipe ask, dataset search/RAG, meal planning, evals, and manual live smoke paths;
+- deferred production/storage/UI boundaries are explicit;
+- no Qdrant, Postgres, pgvector, embeddings, vector DB, persistent indexes, deployment changes, raw datasets, private env files, or provider keys are added.

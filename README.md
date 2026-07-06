@@ -2,6 +2,42 @@
 
 This mailbox-driven DevOps lab deploys Vanilla Cookbook to AWS EC2 at [cookbook.roadmaps.link](https://cookbook.roadmaps.link). Coder and Codex handle reviewed tasks, GitHub stores desired state, and GitHub Actions operates EC2 through AWS Systems Manager.
 
+## AI Cookbook Showcase
+
+This repo now includes a portfolio-ready AI cookbook sidecar: Vanilla Cookbook remains the source app, while a FastAPI `ai-api` service provides offline-first AI workflows for structured recipe import, saved-recipe Q&A, deterministic local dataset search/RAG, and saved-recipe meal planning. The architecture is intentionally conservative: retrieval happens before provider calls, responses carry citations/provenance, normal validation uses generated fixtures and the mock provider, and live OpenAI calls are manual-only.
+
+Completed AI workflows:
+
+- Structured recipe importer: `POST /ai/import-recipe` returns schema-validated recipe drafts.
+- Ask My Cookbook: `POST /ai/ask` answers over saved recipes with recipe citations.
+- Dataset search/RAG: `GET/POST /dataset/search` and `POST /dataset/ask` use bounded local dataset fixtures with provenance citations.
+- Meal planning: `POST /ai/meal-plan` builds plans from saved recipe candidates.
+- Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
+
+Validation proof:
+
+- Offline evals cover dataset ask, saved-recipe ask, importer, meal plan, provider config hygiene, citations, and secret-like leakage checks.
+- Repository validation runs pytest and offline evals without provider keys, Docker-only services, the real Kaggle dataset, or a production cookbook database.
+- Manual live OpenAI smoke validation passed with `provider=openai`, `model=gpt-5.4-nano`, `live_calls=4`, `estimated_usage_tokens=1200`, `workflows=importer,ask_my_cookbook,dataset_ask,meal_plan`, `budget_cents=25`, `status=passed`.
+
+Demo and evidence links:
+
+- [AI portfolio showcase](docs/ai-portfolio-showcase.md)
+- [AI demo walkthrough](docs/ai-demo-walkthrough.md)
+- [AI feature status](docs/ai-feature-status.md)
+- [REST request examples](scripts/demo-ai-requests.http)
+- [AI evals plan](docs/ai-evals-plan.md)
+- [Manual live OpenAI smoke tests](docs/live-openai-smoke-tests.md)
+- [AI screenshot capture guide](docs/ai-screenshot-capture-guide.md)
+
+Run the safe mock demo:
+
+```powershell
+.\scripts\demo-ai-mock.ps1
+```
+
+Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
+
 ## Architecture
 
 GitHub Actions assumes a repository-scoped AWS role through OIDC and deploys Docker Compose through Systems Manager. Vanilla Cookbook listens only on EC2 loopback; `cloudflared` creates the outbound public route.
@@ -31,9 +67,11 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 
 - [Repository map](docs/repo-map.md)
 - [AI medium-path roadmap](docs/ai-medium-path-roadmap.md)
+- [AI portfolio showcase](docs/ai-portfolio-showcase.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
+- [AI screenshot capture guide](docs/ai-screenshot-capture-guide.md)
 - [Local recipe dataset adapter](docs/local-recipe-dataset-adapter.md)
 - [Shared infrastructure data boundaries](docs/shared-infrastructure-data-boundaries.md)
 - [Meal planner foundation](docs/meal-planner-foundation.md)

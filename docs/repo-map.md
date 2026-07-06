@@ -27,9 +27,11 @@ Resume and readiness references:
 AI design references:
 
 - [AI medium-path roadmap](ai-medium-path-roadmap.md)
+- [AI portfolio showcase](ai-portfolio-showcase.md)
 - [AI sidecar architecture](ai-sidecar-architecture.md)
 - [AI demo walkthrough](ai-demo-walkthrough.md)
 - [AI feature status](ai-feature-status.md)
+- [AI screenshot capture guide](ai-screenshot-capture-guide.md)
 - [AI schema notes](ai-schema-notes.md)
 - [Local recipe dataset adapter](local-recipe-dataset-adapter.md)
 - [Shared infrastructure data boundaries](shared-infrastructure-data-boundaries.md)
