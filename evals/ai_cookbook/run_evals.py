@@ -3,25 +3,57 @@ from __future__ import annotations
 import csv
 import json
 import os
+import sqlite3
 import sys
+import uuid
 from pathlib import Path
 from typing import Any
 
 
-SECRET_PATTERNS = ("OPENAI_API_KEY", "sk-", "Authorization:", ".env", "raw provider config")
+SECRET_PATTERNS = (
+    "OPENAI_API_KEY",
+    "sk-",
+    "Authorization:",
+    ".env",
+    "raw provider config",
+    "CLOUDFLARE_TUNNEL_TOKEN",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_ACCESS_KEY_ID",
+)
+
+PROVIDER_ENV_KEYS = (
+    "AI_PROVIDER",
+    "AI_MODEL",
+    "AI_MAX_OUTPUT_TOKENS",
+    "AI_TIMEOUT_SECONDS",
+    "OPENAI_API_KEY",
+    "OPENAI_MODEL",
+    "OPENAI_FALLBACK_MODEL",
+    "OPENAI_ENABLE_LIVE_TESTS",
+    "RECIPE_DATASET_DIR",
+    "RECIPE_DATASET_INDEX_LIMIT",
+    "COOKBOOK_DB_PATH",
+    "CLOUDFLARE_TUNNEL_TOKEN",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_ACCESS_KEY_ID",
+)
 
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     sys.path.insert(0, str(repo_root / "ai-api"))
 
-    cases_path = Path(__file__).with_name("dataset_ask_cases.json")
-    cases = json.loads(cases_path.read_text(encoding="utf-8"))
+    evals: list[tuple[str, dict[str, Any]]] = []
+    for case in _load_json("dataset_ask_cases.json"):
+        evals.append(("dataset_ask", case))
+    for case in _load_json("workflow_cases.json"):
+        evals.append((case["type"], case))
+    evals.append(("provider_config", {"name": "provider_config_does_not_leak_fake_secrets"}))
 
     failures: list[str] = []
-    for case in cases:
+    for case_type, case in evals:
         try:
-            _run_case(case)
+            _run_case(case_type, case)
             print(f"PASS: {case['name']}")
         except AssertionError as exc:
             failures.append(f"{case['name']}: {exc}")
@@ -33,56 +65,67 @@ def main() -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
 
-    print(f"Offline evals passed: {len(cases)} cases.")
+    print(f"Offline evals passed: {len(evals)} cases.")
     return 0
 
 
-def _run_case(case: dict[str, Any]) -> None:
+def _load_json(name: str) -> list[dict[str, Any]]:
+    path = Path(__file__).with_name(name)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _run_case(case_type: str, case: dict[str, Any]) -> None:
+    if case_type == "dataset_ask":
+        _run_dataset_ask_case(case)
+    elif case_type == "saved_recipe_ask":
+        _run_saved_recipe_ask_case(case)
+    elif case_type == "import_recipe":
+        _run_import_recipe_case(case)
+    elif case_type == "meal_plan":
+        _run_meal_plan_case(case)
+    elif case_type == "provider_config":
+        _run_provider_config_case()
+    else:
+        raise AssertionError(f"unknown eval type {case_type!r}")
+
+
+def _run_dataset_ask_case(case: dict[str, Any]) -> None:
     from app.dataset_rag import ask_dataset_recipes
     from app.schemas import DatasetAskRequest
 
-    old_env = {key: os.environ.get(key) for key in ("AI_PROVIDER", "RECIPE_DATASET_DIR")}
-    os.environ["AI_PROVIDER"] = "mock"
+    with _env_guard() as temp_root:
+        os.environ["AI_PROVIDER"] = "mock"
+        dataset_dir = temp_root / "dataset"
+        dataset_dir.mkdir(exist_ok=True)
+        csv_path = dataset_dir / "13k-recipes.csv"
 
-    temp_root = Path(__file__).resolve().parents[2] / ".tmp-pytest-evals"
-    temp_root.mkdir(exist_ok=True)
-    dataset_dir = temp_root
-    csv_path = dataset_dir / "13k-recipes.csv"
-    if csv_path.exists():
-        csv_path.unlink()
+        if case.get("missing_dataset"):
+            os.environ["RECIPE_DATASET_DIR"] = str(dataset_dir / "missing")
+        else:
+            _write_csv(csv_path, case.get("rows", []))
+            os.environ["RECIPE_DATASET_DIR"] = str(dataset_dir)
 
-    if case.get("missing_dataset"):
-        os.environ["RECIPE_DATASET_DIR"] = str(dataset_dir / "missing")
-    else:
-        _write_csv(csv_path, case.get("rows", []))
-        os.environ["RECIPE_DATASET_DIR"] = str(dataset_dir)
-
-    response = ask_dataset_recipes(
-        DatasetAskRequest(
-            question=case["question"],
-            limit=case.get("limit", 3),
-            dataset_limit=case.get("dataset_limit", 10),
+        response = ask_dataset_recipes(
+            DatasetAskRequest(
+                question=case["question"],
+                limit=case.get("limit", 3),
+                dataset_limit=case.get("dataset_limit", 10),
+            )
         )
-    )
 
-    _restore_env(old_env)
     payload = response.model_dump()
     serialized = json.dumps(payload, sort_keys=True)
 
     assert response.provider == case["expect_provider"], f"provider {response.provider!r}"
     assert [citation.source_id for citation in response.citations] == case["expected_source_ids"]
+    assert response.retrieval.retrieved_count == len(response.citations), "retrieval count does not match citations"
+    assert response.retrieval.matched_result_ids == [citation.id for citation in response.citations]
 
     for forbidden in case.get("forbidden_source_ids", []):
         assert forbidden not in serialized, f"non-retrieved source id leaked: {forbidden}"
 
     if case.get("must_include_citations"):
-        assert response.citations, "missing citations"
-        for citation in response.citations:
-            assert citation.provenance.dataset == "Food Ingredients and Recipes Dataset with Images"
-            assert citation.provenance.license == "CC BY-SA 3.0"
-            assert citation.provenance.source_url.startswith("https://www.kaggle.com/")
-            assert citation.source_id, "citation missing source ID"
-            assert citation.title, "citation missing title"
+        _assert_dataset_citations(response.citations)
     else:
         assert response.citations == [], "unexpected citations"
 
@@ -90,8 +133,129 @@ def _run_case(case: dict[str, Any]) -> None:
     if expected_warning:
         assert expected_warning in response.warnings, f"missing warning {expected_warning!r}"
 
+    _assert_no_secret_leaks(case["name"], payload)
+
+
+def _run_saved_recipe_ask_case(case: dict[str, Any]) -> None:
+    from app.rag import ask_cookbook
+    from app.schemas import AskRequest, RecipeDocument
+
+    provider = TextFixtureProvider(case["answer"])
+    recipes = [RecipeDocument(**recipe) for recipe in case["recipes"]]
+    response = ask_cookbook(
+        AskRequest(question=case["question"], limit=case.get("limit", 3)),
+        provider=provider,
+        recipes=recipes,
+    )
+    payload = response.model_dump()
+
+    assert response.provider == "fixture"
+    assert response.model == "fixture-model"
+    assert [citation.recipe_id for citation in response.citations] == case["expected_recipe_ids"]
+    assert response.retrieval.retrieved_count == len(response.citations)
+    assert response.retrieval.matched_recipe_ids == case["expected_recipe_ids"]
+    for citation in response.citations:
+        assert citation.recipe_id, "citation missing recipe ID"
+        assert citation.title, "citation missing title"
+        assert citation.snippet, "citation missing snippet"
+    for forbidden_title in case.get("forbidden_prompt_titles", []):
+        assert forbidden_title not in provider.last_prompt, f"non-retrieved recipe was sent to provider: {forbidden_title}"
+    _assert_no_secret_leaks(case["name"], payload)
+    _assert_no_secret_leaks(f"{case['name']} provider prompt", provider.last_prompt)
+
+
+def _run_import_recipe_case(case: dict[str, Any]) -> None:
+    from app.importer import import_recipe_text
+    from app.schemas import RecipeImportRequest
+
+    provider = StructuredFixtureProvider(case["provider_data"])
+    response = import_recipe_text(
+        RecipeImportRequest(text=case["text"], source=case.get("source")),
+        provider=provider,
+    )
+    payload = response.model_dump()
+
+    assert response.provider == "fixture"
+    assert response.model == "fixture-model"
+    assert response.draft.title == case["expected_title"]
+    assert [ingredient.name for ingredient in response.draft.ingredients] == case["expected_ingredients"]
+    assert [instruction.step for instruction in response.draft.instructions] == case["expected_steps"]
+    assert case["source"] in provider.last_prompt
+    _assert_no_secret_leaks(case["name"], payload)
+    _assert_no_secret_leaks(f"{case['name']} provider prompt", provider.last_prompt)
+
+
+def _run_meal_plan_case(case: dict[str, Any]) -> None:
+    from app.meal_plan_endpoint import create_meal_plan
+    from app.schemas import MealPlanRequest
+
+    with _env_guard() as temp_root:
+        db_path = temp_root / "cookbook.sqlite"
+        _write_recipe_db(db_path, case["recipes"])
+        os.environ["COOKBOOK_DB_PATH"] = str(db_path)
+        provider = StructuredFixtureProvider(case["provider_data"])
+        response = create_meal_plan(MealPlanRequest(**case["request"]), provider=provider)
+
+    payload = response.model_dump()
+    planned_ids = [
+        meal.recipe_id
+        for day in response.plan.days
+        for meal in day.meals
+    ]
+
+    assert response.provider == "fixture"
+    assert response.model == "fixture-model"
+    assert response.selection.matched_recipe_ids == case["expected_recipe_ids"]
+    assert [citation.recipe_id for citation in response.citations] == case["expected_recipe_ids"]
+    assert planned_ids == case["expected_planned_recipe_ids"]
+    assert set(planned_ids).issubset(set(response.selection.matched_recipe_ids))
+    for citation in response.citations:
+        assert citation.recipe_id, "meal-plan citation missing recipe ID"
+        assert citation.title, "meal-plan citation missing title"
+        assert citation.snippet, "meal-plan citation missing snippet"
+    for forbidden_title in case.get("forbidden_prompt_titles", []):
+        assert forbidden_title not in provider.last_prompt, f"non-selected recipe was sent to provider: {forbidden_title}"
+    _assert_no_secret_leaks(case["name"], payload)
+    _assert_no_secret_leaks(f"{case['name']} provider prompt", provider.last_prompt)
+
+
+def _run_provider_config_case() -> None:
+    from app.config import get_provider_config
+
+    with _env_guard():
+        os.environ["OPENAI_API_KEY"] = "sk-fake-offline-eval-secret"
+        os.environ["CLOUDFLARE_TUNNEL_TOKEN"] = "fake-cloudflare-token"
+        os.environ["AWS_SECRET_ACCESS_KEY"] = "fake-aws-secret"
+        os.environ["AWS_ACCESS_KEY_ID"] = "fake-aws-key-id"
+        config = get_provider_config()
+
+    payload = {
+        name: {"configured": availability.configured}
+        for name, availability in config.items()
+    }
+    assert payload["mock"]["configured"] is True
+    assert payload["openai"]["configured"] is True
+    _assert_no_secret_leaks("provider config", payload)
+
+
+def _assert_dataset_citations(citations: list[Any]) -> None:
+    assert citations, "missing citations"
+    for citation in citations:
+        assert citation.id, "citation missing result ID"
+        assert citation.source_id, "citation missing source ID"
+        assert citation.title, "citation missing title"
+        assert citation.snippet, "citation missing snippet"
+        assert citation.provenance.dataset == "Food Ingredients and Recipes Dataset with Images"
+        assert citation.provenance.license == "CC BY-SA 3.0"
+        assert citation.provenance.source_url.startswith("https://www.kaggle.com/")
+        assert citation.provenance.source_file, "citation missing source file"
+        assert citation.provenance.source_id == citation.source_id
+
+
+def _assert_no_secret_leaks(label: str, payload: Any) -> None:
+    serialized = payload if isinstance(payload, str) else json.dumps(payload, sort_keys=True)
     for pattern in SECRET_PATTERNS:
-        assert pattern not in serialized, f"secret-like pattern leaked: {pattern}"
+        assert pattern not in serialized, f"{label} leaked secret-like pattern: {pattern}"
 
 
 def _write_csv(path: Path, rows: list[dict[str, str]]) -> None:
@@ -103,12 +267,107 @@ def _write_csv(path: Path, rows: list[dict[str, str]]) -> None:
             writer.writerow(row)
 
 
-def _restore_env(old_env: dict[str, str | None]) -> None:
-    for key, value in old_env.items():
-        if value is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = value
+def _write_recipe_db(path: Path, rows: list[dict[str, Any]]) -> None:
+    connection = sqlite3.connect(path)
+    connection.execute(
+        """
+        CREATE TABLE recipes (
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            ingredients TEXT,
+            instructions TEXT,
+            tags TEXT,
+            source_url TEXT
+        )
+        """
+    )
+    connection.executemany(
+        """
+        INSERT INTO recipes
+          (id, title, description, ingredients, instructions, tags, source_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                row["id"],
+                row["title"],
+                row.get("description"),
+                json.dumps(row.get("ingredients", [])),
+                "\n".join(row.get("instructions", [])),
+                "\n".join(row.get("tags", [])),
+                row.get("source_url"),
+            )
+            for row in rows
+        ],
+    )
+    connection.commit()
+    connection.close()
+
+
+class _env_guard:
+    def __init__(self) -> None:
+        self._old_env: dict[str, str | None] = {}
+        self._base_temp_root = Path(__file__).resolve().parents[2] / ".tmp-pytest-evals"
+        self._temp_root = self._base_temp_root / f"run-{uuid.uuid4().hex}"
+
+    def __enter__(self) -> Path:
+        self._old_env = {key: os.environ.get(key) for key in PROVIDER_ENV_KEYS}
+        self._temp_root.mkdir(parents=True, exist_ok=True)
+        return self._temp_root
+
+    def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
+        for key, value in self._old_env.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+
+class TextFixtureProvider:
+    name = "fixture"
+    model = "fixture-model"
+
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.last_prompt = ""
+
+    def generate_text(self, request: Any) -> Any:
+        from app.providers.base import LLMResponse
+
+        self.last_prompt = request.prompt
+        return LLMResponse(
+            text=self.text,
+            provider=self.name,
+            model=self.model,
+            usage={"input_tokens": len(request.prompt.split()), "output_tokens": len(self.text.split())},
+        )
+
+    def generate_structured(self, request: Any) -> Any:
+        raise AssertionError("Text fixture provider does not support structured generation.")
+
+
+class StructuredFixtureProvider:
+    name = "fixture"
+    model = "fixture-model"
+
+    def __init__(self, data: dict[str, Any]) -> None:
+        self.data = data
+        self.last_prompt = ""
+
+    def generate_text(self, request: Any) -> Any:
+        raise AssertionError("Structured fixture provider does not support text generation.")
+
+    def generate_structured(self, request: Any) -> Any:
+        from app.providers.base import StructuredLLMResponse
+
+        self.last_prompt = request.prompt
+        return StructuredLLMResponse(
+            data=self.data,
+            provider=self.name,
+            model=self.model,
+            usage={"input_tokens": len(request.prompt.split()), "output_tokens": len(self.data)},
+        )
 
 
 if __name__ == "__main__":

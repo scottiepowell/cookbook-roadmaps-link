@@ -26,6 +26,65 @@
     "must_include_citations": true
   },
   {
+    "name": "dataset_ask_title_and_ingredient_match",
+    "question": "Which indexed recipe uses oats for breakfast?",
+    "limit": 2,
+    "dataset_limit": 4,
+    "rows": [
+      {
+        "recipe_id": "oats-1",
+        "title": "Apple Oat Breakfast",
+        "ingredients": "oats; apple; cinnamon",
+        "instructions": "Simmer oats with apple",
+        "cuisine": "breakfast"
+      },
+      {
+        "recipe_id": "beans-1",
+        "title": "Lemon Beans",
+        "ingredients": "beans; lemon",
+        "instructions": "Warm beans",
+        "cuisine": "dinner"
+      },
+      {
+        "recipe_id": "toast-1",
+        "title": "Toast",
+        "ingredients": "bread",
+        "instructions": "Toast bread",
+        "cuisine": "breakfast"
+      }
+    ],
+    "expect_provider": "mock",
+    "expected_source_ids": ["oats-1", "toast-1"],
+    "forbidden_source_ids": ["beans-1"],
+    "must_include_citations": true
+  },
+  {
+    "name": "dataset_ask_limit_enforced",
+    "question": "What indexed recipe uses lemon?",
+    "limit": 1,
+    "dataset_limit": 3,
+    "rows": [
+      {
+        "recipe_id": "lem-1",
+        "title": "Lemon Beans",
+        "ingredients": "beans; lemon",
+        "instructions": "Warm beans",
+        "cuisine": "dinner"
+      },
+      {
+        "recipe_id": "lem-2",
+        "title": "Lemon Salad",
+        "ingredients": "lettuce; lemon",
+        "instructions": "Toss salad",
+        "cuisine": "lunch"
+      }
+    ],
+    "expect_provider": "mock",
+    "expected_source_ids": ["lem-1"],
+    "forbidden_source_ids": ["lem-2"],
+    "must_include_citations": true
+  },
+  {
     "name": "no_match_returns_controlled_response",
     "question": "Which indexed recipe uses saffron?",
     "limit": 2,

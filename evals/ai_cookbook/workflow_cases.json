@@ -1,0 +1,113 @@
+[
+  {
+    "type": "saved_recipe_ask",
+    "name": "saved_recipe_ask_grounded_citation",
+    "question": "What can I make with lemon?",
+    "limit": 2,
+    "answer": "Use Lemon Beans from the saved cookbook.",
+    "recipes": [
+      {
+        "id": "1",
+        "title": "Lemon Beans",
+        "description": "Bright pantry dinner",
+        "ingredients": ["beans", "lemon", "olive oil"],
+        "instructions": ["Warm beans", "Add lemon", "Serve"],
+        "tags": ["dinner", "vegetarian"]
+      },
+      {
+        "id": "2",
+        "title": "Pasta Bake",
+        "description": "Comfort dinner",
+        "ingredients": ["pasta", "tomato", "cheese"],
+        "instructions": ["Boil pasta", "Bake with cheese"],
+        "tags": ["dinner"]
+      }
+    ],
+    "expected_recipe_ids": ["1"],
+    "forbidden_prompt_titles": ["Pasta Bake"]
+  },
+  {
+    "type": "import_recipe",
+    "name": "structured_importer_valid_draft",
+    "text": "Lemon beans: simmer beans with lemon and olive oil. Serve warm.",
+    "source": "offline fixture",
+    "provider_data": {
+      "title": "Lemon Beans",
+      "description": "Bright pantry dinner",
+      "ingredients": [
+        {"name": "beans", "quantity": "2", "unit": "cups"},
+        {"name": "lemon", "quantity": "1", "unit": null}
+      ],
+      "instructions": [
+        {"step": 1, "text": "Warm the beans."},
+        {"step": 2, "text": "Add lemon and serve."}
+      ],
+      "tags": ["dinner"],
+      "source": "offline fixture",
+      "notes": "Generated from a deterministic eval fixture."
+    },
+    "expected_title": "Lemon Beans",
+    "expected_ingredients": ["beans", "lemon"],
+    "expected_steps": [1, 2]
+  },
+  {
+    "type": "meal_plan",
+    "name": "meal_plan_uses_selected_saved_recipes",
+    "request": {
+      "days": 1,
+      "meals_per_day": 2,
+      "preferences": "lemon vegetarian",
+      "candidate_limit": 5
+    },
+    "recipes": [
+      {
+        "id": 1,
+        "title": "Lemon Beans",
+        "description": "Bright pantry dinner",
+        "ingredients": ["beans", "lemon", "olive oil"],
+        "instructions": ["Warm beans", "Add lemon", "Serve"],
+        "tags": ["dinner", "vegetarian"]
+      },
+      {
+        "id": 2,
+        "title": "Pasta Bake",
+        "description": "Comfort dinner",
+        "ingredients": ["pasta", "tomato", "cheese"],
+        "instructions": ["Boil pasta", "Bake with cheese"],
+        "tags": ["dinner"]
+      },
+      {
+        "id": 3,
+        "title": "Cucumber Salad",
+        "description": "Cold lunch",
+        "ingredients": ["cucumber", "parsley", "lemon"],
+        "instructions": ["Chop vegetables", "Toss together"],
+        "tags": ["lunch", "vegetarian"]
+      }
+    ],
+    "provider_data": {
+      "days": [
+        {
+          "day": 1,
+          "meals": [
+            {
+              "slot": "meal 1",
+              "recipe_id": "1",
+              "title": "Lemon Beans",
+              "reason": "Selected from saved recipe candidates."
+            },
+            {
+              "slot": "meal 2",
+              "recipe_id": "3",
+              "title": "Cucumber Salad",
+              "reason": "Selected from saved recipe candidates."
+            }
+          ]
+        }
+      ]
+    },
+    "expected_recipe_ids": ["1", "3"],
+    "expected_planned_recipe_ids": ["1", "3"],
+    "forbidden_prompt_titles": ["Pasta Bake"]
+  }
+]
