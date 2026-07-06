@@ -62,6 +62,18 @@ budget_cents=25
 status=passed
 ```
 
+Last recorded manual live validation:
+
+```text
+provider=openai
+model=gpt-5.4-nano
+live_calls=4
+estimated_usage_tokens=1200
+workflows=importer,ask_my_cookbook,dataset_ask,meal_plan
+budget_cents=25
+status=passed
+```
+
 Skip/fail behavior:
 
 - disabled live flag: exits `0` with a skip message and no live calls;
@@ -71,6 +83,8 @@ Skip/fail behavior:
 - unavailable model, rate limit, quota, or provider error: exits non-zero with a clear provider failure.
 
 The script must not print API keys, key prefixes, authorization headers, raw `.env` content, raw provider config, or cloud secret names.
+
+On Windows, the script uses best-effort temporary directory cleanup so a transient SQLite file handle during cleanup does not mask successful live workflow validation. Provider errors, assertion failures, guardrail failures, and workflow failures still exit non-zero.
 
 ## Normal Validation
 

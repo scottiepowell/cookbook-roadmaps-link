@@ -98,3 +98,21 @@ def test_secret_checker_catches_obvious_patterns():
         assert "secret-like pattern" in str(exc)
     else:
         raise AssertionError("Expected secret-like pattern to fail.")
+
+
+def test_smoke_temp_dir_uses_best_effort_cleanup(monkeypatch):
+    smoke = load_smoke_module()
+    captured = {}
+
+    class FakeTemporaryDirectory:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(smoke.tempfile, "TemporaryDirectory", FakeTemporaryDirectory)
+
+    smoke._make_smoke_temp_dir()
+
+    assert captured == {
+        "prefix": "cookbook-openai-smoke-",
+        "ignore_cleanup_errors": True,
+    }

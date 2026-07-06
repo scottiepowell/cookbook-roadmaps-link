@@ -414,7 +414,63 @@ Done criteria:
 - script does not run from CI, normal pytest selection beyond offline guardrail tests, offline evals, or repository validation as a live call.
 - no production deployment, Cloudflare, Qdrant, Postgres, pgvector, embeddings, vector DB, generated persistent indexes, raw dataset files, `.env`, or secrets are added.
 
-## 0025D: Keep AI Validation Deterministic In CI
+## 0025D: Fix OpenAI Structured Output Schema
+
+Status: complete.
+
+Goal: Normalize Pydantic JSON Schemas before sending strict structured-output requests to OpenAI.
+
+Files likely touched:
+
+- `ai-api/app/providers/openai_schema.py`
+- `ai-api/app/providers/openai_provider.py`
+- `ai-api/tests/test_openai_schema.py`
+
+Validation:
+
+- schema normalizer tests;
+- fake OpenAI client payload tests without network calls;
+- offline eval command;
+- AI API pytest suite;
+- repo validation.
+
+Done criteria:
+
+- strict schema payloads include `additionalProperties: false` for object schemas.
+- object `required` lists include all properties, including nullable/defaulted fields.
+- nested schemas and `$defs` are normalized.
+- caller-provided schemas are not mutated.
+
+## 0025E: Fix Live Smoke Windows Cleanup And Record Validation
+
+Status: complete.
+
+Goal: Make live OpenAI smoke temporary fixture cleanup Windows-safe and record successful manual live validation.
+
+Files likely touched:
+
+- `scripts/smoke-openai-live.py`
+- `ai-api/tests/test_openai_live_smoke_script.py`
+- `docs/live-openai-smoke-tests.md`
+- `docs/ai-implementation-backlog.md`
+- `inbox/0025E-fix-live-smoke-windows-cleanup.md`
+- `outbox/0025E-fix-live-smoke-windows-cleanup-results.md`
+
+Validation:
+
+- cleanup behavior test without live calls;
+- offline eval command;
+- AI API pytest suite;
+- repo validation.
+
+Done criteria:
+
+- live smoke uses best-effort temp cleanup on Windows.
+- cleanup errors after successful workflows do not mask compact success output.
+- provider, workflow, assertion, and guardrail failures still exit non-zero.
+- docs record the successful manual live OpenAI smoke run using `gpt-5.4-nano`.
+
+## 0025F: Keep AI Validation Deterministic In CI
 
 Goal: Wire offline AI evals into local validation and GitHub Actions.
 

@@ -90,7 +90,7 @@ def main() -> int:
 
     summary = SmokeSummary(provider=provider.name, model=provider.model)
     try:
-        with tempfile.TemporaryDirectory(prefix="cookbook-openai-smoke-") as temp_dir_name:
+        with _make_smoke_temp_dir() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
             _run_importer_smoke(provider, summary)
             _assert_call_budget(summary)
@@ -147,6 +147,10 @@ def evaluate_live_guard(env: dict[str, str]) -> GuardResult:
         return GuardResult(False, 2, f"FAIL: AI_MAX_OUTPUT_TOKENS must be between 1 and {MAX_OUTPUT_TOKENS_LIMIT}.")
 
     return GuardResult(True, 0, "RUN: live OpenAI smoke tests enabled.", budget_cents=budget)
+
+
+def _make_smoke_temp_dir() -> tempfile.TemporaryDirectory:
+    return tempfile.TemporaryDirectory(prefix="cookbook-openai-smoke-", ignore_cleanup_errors=True)
 
 
 def _run_importer_smoke(provider: Any, summary: SmokeSummary) -> None:
