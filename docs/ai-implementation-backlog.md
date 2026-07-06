@@ -493,7 +493,38 @@ Done criteria:
 - Offline evals fail on invalid schemas, missing citations, or secret leakage.
 - Documentation explains how to run evals locally.
 
-## 0026: Add Screenshots, Demo Docs, And Portfolio README Polish
+## 0026A: Add AI Demo Walkthrough And Scripts
+
+Status: complete.
+
+Goal: Make the completed AI cookbook features demo-ready for portfolio, interview, and customer walkthroughs without adding deployment or storage architecture.
+
+Files likely touched:
+
+- `scripts/demo-ai-mock.ps1`
+- `scripts/demo-ai-live-smoke.ps1`
+- `scripts/demo-ai-requests.http`
+- `docs/ai-demo-walkthrough.md`
+- `docs/ai-feature-status.md`
+- `README.md`
+- `docs/repo-map.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite;
+- repo validation;
+- no committed secrets, raw datasets, generated artifacts, or provider keys.
+
+Done criteria:
+
+- mock/offline demo path exists.
+- optional live-smoke wrapper is documented and guarded.
+- REST request examples cover the AI sidecar workflows.
+- feature status matrix and five-minute talk track exist.
+- README links to the demo docs.
+
+## 0026B: Add Screenshots And Portfolio README Polish
 
 Goal: Make the AI layer presentation-ready.
 

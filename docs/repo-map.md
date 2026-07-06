@@ -10,7 +10,7 @@
 | `evals/` | Offline AI cookbook eval harness and generated-fixture cases. |
 | `inbox/` | Numbered task specifications; never store secrets here. |
 | `outbox/` | Matching implementation and validation reports. |
-| `scripts/` | Bootstrap, preflight, repository validation, Windows validation wrapper, verification, backup, restore, local dataset index inspection, and listing helpers. |
+| `scripts/` | Bootstrap, preflight, repository validation, Windows validation wrapper, verification, backup, restore, local dataset index inspection, AI demo helpers, and listing helpers. |
 | `.env.example` | Non-secret template; real host `.env` stays untracked. |
 | `docker-compose.yml` | Runs Cookbook and `cloudflared`, persists data, binds app to loopback. |
 | `deploy.sh` | Updates `/opt/cookbook`, prepares data, pulls images, reconciles Compose. |
@@ -28,6 +28,8 @@ AI design references:
 
 - [AI medium-path roadmap](ai-medium-path-roadmap.md)
 - [AI sidecar architecture](ai-sidecar-architecture.md)
+- [AI demo walkthrough](ai-demo-walkthrough.md)
+- [AI feature status](ai-feature-status.md)
 - [AI schema notes](ai-schema-notes.md)
 - [Local recipe dataset adapter](local-recipe-dataset-adapter.md)
 - [Shared infrastructure data boundaries](shared-infrastructure-data-boundaries.md)

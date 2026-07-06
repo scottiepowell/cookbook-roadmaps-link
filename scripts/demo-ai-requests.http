@@ -1,0 +1,53 @@
+@baseUrl = http://127.0.0.1:8000
+
+### Health
+GET {{baseUrl}}/health
+
+### Non-secret provider config
+GET {{baseUrl}}/ai/config
+
+### Structured recipe importer
+POST {{baseUrl}}/ai/import-recipe
+Content-Type: application/json
+
+{
+  "text": "Lemon beans: warm canned beans with lemon juice and olive oil. Serve.",
+  "source": "demo fixture"
+}
+
+### Ask My Cookbook over saved recipes
+# Requires COOKBOOK_DB_PATH to point at a demo SQLite DB with saved recipes.
+POST {{baseUrl}}/ai/ask
+Content-Type: application/json
+
+{
+  "question": "What saved recipe uses lemon?",
+  "limit": 2
+}
+
+### Local dataset search
+# Requires RECIPE_DATASET_DIR to point at a demo folder containing 13k-recipes.csv.
+GET {{baseUrl}}/dataset/search?q=lemon&limit=2&dataset_limit=5
+
+### Dataset Ask/RAG with citations
+# Requires RECIPE_DATASET_DIR to point at a demo folder containing 13k-recipes.csv.
+POST {{baseUrl}}/dataset/ask
+Content-Type: application/json
+
+{
+  "question": "What indexed recipe uses lemon?",
+  "limit": 1,
+  "dataset_limit": 5
+}
+
+### Saved-recipe meal planning
+# Requires COOKBOOK_DB_PATH to point at a demo SQLite DB with saved recipes.
+POST {{baseUrl}}/ai/meal-plan
+Content-Type: application/json
+
+{
+  "days": 1,
+  "meals_per_day": 1,
+  "preferences": "lemon",
+  "candidate_limit": 2
+}

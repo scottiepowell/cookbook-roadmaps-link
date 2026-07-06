@@ -32,6 +32,8 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Repository map](docs/repo-map.md)
 - [AI medium-path roadmap](docs/ai-medium-path-roadmap.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
+- [AI demo walkthrough](docs/ai-demo-walkthrough.md)
+- [AI feature status](docs/ai-feature-status.md)
 - [Local recipe dataset adapter](docs/local-recipe-dataset-adapter.md)
 - [Shared infrastructure data boundaries](docs/shared-infrastructure-data-boundaries.md)
 - [Meal planner foundation](docs/meal-planner-foundation.md)
@@ -59,6 +61,12 @@ Numbered `inbox/` specifications drive work. Codex inspects, implements, validat
 ## AI Sidecar Status
 
 The `ai-api` service provides health/config endpoints, deterministic saved-recipe search, structured recipe import drafts, Ask My Cookbook RAG over saved recipes, a saved-recipe meal-plan endpoint, read-only cookbook DB inspection, local-only Kaggle recipe dataset search/RAG, offline evals, and a manual-only live OpenAI smoke script. Automated validation uses the mock provider and generated fixtures; it does not require provider keys, live AI calls, the Vanilla Cookbook database, or committed raw dataset files.
+
+For a portfolio or interview walkthrough, start with [AI demo walkthrough](docs/ai-demo-walkthrough.md), [AI feature status](docs/ai-feature-status.md), and the mock demo helper:
+
+```powershell
+.\scripts\demo-ai-mock.ps1
+```
 
 ## Status
 
