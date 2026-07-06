@@ -1,10 +1,15 @@
-from fastapi import FastAPI, HTTPException, Query
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_provider_config
 from app.dataset_rag import DatasetAskProviderError, ask_dataset_recipes
 from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.meal_plan_endpoint import MealPlanProviderError, MealPlanValidationError, create_meal_plan
+from app.observability import configure_logging, log_ai_workflow, request_logging_middleware
 from app.recipe_reader import NoRecipeTableFoundError, RecipeReaderError, load_recipe_documents
 from app.rag import AskProviderError, ask_cookbook
 from app.schemas import (
@@ -27,6 +32,17 @@ from app.schemas import (
 from app.search import search_recipes
 
 app = FastAPI(title="Cookbook AI API", version="0.1.0")
+configure_logging()
+app.middleware("http")(request_logging_middleware)
+
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/demo", include_in_schema=False)
+@app.get("/demo/ai", include_in_schema=False)
+def ai_demo() -> FileResponse:
+    return FileResponse(STATIC_DIR / "demo.html", media_type="text/html")
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -45,72 +61,144 @@ def ai_config() -> ConfigResponse:
 
 @app.get("/recipes/search", response_model=RecipeSearchResponse)
 def search_recipes_get(
+    request: Request,
     q: str = "",
     limit: int = Query(default=10, ge=1, le=50),
 ) -> RecipeSearchResponse:
-    return _search_response(query=q, limit=limit)
+    response = _search_response(query=q, limit=limit)
+    log_ai_workflow("recipes.search", request, retrieved_count=response.count, citation_count=0, warning_count=0)
+    return response
 
 
 @app.post("/recipes/search", response_model=RecipeSearchResponse)
-def search_recipes_post(request: RecipeSearchRequest) -> RecipeSearchResponse:
-    return _search_response(query=request.query, limit=request.limit)
+def search_recipes_post(payload: RecipeSearchRequest, request: Request) -> RecipeSearchResponse:
+    response = _search_response(query=payload.query, limit=payload.limit)
+    log_ai_workflow("recipes.search", request, retrieved_count=response.count, citation_count=0, warning_count=0)
+    return response
 
 
 @app.get("/dataset/search", response_model=DatasetSearchResponse)
 def search_dataset_get(
+    request: Request,
     q: str = "",
     limit: int = Query(default=10, ge=1, le=50),
     dataset_limit: int | None = Query(default=None, ge=1, le=5000),
 ) -> DatasetSearchResponse:
-    return search_dataset_recipes(query=q, limit=limit, dataset_limit=dataset_limit)
+    response = search_dataset_recipes(query=q, limit=limit, dataset_limit=dataset_limit)
+    log_ai_workflow(
+        "dataset.search",
+        request,
+        retrieved_count=response.count,
+        citation_count=0,
+        warning_count=len(response.warnings),
+    )
+    return response
 
 
 @app.post("/dataset/search", response_model=DatasetSearchResponse)
-def search_dataset_post(request: DatasetSearchRequest) -> DatasetSearchResponse:
-    return search_dataset_recipes(query=request.query, limit=request.limit, dataset_limit=request.dataset_limit)
+def search_dataset_post(payload: DatasetSearchRequest, request: Request) -> DatasetSearchResponse:
+    response = search_dataset_recipes(query=payload.query, limit=payload.limit, dataset_limit=payload.dataset_limit)
+    log_ai_workflow(
+        "dataset.search",
+        request,
+        retrieved_count=response.count,
+        citation_count=0,
+        warning_count=len(response.warnings),
+    )
+    return response
 
 
 @app.post("/dataset/ask", response_model=DatasetAskResponse)
-def ask_dataset(request: DatasetAskRequest) -> DatasetAskResponse:
+def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskResponse:
     try:
-        return ask_dataset_recipes(request)
+        response = ask_dataset_recipes(payload)
+        log_ai_workflow(
+            "dataset.ask",
+            request,
+            provider=response.provider,
+            model=response.model,
+            retrieved_count=response.retrieval.retrieved_count,
+            citation_count=len(response.citations),
+            warning_count=len(response.warnings),
+        )
+        return response
     except DatasetAskProviderError as exc:
+        log_ai_workflow("dataset.ask", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=503, detail="Dataset ask provider is not available.") from exc
 
 
 @app.post("/ai/import-recipe", response_model=RecipeImportResponse)
-def import_recipe(request: RecipeImportRequest) -> RecipeImportResponse:
+def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImportResponse:
     try:
-        return import_recipe_text(request)
+        response = import_recipe_text(payload)
+        log_ai_workflow(
+            "recipe.import",
+            request,
+            provider=response.provider,
+            model=response.model,
+            retrieved_count=0,
+            citation_count=0,
+            warning_count=len(response.warnings),
+        )
+        return response
     except RecipeImportProviderError as exc:
+        log_ai_workflow("recipe.import", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=503, detail="Recipe importer provider is not available.") from exc
     except RecipeImportValidationError as exc:
+        log_ai_workflow("recipe.import", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=502, detail="Recipe importer returned an invalid draft.") from exc
 
 
 @app.post("/ai/ask", response_model=AskResponse)
-def ask_my_cookbook(request: AskRequest) -> AskResponse:
+def ask_my_cookbook(payload: AskRequest, request: Request) -> AskResponse:
     try:
-        return ask_cookbook(request)
+        response = ask_cookbook(payload)
+        log_ai_workflow(
+            "cookbook.ask",
+            request,
+            provider=response.provider,
+            model=response.model,
+            retrieved_count=response.retrieval.retrieved_count,
+            citation_count=len(response.citations),
+            warning_count=len(response.warnings),
+        )
+        return response
     except NoRecipeTableFoundError as exc:
+        log_ai_workflow("cookbook.ask", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except RecipeReaderError as exc:
+        log_ai_workflow("cookbook.ask", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=500, detail="Recipe database could not be read.") from exc
     except AskProviderError as exc:
+        log_ai_workflow("cookbook.ask", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=503, detail="Ask provider is not available.") from exc
 
 
 @app.post("/ai/meal-plan", response_model=MealPlanResponse)
-def meal_plan(request: MealPlanRequest) -> MealPlanResponse:
+def meal_plan(payload: MealPlanRequest, request: Request) -> MealPlanResponse:
     try:
-        return create_meal_plan(request)
+        response = create_meal_plan(payload)
+        log_ai_workflow(
+            "meal.plan",
+            request,
+            provider=response.provider,
+            model=response.model,
+            retrieved_count=response.selection.candidate_count,
+            citation_count=len(response.citations),
+            warning_count=len(response.warnings),
+        )
+        return response
     except NoRecipeTableFoundError as exc:
+        log_ai_workflow("meal.plan", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except RecipeReaderError as exc:
+        log_ai_workflow("meal.plan", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=500, detail="Recipe database could not be read.") from exc
     except MealPlanProviderError as exc:
+        log_ai_workflow("meal.plan", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=503, detail="Meal-plan provider is not available.") from exc
     except MealPlanValidationError as exc:
+        log_ai_workflow("meal.plan", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=502, detail="Meal-plan provider returned an invalid plan.") from exc
 
 

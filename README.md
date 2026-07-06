@@ -12,6 +12,7 @@ Completed AI workflows:
 - Ask My Cookbook: `POST /ai/ask` answers over saved recipes with recipe citations.
 - Dataset search/RAG: `GET/POST /dataset/search` and `POST /dataset/ask` use bounded local dataset fixtures with provenance citations.
 - Meal planning: `POST /ai/meal-plan` builds plans from saved recipe candidates.
+- Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows.
 - Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
 
 Validation proof:
@@ -24,6 +25,8 @@ Demo and evidence links:
 
 - [AI portfolio showcase](docs/ai-portfolio-showcase.md)
 - [AI feature completion review](docs/ai-feature-completion-review.md)
+- [AI UI integration plan](docs/ai-ui-integration-plan.md)
+- [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -36,6 +39,8 @@ Run the safe mock demo:
 ```powershell
 .\scripts\demo-ai-mock.ps1
 ```
+
+When the AI sidecar is running locally, open `http://127.0.0.1:8000/demo` for the browser demo UI.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
@@ -70,6 +75,8 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [AI medium-path roadmap](docs/ai-medium-path-roadmap.md)
 - [AI portfolio showcase](docs/ai-portfolio-showcase.md)
 - [AI feature completion review](docs/ai-feature-completion-review.md)
+- [AI UI integration plan](docs/ai-ui-integration-plan.md)
+- [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)

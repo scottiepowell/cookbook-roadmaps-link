@@ -7,6 +7,7 @@ This project demonstrates an offline-first AI application architecture with a Fa
 Vanilla Cookbook remains the application being extended. The `ai-api` sidecar adds AI workflows without requiring production storage changes, vector databases, embeddings, raw dataset commits, or live provider calls during normal validation.
 
 The final acceptance review is documented in [AI Feature Completion Review](ai-feature-completion-review.md).
+The first product-facing UI is a sidecar-served demo at `GET /demo`; see [AI UI Integration Plan](ai-ui-integration-plan.md) and [AI Sidecar Logging](ai-sidecar-logging.md).
 
 ## Architecture
 
@@ -36,6 +37,8 @@ The important design choice is retrieval before generation. Saved-recipe Q&A and
 | Meal planning | `POST /ai/meal-plan` | Plans built from saved recipe candidates. |
 | Offline evals | `evals/ai_cookbook/run_evals.py` | Repeatable quality checks with generated fixtures. |
 | Live provider smoke | `scripts/smoke-openai-live.py` | Manual proof that the OpenAI provider path works. |
+| Sidecar demo UI | `GET /demo`, `GET /demo/ai` | Browser demo for completed sidecar workflows without upstream UI rewrite. |
+| Structured logging | stdout JSON logs | Safe request/workflow metadata for local and Docker Compose logs. |
 
 ## Validation Evidence
 

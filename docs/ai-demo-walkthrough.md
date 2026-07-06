@@ -6,6 +6,14 @@ For a higher-level summary, start with [AI Portfolio Showcase](ai-portfolio-show
 
 ## Demo Paths
 
+Use the browser demo UI when the AI sidecar is running locally:
+
+```text
+http://127.0.0.1:8000/demo
+```
+
+The page is served by the sidecar because this repository does not include the upstream Vanilla Cookbook frontend source tree. It exercises health/config, importer, Ask My Cookbook, dataset search, dataset ask, and meal planning through existing API endpoints.
+
 Use the mock/offline path for normal demos:
 
 ```powershell
@@ -27,6 +35,8 @@ $env:AI_MAX_OUTPUT_TOKENS="200"
 ```
 
 REST examples live in `scripts/demo-ai-requests.http`. They assume an AI API server is already running at `http://127.0.0.1:8000`; the file is for manual request clients and is not a launch workflow.
+
+Sidecar logs are structured JSON on stdout. See [AI Sidecar Logging](ai-sidecar-logging.md) for safe fields and local viewing commands.
 
 ## Five-Minute Talk Track
 
@@ -50,11 +60,12 @@ The project documents data boundaries, validation behavior, live smoke interpret
 1. Open [AI Portfolio Showcase](ai-portfolio-showcase.md) and summarize the architecture.
 2. Open [AI Feature Completion Review](ai-feature-completion-review.md) for the acceptance matrix.
 3. Open [AI Feature Status](ai-feature-status.md) and show the feature matrix.
-4. Run `.\scripts\demo-ai-mock.ps1`.
-5. Show `evals/ai_cookbook/workflow_cases.json` for fixture-based workflow coverage.
-6. Open `scripts/demo-ai-requests.http` and walk through the REST endpoints.
-7. Show [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md) and the recorded passing live output.
-8. Use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md) if visual proof is needed later.
+4. Open `http://127.0.0.1:8000/demo` if the sidecar is running.
+5. Run `.\scripts\demo-ai-mock.ps1`.
+6. Show `evals/ai_cookbook/workflow_cases.json` for fixture-based workflow coverage.
+7. Open `scripts/demo-ai-requests.http` and walk through the REST endpoints.
+8. Show [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md) and the recorded passing live output.
+9. Use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md) if visual proof is needed later.
 
 ## What Not To Claim
 
@@ -64,3 +75,4 @@ The project documents data boundaries, validation behavior, live smoke interpret
 - This does not persist generated indexes.
 - This does not add live provider calls to CI.
 - This does not rewrite the Vanilla Cookbook UI.
+- This does not add external logging infrastructure.

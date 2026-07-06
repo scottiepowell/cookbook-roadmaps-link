@@ -607,3 +607,39 @@ Guardrails:
 - each option needs a separate task and acceptance criteria;
 - do not add live provider calls to CI;
 - do not add Qdrant, Postgres, pgvector, embeddings, vector DB, persistent generated indexes, deployment changes, raw datasets, private env files, or provider keys without an explicit future task.
+
+## 0027A: Add AI Demo UI And Logging
+
+Status: complete.
+
+Goal: Start the product-facing phase with a sidecar-served AI demo UI and safe structured logging foundation.
+
+Files likely touched:
+
+- `ai-api/app/main.py`
+- `ai-api/app/observability.py`
+- `ai-api/app/static/`
+- `ai-api/tests/test_demo_ui.py`
+- `ai-api/tests/test_observability.py`
+- `docs/ai-ui-integration-plan.md`
+- `docs/ai-sidecar-logging.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-demo-walkthrough.md`
+- `README.md`
+
+Validation:
+
+- UI route/static asset TestClient tests;
+- logging TestClient/helper tests;
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior.
+
+Done criteria:
+
+- `GET /demo` and `GET /demo/ai` serve a lightweight AI demo UI from the sidecar.
+- UI exercises existing AI endpoints and shows responses, citations/provenance, warnings, provider/model metadata, and friendly errors.
+- structured stdout logging emits safe request/workflow metadata without raw prompts, pasted recipes, provider responses, env contents, local private paths, or secrets.
+- no upstream Vanilla Cookbook frontend rewrite, deployment changes, external logging infrastructure, screenshots, raw datasets, generated artifacts, or provider keys are added.

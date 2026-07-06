@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cookbook AI Demo</title>
+    <link rel="stylesheet" href="/static/demo.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">FastAPI sidecar demo</p>
+        <h1>Cookbook AI</h1>
+      </div>
+      <button id="check-status" type="button">Check status</button>
+    </header>
+
+    <main>
+      <section class="notice">
+        <h2>Safety and Data Boundaries</h2>
+        <p>
+          This page is served by the AI sidecar, not the upstream Vanilla Cookbook frontend.
+          It uses existing API endpoints and shows only response summaries, citations,
+          warnings, provider/model names, and JSON previews. It does not display provider
+          keys, environment files, raw prompts, raw provider config, or private local paths.
+        </p>
+      </section>
+
+      <section class="status-grid">
+        <article>
+          <h2>Health</h2>
+          <pre id="health-output">Not checked yet.</pre>
+        </article>
+        <article>
+          <h2>Provider Status</h2>
+          <pre id="config-output">Not checked yet.</pre>
+        </article>
+      </section>
+
+      <section class="workflow">
+        <div>
+          <h2>Structured Recipe Importer</h2>
+          <textarea id="import-text">Lemon beans: warm canned beans with olive oil and lemon juice. Serve with herbs.</textarea>
+          <button data-action="import" type="button">Run importer</button>
+        </div>
+        <div id="import-result" class="result"></div>
+      </section>
+
+      <section class="workflow">
+        <div>
+          <h2>Ask My Cookbook</h2>
+          <input id="cookbook-question" value="What saved recipe uses lemon?">
+          <button data-action="cookbook-query" type="button">Ask saved recipes</button>
+          <p class="hint">Requires a configured cookbook SQLite database with saved recipes.</p>
+        </div>
+        <div id="cookbook-result" class="result"></div>
+      </section>
+
+      <section class="workflow">
+        <div>
+          <h2>Dataset Search</h2>
+          <input id="dataset-search-query" value="lemon beans">
+          <button data-action="dataset-search" type="button">Search dataset</button>
+          <p class="hint">Uses the configured local dataset directory if available.</p>
+        </div>
+        <div id="dataset-search-result" class="result"></div>
+      </section>
+
+      <section class="workflow">
+        <div>
+          <h2>Dataset Ask/RAG</h2>
+          <input id="dataset-question" value="What indexed recipe uses lemon?">
+          <button data-action="dataset-rag" type="button">Ask dataset</button>
+        </div>
+        <div id="dataset-rag-result" class="result"></div>
+      </section>
+
+      <section class="workflow">
+        <div>
+          <h2>Meal Planner</h2>
+          <input id="meal-plan-preferences" value="lemon dinner">
+          <button data-action="meal-plan" type="button">Create meal plan</button>
+          <p class="hint">Requires saved recipe data; missing data is reported as a friendly API error.</p>
+        </div>
+        <div id="meal-plan-result" class="result"></div>
+      </section>
+    </main>
+
+    <script src="/static/demo.js"></script>
+  </body>
+</html>
