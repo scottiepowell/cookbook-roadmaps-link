@@ -5,6 +5,7 @@ from typing import Any
 from app.config import DEFAULT_AI_MAX_OUTPUT_TOKENS, DEFAULT_OPENAI_FALLBACK_MODEL, DEFAULT_OPENAI_MODEL
 from app.providers.base import LLMProvider, LLMRequest, LLMResponse, StructuredLLMRequest, StructuredLLMResponse
 from app.providers.errors import ProviderCallError, ProviderConfigError
+from app.providers.openai_schema import normalize_strict_json_schema
 
 
 class OpenAIProvider(LLMProvider):
@@ -57,7 +58,7 @@ class OpenAIProvider(LLMProvider):
                     "format": {
                         "type": "json_schema",
                         "name": request.schema_name,
-                        "schema": request.schema,
+                        "schema": normalize_strict_json_schema(request.schema),
                         "strict": True,
                     }
                 },
