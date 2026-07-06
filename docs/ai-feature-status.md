@@ -2,6 +2,8 @@
 
 This matrix summarizes what is complete, how to demo it, and what evidence supports each claim. Normal validation is offline and mock-only.
 
+For the final phase-close acceptance matrix, see [AI Feature Completion Review](ai-feature-completion-review.md).
+
 | Feature | Status | Endpoint or Script | Proof | Notes |
 | --- | --- | --- | --- | --- |
 | Health/config | Complete | `GET /health`, `GET /ai/config` | pytest, mock demo | Reports readiness and non-secret provider availability. |
@@ -44,6 +46,7 @@ status=passed
 ## Demo Starting Points
 
 - [AI Portfolio Showcase](ai-portfolio-showcase.md)
+- [AI Feature Completion Review](ai-feature-completion-review.md)
 - [AI Demo Walkthrough](ai-demo-walkthrough.md)
 - [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md)
 - [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md)

@@ -6,6 +6,8 @@ This project demonstrates an offline-first AI application architecture with a Fa
 
 Vanilla Cookbook remains the application being extended. The `ai-api` sidecar adds AI workflows without requiring production storage changes, vector databases, embeddings, raw dataset commits, or live provider calls during normal validation.
 
+The final acceptance review is documented in [AI Feature Completion Review](ai-feature-completion-review.md).
+
 ## Architecture
 
 ```mermaid
@@ -101,7 +103,6 @@ It is not presented as a finished production AI platform. It is a working, testa
 
 Future work should focus on review and hardening before new infrastructure:
 
-- final AI feature completion review;
 - screenshot capture from mock fixtures only;
 - acceptance matrix for portfolio demos;
 - production storage design only in a separately scoped task;

@@ -23,6 +23,7 @@ Validation proof:
 Demo and evidence links:
 
 - [AI portfolio showcase](docs/ai-portfolio-showcase.md)
+- [AI feature completion review](docs/ai-feature-completion-review.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -68,6 +69,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Repository map](docs/repo-map.md)
 - [AI medium-path roadmap](docs/ai-medium-path-roadmap.md)
 - [AI portfolio showcase](docs/ai-portfolio-showcase.md)
+- [AI feature completion review](docs/ai-feature-completion-review.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)

@@ -558,13 +558,19 @@ Done criteria:
 
 ## 0026C: Final AI Feature Completion Review
 
+Status: complete.
+
 Goal: Perform an acceptance review of the completed AI cookbook feature set and produce a final feature-completion matrix without adding new infrastructure.
 
 Files likely touched:
 
+- `docs/ai-feature-completion-review.md`
 - `docs/ai-feature-status.md`
 - `docs/ai-portfolio-showcase.md`
 - `docs/ai-demo-walkthrough.md`
+- `docs/ai-implementation-backlog.md`
+- `docs/repo-map.md`
+- `README.md`
 - `outbox/0026C-final-ai-feature-completion-review-results.md`
 
 Validation:
@@ -580,3 +586,24 @@ Done criteria:
 - final acceptance matrix confirms completed importer, saved-recipe ask, dataset search/RAG, meal planning, evals, and manual live smoke paths;
 - deferred production/storage/UI boundaries are explicit;
 - no Qdrant, Postgres, pgvector, embeddings, vector DB, persistent indexes, deployment changes, raw datasets, private env files, or provider keys are added.
+
+## 0027: Future AI/Platform Options
+
+Status: deferred options.
+
+Goal: Capture possible next-phase AI and platform work as separately scoped options, not immediate work for the completed AI cookbook feature slice.
+
+Deferred options:
+
+- production storage architecture ADR;
+- demo control-plane ADR;
+- screenshot capture with safe mock data;
+- optional UI integration for selected AI endpoints;
+- embeddings/vector DB spike only if deterministic retrieval becomes insufficient;
+- app-specific data-plane isolation for cookbook, stock, and Army demos.
+
+Guardrails:
+
+- each option needs a separate task and acceptance criteria;
+- do not add live provider calls to CI;
+- do not add Qdrant, Postgres, pgvector, embeddings, vector DB, persistent generated indexes, deployment changes, raw datasets, private env files, or provider keys without an explicit future task.

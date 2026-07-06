@@ -2,7 +2,7 @@
 
 This walkthrough is for portfolio, interview, or customer conversations. It shows the AI sidecar as an offline-first cookbook assistant with optional live OpenAI validation.
 
-For a higher-level summary, start with [AI Portfolio Showcase](ai-portfolio-showcase.md). For future visual assets, use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md).
+For a higher-level summary, start with [AI Portfolio Showcase](ai-portfolio-showcase.md). For final acceptance evidence, use [AI Feature Completion Review](ai-feature-completion-review.md). For future visual assets, use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md).
 
 ## Demo Paths
 
@@ -48,12 +48,13 @@ The project documents data boundaries, validation behavior, live smoke interpret
 ## Suggested Demo Order
 
 1. Open [AI Portfolio Showcase](ai-portfolio-showcase.md) and summarize the architecture.
-2. Open [AI Feature Status](ai-feature-status.md) and show the feature matrix.
-3. Run `.\scripts\demo-ai-mock.ps1`.
-4. Show `evals/ai_cookbook/workflow_cases.json` for fixture-based workflow coverage.
-5. Open `scripts/demo-ai-requests.http` and walk through the REST endpoints.
-6. Show [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md) and the recorded passing live output.
-7. Use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md) if visual proof is needed later.
+2. Open [AI Feature Completion Review](ai-feature-completion-review.md) for the acceptance matrix.
+3. Open [AI Feature Status](ai-feature-status.md) and show the feature matrix.
+4. Run `.\scripts\demo-ai-mock.ps1`.
+5. Show `evals/ai_cookbook/workflow_cases.json` for fixture-based workflow coverage.
+6. Open `scripts/demo-ai-requests.http` and walk through the REST endpoints.
+7. Show [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md) and the recorded passing live output.
+8. Use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md) if visual proof is needed later.
 
 ## What Not To Claim
 

@@ -28,6 +28,7 @@ AI design references:
 
 - [AI medium-path roadmap](ai-medium-path-roadmap.md)
 - [AI portfolio showcase](ai-portfolio-showcase.md)
+- [AI feature completion review](ai-feature-completion-review.md)
 - [AI sidecar architecture](ai-sidecar-architecture.md)
 - [AI demo walkthrough](ai-demo-walkthrough.md)
 - [AI feature status](ai-feature-status.md)
