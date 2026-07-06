@@ -360,7 +360,61 @@ Done criteria:
 - Windows temp-directory pytest issue is documented with a PowerShell wrapper;
 - shared infrastructure/data-boundary note exists.
 
-## 0025B: Add Evals And CI Validation
+## 0025B: Expand Offline AI Evals
+
+Status: complete.
+
+Goal: Expand the offline AI cookbook eval harness across major AI workflows while keeping validation deterministic and mock-only.
+
+Files likely touched:
+
+- `evals/ai_cookbook/`
+- `docs/ai-evals-plan.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite;
+- repo validation;
+- no live provider keys;
+- no raw dataset files or generated indexes committed.
+
+Done criteria:
+
+- evals cover dataset ask, saved-recipe ask, importer, meal plan, provider config hygiene, citations, and secret-like leakage checks.
+- normal validation remains offline and mock-only.
+
+## 0025C: Add Manual Live OpenAI Smoke Tests
+
+Status: complete.
+
+Goal: Add a safe manual-only script that proves the existing OpenAI provider path can make real calls for major AI workflows without affecting CI or normal validation.
+
+Files likely touched:
+
+- `scripts/smoke-openai-live.py`
+- `ai-api/tests/test_openai_live_smoke_script.py`
+- `docs/live-openai-smoke-tests.md`
+- `.env.example`
+- `README.md`
+- `ai-api/README.md`
+
+Validation:
+
+- guardrail unit tests without live calls;
+- offline eval command;
+- AI API pytest suite;
+- repo validation;
+- manual live command only when explicitly opted in.
+
+Done criteria:
+
+- manual live smoke script requires `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`, a local OpenAI key, and `OPENAI_LIVE_TEST_BUDGET_CENTS` at or below 25.
+- script covers provider sanity, importer, saved-recipe ask, dataset ask, and meal plan with tiny generated fixtures.
+- script does not run from CI, normal pytest selection beyond offline guardrail tests, offline evals, or repository validation as a live call.
+- no production deployment, Cloudflare, Qdrant, Postgres, pgvector, embeddings, vector DB, generated persistent indexes, raw dataset files, `.env`, or secrets are added.
+
+## 0025D: Keep AI Validation Deterministic In CI
 
 Goal: Wire offline AI evals into local validation and GitHub Actions.
 

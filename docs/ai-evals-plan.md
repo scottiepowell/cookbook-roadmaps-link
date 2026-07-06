@@ -1,6 +1,6 @@
 # AI Evals Plan
 
-The AI sidecar should be evaluated before it is treated as a portfolio feature. Tests should run offline by default and use the mock provider unless a later task explicitly adds opt-in live evals.
+The AI sidecar should be evaluated before it is treated as a portfolio feature. Tests run offline by default and use the mock provider. Manual live OpenAI smoke tests are separate opt-in checks and are not part of CI or repository validation.
 
 ## Test Layers
 
@@ -121,3 +121,9 @@ evals/
 - Meal-planner foundation tests must not call providers and must not write to the cookbook database.
 - Meal-plan endpoint tests must use mock/offline behavior, send only selected candidates to the provider, cite saved recipes, and avoid database write-back.
 - Dataset ask evals must use generated fixtures only and must not require the real Kaggle dataset, network access, provider keys, Docker runtime, or live providers.
+
+## Manual Live OpenAI Smoke Tests
+
+Manual live OpenAI smoke tests live in `scripts/smoke-openai-live.py` and are documented in [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md). They require explicit opt-in controls, a local provider key, a 25-cent-or-lower budget cap, tiny generated fixtures, and low output tokens. They cover provider sanity, importer, saved-recipe Ask My Cookbook, dataset ask, and meal-plan paths through the existing provider harness.
+
+These smoke tests are not CI requirements and must not be added to normal pytest, offline evals, or repository validation.

@@ -87,7 +87,7 @@ The response contains validated draft fields:
 }
 ```
 
-The mock provider is the default for local validation and CI. Optional OpenAI manual testing can use `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`, `OPENAI_MODEL=gpt-5.4-nano`, and a locally configured provider key, but no live OpenAI calls are part of automated validation.
+The mock provider is the default for local validation and CI. Optional OpenAI manual testing uses `scripts/smoke-openai-live.py` with `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, low output tokens, and a locally configured provider key. No live OpenAI calls are part of automated validation.
 
 ## Ask My Cookbook
 
@@ -159,19 +159,25 @@ AI_TIMEOUT_SECONDS=20
 OPENAI_MODEL=gpt-5.4-nano
 OPENAI_FALLBACK_MODEL=gpt-5.4-mini
 OPENAI_ENABLE_LIVE_TESTS=false
+OPENAI_LIVE_TEST_BUDGET_CENTS=25
 RECIPE_DATASET_DIR=recipe-dataset
 RECIPE_DATASET_INDEX_LIMIT=100
 ```
 
 `mock` is the default provider and returns deterministic text and structured JSON-shaped responses for offline tests. `openai` is the first real provider path and uses the official OpenAI Python SDK lazily, with `gpt-5.4-nano` as the default model and `gpt-5.4-mini` configured as a fallback for future explicit use.
 
-Manual live smoke tests are opt-in only and were not added to automated validation:
+Manual live smoke tests are opt-in only and are not part of automated validation:
 
-```bash
-AI_PROVIDER=openai OPENAI_ENABLE_LIVE_TESTS=true pytest ai-api/tests/test_openai_live.py
+```powershell
+$env:AI_PROVIDER="openai"
+$env:OPENAI_ENABLE_LIVE_TESTS="true"
+$env:OPENAI_LIVE_TEST_BUDGET_CENTS="25"
+$env:AI_MAX_OUTPUT_TOKENS="200"
+# OPENAI_API_KEY should already be in local .env or process env, never committed
+& .\.venv\Scripts\python.exe scripts\smoke-openai-live.py
 ```
 
-There is no live test file yet. Future live smoke tests should stay skipped unless `OPENAI_ENABLE_LIVE_TESTS=true` and a local provider key are both present.
+The smoke script uses tiny generated fixtures for provider sanity, importer, Ask My Cookbook, dataset ask, and meal planning. It exits without live calls unless `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`, a local OpenAI key, and a 25-cent-or-lower budget cap are present. It does not use the real dataset folder or production cookbook DB and does not add embeddings or vector storage. See [Manual Live OpenAI Smoke Tests](../docs/live-openai-smoke-tests.md).
 
 ## Cookbook DB Path
 

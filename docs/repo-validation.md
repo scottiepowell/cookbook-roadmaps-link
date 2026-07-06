@@ -17,6 +17,8 @@ The validator:
 
 Temporary Compose files are removed automatically. The validator never prints `.env` content or matched credential text.
 
+The manual live OpenAI smoke script is intentionally excluded from repository validation. Validation remains offline, deterministic, mock-provider based, and free.
+
 ## Run Locally
 
 Docker with the Compose plugin, Git, Bash, Perl, Python, and network access for
@@ -53,6 +55,8 @@ For a false positive, first confirm the value is non-sensitive. Prefer replacing
 ## CI Scope
 
 This workflow does not deploy, start containers, contact cloud APIs, or require AWS, Cloudflare, OpenAI, or application credentials. It validates repository content, local Compose parsing, and offline AI sidecar tests.
+
+Manual live OpenAI smoke tests are documented separately in [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md). They require explicit local opt-in variables and are not CI requirements.
 
 ## GitOps Mailbox Support
 
