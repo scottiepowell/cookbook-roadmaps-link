@@ -17,8 +17,8 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Strict OpenAI structured schema | Complete | provider harness | offline fake-client tests | Normalizes Pydantic schemas for strict structured outputs. |
 | Mock demo path | Complete | `scripts/demo-ai-mock.ps1` | local script validation | Runs offline evals and endpoint checks with generated fixtures. |
 | REST examples | Complete | `scripts/demo-ai-requests.http` | docs/examples | Manual request examples for portfolio walkthroughs. |
-| Sidecar demo UI | Complete | `GET /demo`, `GET /demo/ai` | TestClient UI tests | Browser page exercises existing endpoints without upstream UI rewrite. |
-| Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata only. |
+| Sidecar demo UI | Complete | `GET /demo`, `GET /demo/ai`, `GET /demo/readiness` | TestClient UI/readiness tests | Guided browser page exercises existing endpoints without upstream UI rewrite. |
+| Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. |
 
 ## Recorded Live Smoke
 
@@ -50,6 +50,7 @@ status=passed
 - [AI Portfolio Showcase](ai-portfolio-showcase.md)
 - [AI Feature Completion Review](ai-feature-completion-review.md)
 - [AI Demo Walkthrough](ai-demo-walkthrough.md)
+- [AI Live Demo Runbook](ai-live-demo-runbook.md)
 - [AI UI Integration Plan](ai-ui-integration-plan.md)
 - [AI Sidecar Logging](ai-sidecar-logging.md)
 - [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md)

@@ -2,7 +2,7 @@
 
 This walkthrough is for portfolio, interview, or customer conversations. It shows the AI sidecar as an offline-first cookbook assistant with optional live OpenAI validation.
 
-For a higher-level summary, start with [AI Portfolio Showcase](ai-portfolio-showcase.md). For final acceptance evidence, use [AI Feature Completion Review](ai-feature-completion-review.md). For future visual assets, use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md).
+For a higher-level summary, start with [AI Portfolio Showcase](ai-portfolio-showcase.md). For final acceptance evidence, use [AI Feature Completion Review](ai-feature-completion-review.md). For a 15 to 30 minute operator script, use [AI Live Demo Runbook](ai-live-demo-runbook.md). For future visual assets, use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md).
 
 ## Demo Paths
 
@@ -12,7 +12,7 @@ Use the browser demo UI when the AI sidecar is running locally:
 http://127.0.0.1:8000/demo
 ```
 
-The page is served by the sidecar because this repository does not include the upstream Vanilla Cookbook frontend source tree. It exercises health/config, importer, Ask My Cookbook, dataset search, dataset ask, and meal planning through existing API endpoints.
+The page is served by the sidecar because this repository does not include the upstream Vanilla Cookbook frontend source tree. It exercises readiness, health/config, importer, Ask My Cookbook, dataset search, dataset ask, and meal planning through existing API endpoints. It includes sample inputs, reset buttons, loading states, answer cards, citations/provenance, warnings, and raw JSON details.
 
 Use the mock/offline path for normal demos:
 
@@ -61,11 +61,12 @@ The project documents data boundaries, validation behavior, live smoke interpret
 2. Open [AI Feature Completion Review](ai-feature-completion-review.md) for the acceptance matrix.
 3. Open [AI Feature Status](ai-feature-status.md) and show the feature matrix.
 4. Open `http://127.0.0.1:8000/demo` if the sidecar is running.
-5. Run `.\scripts\demo-ai-mock.ps1`.
-6. Show `evals/ai_cookbook/workflow_cases.json` for fixture-based workflow coverage.
-7. Open `scripts/demo-ai-requests.http` and walk through the REST endpoints.
-8. Show [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md) and the recorded passing live output.
-9. Use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md) if visual proof is needed later.
+5. Follow [AI Live Demo Runbook](ai-live-demo-runbook.md) for the 15 or 30 minute flow.
+6. Run `.\scripts\demo-ai-mock.ps1`.
+7. Show `evals/ai_cookbook/workflow_cases.json` for fixture-based workflow coverage.
+8. Open `scripts/demo-ai-requests.http` and walk through the REST endpoints.
+9. Show [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md) and the recorded passing live output.
+10. Use [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md) if visual proof is needed later.
 
 ## What Not To Claim
 

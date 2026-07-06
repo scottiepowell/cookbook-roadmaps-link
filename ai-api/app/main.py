@@ -1,10 +1,11 @@
+import sqlite3
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import get_provider_config
+from app.config import get_ai_settings, get_provider_config, get_recipe_dataset_dir
 from app.dataset_rag import DatasetAskProviderError, ask_dataset_recipes
 from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
@@ -43,6 +44,39 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 @app.get("/demo/ai", include_in_schema=False)
 def ai_demo() -> FileResponse:
     return FileResponse(STATIC_DIR / "demo.html", media_type="text/html")
+
+
+@app.get("/demo/readiness", include_in_schema=False)
+def demo_readiness() -> dict[str, object]:
+    settings = get_ai_settings()
+    recipe_count = _safe_recipe_count()
+    dataset_available = Path(get_recipe_dataset_dir()).exists()
+
+    return {
+        "service": {"ok": True, "name": "ai-api"},
+        "provider": {
+            "mode": settings.provider,
+            "model": settings.openai_model if settings.provider == "openai" else settings.model,
+            "offline_demo_mode": settings.provider == "mock",
+        },
+        "saved_recipes": {
+            "available": recipe_count is not None and recipe_count > 0,
+            "count": recipe_count or 0,
+            "message": (
+                "Saved recipes are available for Ask My Cookbook and meal planning."
+                if recipe_count
+                else "Saved-recipe data is not available; importer and dataset workflows can still be demoed."
+            ),
+        },
+        "dataset": {
+            "available": dataset_available,
+            "message": (
+                "Local dataset data is configured for dataset search and dataset ask."
+                if dataset_available
+                else "Local dataset data is not available; saved-recipe and importer workflows can still be demoed."
+            ),
+        },
+    }
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -215,3 +249,10 @@ def _search_response(query: str, limit: int) -> RecipeSearchResponse:
 
     results = search_recipes(recipes, query=query, limit=limit)
     return RecipeSearchResponse(query=query, count=len(results), results=results)
+
+
+def _safe_recipe_count() -> int | None:
+    try:
+        return len(load_recipe_documents())
+    except (NoRecipeTableFoundError, RecipeReaderError, OSError, sqlite3.Error):
+        return None

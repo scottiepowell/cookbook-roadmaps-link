@@ -10,7 +10,10 @@ from app.observability import LOGGER_NAME, log_ai_workflow
 def test_request_logging_middleware_emits_safe_fields(caplog):
     caplog.set_level(logging.INFO, logger=LOGGER_NAME)
 
-    response = TestClient(app).get("/health", headers={"x-request-id": "demo-request-1"})
+    response = TestClient(app).get(
+        "/health",
+        headers={"x-request-id": "demo-request-1", "x-ai-demo-workflow": "readiness"},
+    )
 
     assert response.status_code == 200
     events = [json.loads(record.message) for record in caplog.records if record.name == LOGGER_NAME]
@@ -19,6 +22,7 @@ def test_request_logging_middleware_emits_safe_fields(caplog):
     event = request_events[-1]
     assert event["request_id"] == "demo-request-1"
     assert event["endpoint_name"] == "/health"
+    assert event["ui_workflow"] == "readiness"
     assert event["status"] == 200
     assert "duration_ms" in event
     assert "OPENAI_API_KEY" not in record_messages(caplog)

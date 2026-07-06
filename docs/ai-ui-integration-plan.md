@@ -11,6 +11,8 @@ GET /demo/ai
 
 This is intentional. The repository runs Vanilla Cookbook from an external Docker image and does not contain the upstream Vanilla Cookbook frontend source tree. A sidecar-served demo page lets the completed AI workflows be exercised from a browser without rewriting or vendoring the upstream application UI.
 
+The production-quality live demo flow is documented in [AI Live Demo Runbook](ai-live-demo-runbook.md).
+
 ## How To Open Locally
 
 Start the AI sidecar with the normal local development approach, then open:
@@ -24,6 +26,14 @@ The page uses static files served from `ai-api/app/static/`:
 - `demo.html`
 - `demo.css`
 - `demo.js`
+
+The UI includes a readiness panel backed by:
+
+```text
+GET /demo/readiness
+```
+
+Readiness reports safe status only: sidecar health, provider mode/model, offline demo mode, saved-recipe availability/count, and local dataset availability. It does not expose local filesystem paths or sensitive runtime values.
 
 ## Workflows Exercised
 
@@ -39,7 +49,7 @@ The demo UI calls existing endpoints only:
 | Dataset Ask/RAG | `POST /dataset/ask` |
 | Meal planner | `POST /ai/meal-plan` |
 
-The UI displays readable answer summaries, JSON previews, citations/provenance, warnings, provider/model metadata, retrieval counts, and friendly errors.
+The UI displays readable answer summaries, JSON previews behind expandable details, citations/provenance, warnings, provider/model metadata, retrieval counts, loading states, reset controls, and friendly errors.
 
 ## Missing Local Data
 

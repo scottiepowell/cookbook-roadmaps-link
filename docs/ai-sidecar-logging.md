@@ -12,6 +12,7 @@ Safe fields include:
 - `timestamp`
 - `request_id`
 - `endpoint_name`
+- `ui_workflow` when the browser demo sends a workflow label
 - `status`
 - `duration_ms`
 - `safe_error_type` when an unhandled exception occurs
@@ -57,6 +58,7 @@ With Docker Compose, use the service log stream:
 
 ```powershell
 docker compose logs ai-api
+docker compose logs ai-api --tail 100
 ```
 
 The current Compose file includes an `ai-api` service. This task only adds the application logging foundation and does not add an external log backend.
@@ -67,6 +69,7 @@ Tests cover:
 
 - request middleware emits safe structured fields;
 - workflow helper emits counts and provider/model metadata;
+- demo UI requests include a safe `ui_workflow` label;
 - obvious sensitive markers are absent from logged test output.
 
 Log shape may grow in later tasks, but raw secrets and large payloads should remain excluded by default.

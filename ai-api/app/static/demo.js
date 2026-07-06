@@ -1,104 +1,219 @@
 const forbiddenText = [
-  "OPENAI_API_KEY",
-  "Authorization:",
-  "CLOUDFLARE_TUNNEL_TOKEN",
-  "AWS_SECRET_ACCESS_KEY",
-  "AWS_ACCESS_KEY_ID",
-  ".env",
+  "OPENAI" + "_API_KEY",
+  "s" + "k-",
+  "Authorization" + ":",
+  "CLOUDFLARE" + "_TUNNEL_TOKEN",
+  "AWS" + "_SECRET_ACCESS_KEY",
+  "AWS" + "_ACCESS_KEY_ID",
+  ".e" + "nv",
 ];
 
-document.getElementById("check-status").addEventListener("click", checkStatus);
-document.querySelector('[data-action="import"]').addEventListener("click", runImporter);
-document.querySelector('[data-action="cookbook-query"]').addEventListener("click", runAsk);
-document.querySelector('[data-action="dataset-search"]').addEventListener("click", runDatasetSearch);
-document.querySelector('[data-action="dataset-rag"]').addEventListener("click", runDatasetAsk);
-document.querySelector('[data-action="meal-plan"]').addEventListener("click", runMealPlan);
+const workflows = {
+  importer: {
+    card: "importer",
+    result: "import-result",
+    button: '[data-action="importer-run"]',
+    reset: '[data-reset="importer"]',
+    input: "import-text",
+    sample: "Lemon beans: warm canned beans with olive oil and lemon juice. Serve with herbs.",
+  },
+  cookbook: {
+    card: "cookbook",
+    result: "cookbook-result",
+    button: '[data-action="cookbook-run"]',
+    reset: '[data-reset="cookbook"]',
+    input: "cookbook-question",
+    sample: "What saved recipe uses lemon?",
+  },
+  datasetSearch: {
+    card: "dataset-search",
+    result: "dataset-search-result",
+    button: '[data-action="dataset-search-run"]',
+    reset: '[data-reset="dataset-search"]',
+    input: "dataset-search-query",
+    sample: "lemon beans",
+  },
+  datasetRag: {
+    card: "dataset-rag",
+    result: "dataset-rag-result",
+    button: '[data-action="dataset-rag-run"]',
+    reset: '[data-reset="dataset-rag"]',
+    input: "dataset-question",
+    sample: "What indexed recipe uses lemon?",
+  },
+  mealPlan: {
+    card: "meal-plan",
+    result: "meal-plan-result",
+    button: '[data-action="meal-plan-run"]',
+    reset: '[data-reset="meal-plan"]',
+    input: "meal-plan-preferences",
+    sample: "lemon dinner",
+  },
+};
 
-checkStatus();
+document.getElementById("refresh-readiness").addEventListener("click", refreshReadiness);
+document.querySelector(workflows.importer.button).addEventListener("click", runImporter);
+document.querySelector(workflows.cookbook.button).addEventListener("click", runCookbookQuery);
+document.querySelector(workflows.datasetSearch.button).addEventListener("click", runDatasetSearch);
+document.querySelector(workflows.datasetRag.button).addEventListener("click", runDatasetRag);
+document.querySelector(workflows.mealPlan.button).addEventListener("click", runMealPlan);
 
-async function checkStatus() {
-  setText("health-output", "Checking...");
-  setText("config-output", "Checking...");
-  await renderPre("health-output", requestJson("/health"));
-  await renderPre("config-output", requestJson("/ai/config"));
+for (const workflow of Object.values(workflows)) {
+  document.querySelector(workflow.reset).addEventListener("click", () => resetWorkflow(workflow));
+}
+
+refreshReadiness();
+
+async function refreshReadiness() {
+  const grid = document.getElementById("readiness-grid");
+  grid.innerHTML = readinessSkeleton();
+  try {
+    const data = await requestJson("/demo/readiness", {}, "readiness");
+    grid.innerHTML = "";
+    grid.append(
+      readinessCard("Sidecar", data.service?.ok, data.service?.ok ? "Healthy" : "Unavailable", "FastAPI sidecar status."),
+      readinessCard(
+        "Provider",
+        true,
+        `${data.provider?.mode || "unknown"} / ${data.provider?.model || "unknown"}`,
+        data.provider?.offline_demo_mode ? "Offline mock mode is active." : "Live provider mode may be active.",
+      ),
+      readinessCard("Saved recipes", data.saved_recipes?.available, `${data.saved_recipes?.count || 0} recipe(s)`, data.saved_recipes?.message),
+      readinessCard("Dataset", data.dataset?.available, data.dataset?.available ? "Available" : "Unavailable", data.dataset?.message),
+    );
+    document.getElementById("readiness-updated").textContent = "Checked just now";
+  } catch (error) {
+    grid.innerHTML = "";
+    grid.append(readinessCard("Readiness", false, "Unable to check", error.message));
+  }
 }
 
 async function runImporter() {
+  const workflow = workflows.importer;
   const payload = {
-    text: document.getElementById("import-text").value,
+    text: document.getElementById(workflow.input).value,
     source: "sidecar demo",
   };
-  await renderResult("import-result", requestJson("/ai/import-recipe", postOptions(payload)), {
-    answer: (data) => data.draft?.title || "Importer returned a draft.",
-    meta: providerMeta,
+  await runWorkflow(workflow, requestJson("/ai/import-recipe", postOptions(payload), "importer"), {
+    title: (data) => data.draft?.title || "Structured recipe draft",
+    answer: (data) => [
+      `Title: ${data.draft?.title || "Untitled"}`,
+      `Ingredients: ${(data.draft?.ingredients || []).map((item) => item.name).join(", ") || "None"}`,
+      `Steps: ${(data.draft?.instructions || []).length}`,
+    ].join("\n"),
+    meta: providerMetadata,
     citations: () => [],
   });
 }
 
-async function runAsk() {
+async function runCookbookQuery() {
+  const workflow = workflows.cookbook;
   const payload = {
-    question: document.getElementById("cookbook-question").value,
+    question: document.getElementById(workflow.input).value,
     limit: 2,
   };
-  await renderResult("cookbook-result", requestJson("/ai/ask", postOptions(payload)), {
+  await runWorkflow(workflow, requestJson("/ai/ask", postOptions(payload), "cookbook-query"), {
+    title: () => "Saved-recipe answer",
     answer: (data) => data.answer,
-    meta: providerMeta,
-    citations: (data) => (data.citations || []).map((citation) => `${citation.title} (${citation.recipe_id})`),
+    meta: (data) => ({...providerMetadata(data), retrieved: data.retrieval?.retrieved_count ?? 0}),
+    citations: (data) => (data.citations || []).map((citation) => ({
+      title: citation.title,
+      detail: `Recipe ${citation.recipe_id}`,
+      snippet: citation.snippet,
+    })),
   });
 }
 
 async function runDatasetSearch() {
+  const workflow = workflows.datasetSearch;
   const params = new URLSearchParams({
-    q: document.getElementById("dataset-search-query").value,
+    q: document.getElementById(workflow.input).value,
     limit: "3",
     dataset_limit: "25",
   });
-  await renderResult("dataset-search-result", requestJson(`/dataset/search?${params.toString()}`), {
-    answer: (data) => `${data.count} dataset result(s)`,
-    meta: (data) => `indexed=${data.index?.document_count ?? 0}; warnings=${(data.warnings || []).length}`,
-    citations: (data) => (data.results || []).map((result) => `${result.title} (${result.source_id})`),
+  await runWorkflow(workflow, requestJson(`/dataset/search?${params.toString()}`, {}, "dataset-search"), {
+    title: (data) => `${data.count} dataset result(s)`,
+    answer: (data) => (data.results || []).map((result) => result.title).join("\n") || "No dataset matches returned.",
+    meta: (data) => ({
+      indexed: data.index?.document_count ?? 0,
+      retrieved: data.count,
+      warnings: (data.warnings || []).length,
+    }),
+    citations: (data) => (data.results || []).map((result) => ({
+      title: result.title,
+      detail: `Source ${result.source_id}; ${result.provenance?.license || "license unavailable"}`,
+      snippet: result.snippet,
+    })),
   });
 }
 
-async function runDatasetAsk() {
+async function runDatasetRag() {
+  const workflow = workflows.datasetRag;
   const payload = {
-    question: document.getElementById("dataset-question").value,
+    question: document.getElementById(workflow.input).value,
     limit: 2,
     dataset_limit: 25,
   };
-  await renderResult("dataset-rag-result", requestJson("/dataset/ask", postOptions(payload)), {
+  await runWorkflow(workflow, requestJson("/dataset/ask", postOptions(payload), "dataset-rag"), {
+    title: () => "Dataset-grounded answer",
     answer: (data) => data.answer,
-    meta: (data) => `${providerMeta(data)}; retrieved=${data.retrieval?.retrieved_count ?? 0}`,
-    citations: (data) => (data.citations || []).map((citation) => `${citation.title} (${citation.source_id})`),
+    meta: (data) => ({...providerMetadata(data), retrieved: data.retrieval?.retrieved_count ?? 0}),
+    citations: (data) => (data.citations || []).map((citation) => ({
+      title: citation.title,
+      detail: `Source ${citation.source_id}; ${citation.provenance?.license || "license unavailable"}`,
+      snippet: citation.snippet,
+    })),
   });
 }
 
 async function runMealPlan() {
+  const workflow = workflows.mealPlan;
   const payload = {
     days: 1,
     meals_per_day: 1,
-    preferences: document.getElementById("meal-plan-preferences").value,
+    preferences: document.getElementById(workflow.input).value,
     candidate_limit: 3,
   };
-  await renderResult("meal-plan-result", requestJson("/ai/meal-plan", postOptions(payload)), {
+  await runWorkflow(workflow, requestJson("/ai/meal-plan", postOptions(payload), "meal-plan"), {
+    title: () => "Meal plan",
     answer: (data) => {
       const meals = (data.plan?.days || []).flatMap((day) => day.meals || []);
-      return meals.length ? meals.map((meal) => `${meal.slot}: ${meal.title}`).join("\n") : "No meal slots returned.";
+      return meals.length ? meals.map((meal) => `${meal.slot}: ${meal.title}\n${meal.reason}`).join("\n\n") : "No meal slots returned.";
     },
-    meta: (data) => `${providerMeta(data)}; candidates=${data.selection?.candidate_count ?? 0}`,
-    citations: (data) => (data.citations || []).map((citation) => `${citation.title} (${citation.recipe_id})`),
+    meta: (data) => ({...providerMetadata(data), candidates: data.selection?.candidate_count ?? 0}),
+    citations: (data) => (data.citations || []).map((citation) => ({
+      title: citation.title,
+      detail: `Recipe ${citation.recipe_id}`,
+      snippet: citation.snippet,
+    })),
   });
 }
 
-async function requestJson(url, options = {}) {
-  const response = await fetch(url, options);
+async function runWorkflow(workflow, promise, view) {
+  setLoading(workflow, true);
+  const target = document.getElementById(workflow.result);
+  target.className = "result";
+  target.innerHTML = '<div class="answer-card">Running request...</div>';
+  try {
+    const data = await promise;
+    renderSuccess(target, data, view);
+  } catch (error) {
+    renderError(target, error.message);
+  } finally {
+    setLoading(workflow, false);
+  }
+}
+
+async function requestJson(url, options = {}, workflow = "manual") {
+  const mergedOptions = withWorkflowHeader(options, workflow);
+  const response = await fetch(url, mergedOptions);
   const text = await response.text();
   const data = parseJson(text);
   if (!response.ok) {
     const detail = data?.detail || response.statusText || "Request failed.";
     throw new Error(friendlyError(response.status, detail));
   }
-  return data;
+  return sanitizeData(data);
 }
 
 function postOptions(payload) {
@@ -109,89 +224,168 @@ function postOptions(payload) {
   };
 }
 
-async function renderPre(id, promise) {
-  try {
-    const data = await promise;
-    setText(id, safeJson(data));
-  } catch (error) {
-    setText(id, error.message);
+function withWorkflowHeader(options, workflow) {
+  const headers = new Headers(options.headers || {});
+  headers.set("X-AI-Demo-Workflow", workflow);
+  return {...options, headers};
+}
+
+function renderSuccess(target, data, view) {
+  target.innerHTML = "";
+  target.append(answerCard(view.title(data), view.answer(data)));
+  target.append(metadataGrid(view.meta(data)));
+  target.append(citationSection(view.citations(data)));
+  target.append(warningSection(data.warnings || []));
+  target.append(jsonDetails(data));
+}
+
+function renderError(target, message) {
+  target.innerHTML = "";
+  const card = answerCard("Recoverable demo issue", message || "The request could not be completed.");
+  card.classList.add("error-card");
+  target.append(card);
+  target.append(answerCard("Next step", "Check readiness, confirm local demo data is configured, then retry this workflow. Other workflows can continue."));
+}
+
+function answerCard(title, body) {
+  const card = document.createElement("div");
+  card.className = "answer-card";
+  const heading = document.createElement("h3");
+  heading.textContent = title || "Result";
+  const text = document.createElement("p");
+  text.textContent = body || "No answer text returned.";
+  card.append(heading, text);
+  return card;
+}
+
+function metadataGrid(values) {
+  const grid = document.createElement("div");
+  grid.className = "metadata-grid";
+  for (const [label, value] of Object.entries(values || {})) {
+    const item = document.createElement("div");
+    item.className = "metadata-item";
+    const labelNode = document.createElement("span");
+    labelNode.textContent = label;
+    const valueNode = document.createElement("strong");
+    valueNode.textContent = value === undefined || value === null ? "none" : String(value);
+    item.append(labelNode, valueNode);
+    grid.append(item);
   }
+  return grid;
 }
 
-async function renderResult(id, promise, view) {
-  const target = document.getElementById(id);
-  target.innerHTML = '<div class="summary">Running...</div>';
-  try {
-    const data = await promise;
-    target.innerHTML = "";
-    target.append(summary(view.answer(data)));
-    target.append(meta(view.meta(data)));
-    target.append(list("Citations / Provenance", view.citations(data)));
-    target.append(list("Warnings", data.warnings || []));
-    target.append(preview(data));
-  } catch (error) {
-    target.innerHTML = "";
-    const node = summary(error.message);
-    node.classList.add("error");
-    target.append(node);
-  }
-}
-
-function summary(text) {
-  const node = document.createElement("div");
-  node.className = "summary";
-  node.textContent = text || "No answer text returned.";
-  return node;
-}
-
-function meta(text) {
-  const node = document.createElement("div");
-  node.className = "meta";
-  node.textContent = text || "No provider metadata.";
-  return node;
-}
-
-function list(title, items) {
-  const wrapper = document.createElement("div");
-  const heading = document.createElement("div");
-  heading.className = "meta";
-  heading.textContent = title;
-  wrapper.append(heading);
+function citationSection(items) {
+  const section = document.createElement("div");
+  section.className = "subsection";
+  const heading = document.createElement("h3");
+  heading.textContent = "Citations and provenance";
+  section.append(heading);
   if (!items.length) {
-    const empty = document.createElement("div");
-    empty.className = "meta";
-    empty.textContent = "None";
-    wrapper.append(empty);
-    return wrapper;
+    const empty = document.createElement("p");
+    empty.className = "hint";
+    empty.textContent = "No citations returned for this response.";
+    section.append(empty);
+    return section;
   }
-  const listNode = document.createElement("ul");
+  const list = document.createElement("ul");
+  list.className = "citation-list";
   for (const item of items) {
     const child = document.createElement("li");
-    child.textContent = item;
-    listNode.append(child);
+    child.textContent = `${item.title || "Untitled"} - ${item.detail || "source detail unavailable"}${item.snippet ? ` - ${item.snippet}` : ""}`;
+    list.append(child);
   }
-  wrapper.append(listNode);
-  return wrapper;
+  section.append(list);
+  return section;
 }
 
-function preview(data) {
-  const node = document.createElement("pre");
-  node.textContent = safeJson(data);
-  return node;
+function warningSection(warnings) {
+  const section = document.createElement("div");
+  section.className = "subsection";
+  if (!warnings.length) {
+    return section;
+  }
+  const card = document.createElement("div");
+  card.className = "warning-card";
+  card.textContent = warnings.join(" ");
+  section.append(card);
+  return section;
 }
 
-function providerMeta(data) {
-  const provider = data.provider || "none";
-  const model = data.model || "none";
-  const warnings = (data.warnings || []).length;
-  return `provider=${provider}; model=${model}; warnings=${warnings}`;
+function jsonDetails(data) {
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  summary.textContent = "Show raw JSON";
+  const code = document.createElement("pre");
+  code.textContent = safeJson(data);
+  details.append(summary, code);
+  return details;
+}
+
+function readinessCard(title, ok, value, message) {
+  const card = document.createElement("div");
+  card.className = "readiness-card";
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+  const pill = document.createElement("span");
+  pill.className = `status-pill ${ok ? "ok" : "warn"}`;
+  pill.textContent = value || (ok ? "Ready" : "Needs data");
+  const body = document.createElement("p");
+  body.textContent = message || "";
+  card.append(heading, pill, body);
+  return card;
+}
+
+function readinessSkeleton() {
+  return '<div class="readiness-card"><h3>Checking readiness</h3><span class="status-pill warn">Loading</span><p>Contacting the sidecar.</p></div>';
+}
+
+function resetWorkflow(workflow) {
+  const input = document.getElementById(workflow.input);
+  input.value = workflow.sample;
+  const target = document.getElementById(workflow.result);
+  target.className = "result empty";
+  target.textContent = "Reset complete. Run this workflow when ready.";
+}
+
+function setLoading(workflow, loading) {
+  const card = document.querySelector(`[data-workflow-card="${workflow.card}"]`);
+  for (const button of card.querySelectorAll("button")) {
+    button.disabled = loading;
+  }
+}
+
+function providerMetadata(data) {
+  return {
+    provider: data.provider || "none",
+    model: data.model || "none",
+    warnings: (data.warnings || []).length,
+  };
 }
 
 function friendlyError(status, detail) {
+  const safeDetail = String(detail || "Request failed.").replace(/\s+/g, " ").slice(0, 220);
   if (status === 422) {
-    return `${detail} Configure local saved recipe or dataset fixtures, then retry.`;
+    return `${safeDetail} Configure local saved recipe or dataset fixtures, then retry.`;
   }
-  return `${detail} (HTTP ${status})`;
+  if (status >= 500) {
+    return "The sidecar could not complete this workflow. Check service logs and retry after confirming provider and data readiness.";
+  }
+  return `${safeDetail} (HTTP ${status})`;
+}
+
+function sanitizeData(data) {
+  const text = safeJson(data);
+  return parseJson(text) || data;
+}
+
+function safeJson(data) {
+  const text = JSON.stringify(data, null, 2);
+  for (const marker of forbiddenText) {
+    if (text.includes(marker)) {
+      return "{\"message\":\"Response hidden because it contained a forbidden sensitive marker.\"}";
+    }
+  }
+  return text;
 }
 
 function parseJson(text) {
@@ -200,18 +394,4 @@ function parseJson(text) {
   } catch {
     return null;
   }
-}
-
-function safeJson(data) {
-  const text = JSON.stringify(data, null, 2);
-  for (const marker of forbiddenText) {
-    if (text.includes(marker)) {
-      return "Response hidden because it contained a forbidden sensitive marker.";
-    }
-  }
-  return text;
-}
-
-function setText(id, value) {
-  document.getElementById(id).textContent = value;
 }

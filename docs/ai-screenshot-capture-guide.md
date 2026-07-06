@@ -9,6 +9,8 @@ Capture from safe mock/demo data only:
 - README AI showcase section.
 - [AI Portfolio Showcase](ai-portfolio-showcase.md) architecture and validation sections.
 - [AI Feature Status](ai-feature-status.md) matrix.
+- AI demo UI readiness panel at `/demo`.
+- AI demo UI answer cards with raw JSON collapsed.
 - `scripts/demo-ai-mock.ps1` passing.
 - Offline eval output from `evals/ai_cookbook/run_evals.py`.
 - REST client examples from `scripts/demo-ai-requests.http` with generated fixture responses.
@@ -41,10 +43,12 @@ Prefer:
 
 1. Repository landing page showing the AI showcase.
 2. Feature status matrix with completed workflows.
-3. Mock demo script output showing offline evals plus endpoint checks.
-4. Offline eval output showing all cases passing.
-5. REST request/response examples for importer, Ask My Cookbook, dataset ask, and meal planning.
-6. Live smoke success summary with no surrounding environment output.
+3. Sidecar demo UI readiness panel.
+4. Sidecar demo UI importer or dataset RAG answer card.
+5. Mock demo script output showing offline evals plus endpoint checks.
+6. Offline eval output showing all cases passing.
+7. REST request/response examples for importer, Ask My Cookbook, dataset ask, and meal planning.
+8. Live smoke success summary with no surrounding environment output.
 
 ## Commit Rules
 

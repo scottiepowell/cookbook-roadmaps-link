@@ -31,6 +31,7 @@ AI design references:
 - [AI feature completion review](ai-feature-completion-review.md)
 - [AI UI integration plan](ai-ui-integration-plan.md)
 - [AI sidecar logging](ai-sidecar-logging.md)
+- [AI live demo runbook](ai-live-demo-runbook.md)
 - [AI sidecar architecture](ai-sidecar-architecture.md)
 - [AI demo walkthrough](ai-demo-walkthrough.md)
 - [AI feature status](ai-feature-status.md)

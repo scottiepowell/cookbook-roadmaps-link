@@ -643,3 +643,42 @@ Done criteria:
 - UI exercises existing AI endpoints and shows responses, citations/provenance, warnings, provider/model metadata, and friendly errors.
 - structured stdout logging emits safe request/workflow metadata without raw prompts, pasted recipes, provider responses, env contents, local private paths, or secrets.
 - no upstream Vanilla Cookbook frontend rewrite, deployment changes, external logging infrastructure, screenshots, raw datasets, generated artifacts, or provider keys are added.
+
+## 0027B: Production-Quality AI Demo Usability
+
+Status: complete.
+
+Goal: Harden the sidecar-served AI demo UI for a 15 to 30 minute hands-on live demo.
+
+Files likely touched:
+
+- `ai-api/app/main.py`
+- `ai-api/app/observability.py`
+- `ai-api/app/static/`
+- `ai-api/tests/test_demo_ui.py`
+- `ai-api/tests/test_observability.py`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-ui-integration-plan.md`
+- `docs/ai-sidecar-logging.md`
+- `docs/ai-screenshot-capture-guide.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-demo-walkthrough.md`
+- `README.md`
+
+Validation:
+
+- UI/readiness/static TestClient tests;
+- logging TestClient/helper tests;
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior.
+
+Done criteria:
+
+- demo UI has a clear landing section, readiness panel, guided workflow order, sample inputs, reset controls, loading states, answer cards, citations/provenance, warnings, friendly errors, and raw JSON details.
+- readiness clearly reports sidecar health, provider mode/model, saved-recipe availability, dataset availability, and offline demo mode without exposing local paths.
+- operator logs include request ID, UI workflow, endpoint, status, duration, provider/model where available, retrieved count, citation count, and warning count.
+- live demo runbook exists for 15 and 30 minute flows.
+- no production storage, deployment changes, Cloudflare changes, control-plane workflows, live CI provider tests, vector infrastructure, upstream frontend rewrite, browser automation, screenshots, raw datasets, generated artifacts, private env files, or credentials are added.

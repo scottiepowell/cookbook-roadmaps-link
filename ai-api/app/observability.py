@@ -42,6 +42,7 @@ async def request_logging_middleware(
             "ai.request",
             request_id=request_id,
             endpoint_name=_endpoint_name(request),
+            ui_workflow=_safe_header(request.headers.get("x-ai-demo-workflow")),
             status=status_code,
             duration_ms=duration_ms,
             safe_error_type=error_type,
@@ -93,10 +94,17 @@ def log_event(event: str, **fields: Any) -> None:
 
 def _request_id(header_value: str | None) -> str:
     if header_value:
-        safe = "".join(character for character in header_value if character.isalnum() or character in "-_")
+        safe = _safe_header(header_value)
         if safe:
             return safe[:64]
     return uuid.uuid4().hex
+
+
+def _safe_header(header_value: str | None) -> str | None:
+    if not header_value:
+        return None
+    safe = "".join(character for character in header_value if character.isalnum() or character in "-_")
+    return safe[:64] or None
 
 
 def _endpoint_name(request: Request) -> str:

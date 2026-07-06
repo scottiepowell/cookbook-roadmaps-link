@@ -7,82 +7,135 @@
     <link rel="stylesheet" href="/static/demo.css">
   </head>
   <body>
-    <header class="topbar">
+    <header class="shell-header">
       <div>
         <p class="eyebrow">FastAPI sidecar demo</p>
-        <h1>Cookbook AI</h1>
+        <h1>Cookbook AI Demo Workspace</h1>
+        <p class="lede">
+          A guided browser walkthrough for structured import, saved-recipe Q&A,
+          dataset retrieval/RAG, and meal planning. Built for mock-first live demos.
+        </p>
       </div>
-      <button id="check-status" type="button">Check status</button>
+      <div class="header-actions">
+        <button id="refresh-readiness" type="button">Refresh readiness</button>
+        <a class="button secondary" href="/docs" target="_blank" rel="noreferrer">API docs</a>
+      </div>
     </header>
 
     <main>
-      <section class="notice">
-        <h2>Safety and Data Boundaries</h2>
+      <section class="panel intro-panel">
+        <div>
+          <h2>Run the demo in order</h2>
+          <p>
+            Start with readiness, then run each workflow from top to bottom. Missing
+            saved recipes or dataset files are shown as recoverable demo conditions,
+            not browser failures.
+          </p>
+        </div>
+        <ol class="flow-list" aria-label="Guided workflow order">
+          <li>Importer</li>
+          <li>Saved-recipe Q&A</li>
+          <li>Dataset search</li>
+          <li>Dataset RAG</li>
+          <li>Meal planning</li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Readiness</p>
+            <h2>System and demo data</h2>
+          </div>
+          <span id="readiness-updated" class="meta-pill">Not checked</span>
+        </div>
+        <div id="readiness-grid" class="readiness-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="panel safety-note">
+        <h2>Safety and data boundaries</h2>
         <p>
           This page is served by the AI sidecar, not the upstream Vanilla Cookbook frontend.
-          It uses existing API endpoints and shows only response summaries, citations,
-          warnings, provider/model names, and JSON previews. It does not display provider
-          keys, environment files, raw prompts, raw provider config, or private local paths.
+          It does not show provider keys, environment file contents, raw prompts, raw provider
+          config, local private paths, stack traces, or full provider response bodies.
         </p>
       </section>
 
-      <section class="status-grid">
-        <article>
-          <h2>Health</h2>
-          <pre id="health-output">Not checked yet.</pre>
-        </article>
-        <article>
-          <h2>Provider Status</h2>
-          <pre id="config-output">Not checked yet.</pre>
-        </article>
-      </section>
-
-      <section class="workflow">
-        <div>
+      <section class="workflow" data-workflow-card="importer">
+        <div class="workflow-copy">
+          <p class="step">Step 1</p>
           <h2>Structured Recipe Importer</h2>
-          <textarea id="import-text">Lemon beans: warm canned beans with olive oil and lemon juice. Serve with herbs.</textarea>
-          <button data-action="import" type="button">Run importer</button>
+          <p>Turn pasted recipe notes into a schema-validated draft.</p>
+          <label for="import-text">Sample recipe text</label>
+          <textarea id="import-text" data-sample="Lemon beans: warm canned beans with olive oil and lemon juice. Serve with herbs.">Lemon beans: warm canned beans with olive oil and lemon juice. Serve with herbs.</textarea>
+          <div class="button-row">
+            <button data-action="importer-run" type="button">Run importer</button>
+            <button data-reset="importer" class="secondary" type="button">Reset</button>
+          </div>
         </div>
-        <div id="import-result" class="result"></div>
+        <div id="import-result" class="result empty">Run this workflow to see a structured draft.</div>
       </section>
 
-      <section class="workflow">
-        <div>
+      <section class="workflow" data-workflow-card="cookbook">
+        <div class="workflow-copy">
+          <p class="step">Step 2</p>
           <h2>Ask My Cookbook</h2>
-          <input id="cookbook-question" value="What saved recipe uses lemon?">
-          <button data-action="cookbook-query" type="button">Ask saved recipes</button>
-          <p class="hint">Requires a configured cookbook SQLite database with saved recipes.</p>
+          <p>Ask against saved recipes, with recipe citations when local data is available.</p>
+          <label for="cookbook-question">Sample question</label>
+          <input id="cookbook-question" data-sample="What saved recipe uses lemon?" value="What saved recipe uses lemon?">
+          <div class="button-row">
+            <button data-action="cookbook-run" type="button">Ask saved recipes</button>
+            <button data-reset="cookbook" class="secondary" type="button">Reset</button>
+          </div>
+          <p class="hint">Needs configured saved-recipe SQLite data. Other workflows still work if this is unavailable.</p>
         </div>
-        <div id="cookbook-result" class="result"></div>
+        <div id="cookbook-result" class="result empty">Run this workflow to see grounded saved-recipe answers.</div>
       </section>
 
-      <section class="workflow">
-        <div>
+      <section class="workflow" data-workflow-card="dataset-search">
+        <div class="workflow-copy">
+          <p class="step">Step 3</p>
           <h2>Dataset Search</h2>
-          <input id="dataset-search-query" value="lemon beans">
-          <button data-action="dataset-search" type="button">Search dataset</button>
-          <p class="hint">Uses the configured local dataset directory if available.</p>
+          <p>Search the bounded local dataset index and inspect provenance.</p>
+          <label for="dataset-search-query">Sample search</label>
+          <input id="dataset-search-query" data-sample="lemon beans" value="lemon beans">
+          <div class="button-row">
+            <button data-action="dataset-search-run" type="button">Search dataset</button>
+            <button data-reset="dataset-search" class="secondary" type="button">Reset</button>
+          </div>
         </div>
-        <div id="dataset-search-result" class="result"></div>
+        <div id="dataset-search-result" class="result empty">Run this workflow to see ranked dataset matches.</div>
       </section>
 
-      <section class="workflow">
-        <div>
+      <section class="workflow" data-workflow-card="dataset-rag">
+        <div class="workflow-copy">
+          <p class="step">Step 4</p>
           <h2>Dataset Ask/RAG</h2>
-          <input id="dataset-question" value="What indexed recipe uses lemon?">
-          <button data-action="dataset-rag" type="button">Ask dataset</button>
+          <p>Ask a question over retrieved dataset records and review citations.</p>
+          <label for="dataset-question">Sample question</label>
+          <input id="dataset-question" data-sample="What indexed recipe uses lemon?" value="What indexed recipe uses lemon?">
+          <div class="button-row">
+            <button data-action="dataset-rag-run" type="button">Ask dataset</button>
+            <button data-reset="dataset-rag" class="secondary" type="button">Reset</button>
+          </div>
         </div>
-        <div id="dataset-rag-result" class="result"></div>
+        <div id="dataset-rag-result" class="result empty">Run this workflow to see dataset-grounded answers.</div>
       </section>
 
-      <section class="workflow">
-        <div>
+      <section class="workflow" data-workflow-card="meal-plan">
+        <div class="workflow-copy">
+          <p class="step">Step 5</p>
           <h2>Meal Planner</h2>
-          <input id="meal-plan-preferences" value="lemon dinner">
-          <button data-action="meal-plan" type="button">Create meal plan</button>
-          <p class="hint">Requires saved recipe data; missing data is reported as a friendly API error.</p>
+          <p>Create a small plan from saved recipe candidates.</p>
+          <label for="meal-plan-preferences">Sample preferences</label>
+          <input id="meal-plan-preferences" data-sample="lemon dinner" value="lemon dinner">
+          <div class="button-row">
+            <button data-action="meal-plan-run" type="button">Create meal plan</button>
+            <button data-reset="meal-plan" class="secondary" type="button">Reset</button>
+          </div>
+          <p class="hint">Needs configured saved-recipe data. Missing data is shown with recovery guidance.</p>
         </div>
-        <div id="meal-plan-result" class="result"></div>
+        <div id="meal-plan-result" class="result empty">Run this workflow to see a meal-plan card.</div>
       </section>
     </main>
 
