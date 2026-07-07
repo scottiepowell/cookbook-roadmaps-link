@@ -20,58 +20,18 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "AI demo mock path: direct endpoint smoke"
 $DemoPython = @'
-import csv
-import json
 import os
 import shutil
-import sqlite3
 import sys
 import uuid
 from pathlib import Path
 
 sys.path.insert(0, "ai-api")
 
+from app.demo_data import seed_demo_data
 from fastapi.testclient import TestClient
 
 from app.main import app
-
-
-def write_recipe_db(path: Path) -> None:
-    connection = sqlite3.connect(path)
-    connection.execute(
-        """
-        CREATE TABLE recipes (
-            id INTEGER PRIMARY KEY,
-            title TEXT NOT NULL,
-            description TEXT,
-            ingredients TEXT,
-            instructions TEXT,
-            tags TEXT,
-            source_url TEXT
-        )
-        """
-    )
-    connection.executemany(
-        """
-        INSERT INTO recipes
-          (id, title, description, ingredients, instructions, tags, source_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        [
-            (1, "Lemon Beans", "Bright pantry dinner", json.dumps(["beans", "lemon", "olive oil"]), "Warm beans\nAdd lemon\nServe", "dinner\nvegetarian", None),
-            (2, "Pasta Bake", "Comfort dinner", json.dumps(["pasta", "tomato", "cheese"]), "Boil pasta\nBake with cheese", "dinner", None),
-        ],
-    )
-    connection.commit()
-    connection.close()
-
-
-def write_dataset(path: Path) -> None:
-    with (path / "13k-recipes.csv").open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["recipe_id", "title", "ingredients", "instructions", "cuisine"])
-        writer.writeheader()
-        writer.writerow({"recipe_id": "demo-1", "title": "Lemon Beans", "ingredients": "beans; lemon", "instructions": "Warm beans", "cuisine": "dinner"})
-        writer.writerow({"recipe_id": "demo-2", "title": "Plain Toast", "ingredients": "bread", "instructions": "Toast bread", "cuisine": "breakfast"})
 
 
 tmp_parent = Path(".tmp-ai-demo")
@@ -81,13 +41,9 @@ tmp.mkdir()
 
 try:
     root = tmp
-    db_path = root / "recipes.sqlite"
-    dataset_dir = root / "dataset"
-    dataset_dir.mkdir()
-    write_recipe_db(db_path)
-    write_dataset(dataset_dir)
-    os.environ["COOKBOOK_DB_PATH"] = str(db_path)
-    os.environ["RECIPE_DATASET_DIR"] = str(dataset_dir)
+    paths = seed_demo_data(root)
+    os.environ["COOKBOOK_DB_PATH"] = str(paths["db_path"])
+    os.environ["RECIPE_DATASET_DIR"] = str(paths["dataset_dir"])
     os.environ["AI_PROVIDER"] = "mock"
 
     client = TestClient(app)
@@ -96,8 +52,8 @@ try:
         ("config", client.get("/ai/config")),
         ("importer", client.post("/ai/import-recipe", json={"text": "Lemon beans: warm beans with lemon.", "source": "demo"})),
         ("ask_my_cookbook", client.post("/ai/ask", json={"question": "What uses lemon?", "limit": 1})),
-        ("dataset_search", client.get("/dataset/search", params={"q": "lemon", "limit": 1, "dataset_limit": 2})),
-        ("dataset_ask", client.post("/dataset/ask", json={"question": "What indexed recipe uses lemon?", "limit": 1, "dataset_limit": 2})),
+        ("dataset_search", client.get("/dataset/search", params={"q": "tomato pasta", "limit": 1, "dataset_limit": 3})),
+        ("dataset_ask", client.post("/dataset/ask", json={"question": "What indexed recipe uses tomato pasta?", "limit": 1, "dataset_limit": 3})),
         ("meal_plan", client.post("/ai/meal-plan", json={"days": 1, "meals_per_day": 1, "preferences": "lemon", "candidate_limit": 2})),
     ]
 

@@ -17,9 +17,17 @@ The production-quality live demo flow is documented in [AI Live Demo Runbook](ai
 
 Start the AI sidecar with the normal local development approach, then open:
 
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
+```
+
+Then open:
+
 ```text
 http://127.0.0.1:8000/demo
 ```
+
+The start script seeds generated local demo data and starts the sidecar on `127.0.0.1:8000`. It sets `AI_PROVIDER=mock`, `COOKBOOK_DB_PATH`, and `RECIPE_DATASET_DIR` for the current process only. It does not write to production cookbook data.
 
 The page uses static files served from `ai-api/app/static/`:
 
@@ -51,9 +59,15 @@ The demo UI calls existing endpoints only:
 
 The UI displays readable answer summaries, JSON previews behind expandable details, citations/provenance, warnings, provider/model metadata, retrieval counts, loading states, reset controls, and friendly errors.
 
-## Missing Local Data
+## Local Demo Data
 
-Saved-recipe workflows need a configured cookbook SQLite database. Dataset workflows need a configured local dataset directory. If either is missing, the API returns controlled errors or warnings and the UI shows a friendly message instead of exposing local private paths.
+Saved-recipe workflows need a configured cookbook SQLite database. Dataset workflows need a configured local dataset directory. For local mock demos, use:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\seed-ai-demo-data.ps1
+```
+
+This writes a small generated fixture under `.tmp-ai-demo/` by default. If either data source is missing, the API returns controlled errors or warnings and the UI shows a friendly message instead of exposing local private paths.
 
 ## Screenshot And Demo Support
 

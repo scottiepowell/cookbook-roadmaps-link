@@ -41,7 +41,13 @@ Run the safe mock demo:
 .\scripts\demo-ai-mock.ps1
 ```
 
-When the AI sidecar is running locally, open `http://127.0.0.1:8000/demo` for the guided browser demo UI.
+Start the local browser demo with generated demo-safe saved recipes and dataset fixtures:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
+```
+
+Then open `http://127.0.0.1:8000/demo` for the guided browser demo UI.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
@@ -115,6 +121,12 @@ For a portfolio or interview walkthrough, start with [AI demo walkthrough](docs/
 
 ```powershell
 .\scripts\demo-ai-mock.ps1
+```
+
+For the full local browser UI path, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
 ## Status

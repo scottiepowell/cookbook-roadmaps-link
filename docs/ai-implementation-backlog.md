@@ -682,3 +682,71 @@ Done criteria:
 - operator logs include request ID, UI workflow, endpoint, status, duration, provider/model where available, retrieved count, citation count, and warning count.
 - live demo runbook exists for 15 and 30 minute flows.
 - no production storage, deployment changes, Cloudflare changes, control-plane workflows, live CI provider tests, vector infrastructure, upstream frontend rewrite, browser automation, screenshots, raw datasets, generated artifacts, private env files, or credentials are added.
+
+## 0027C: Manual UI Demo Acceptance Test
+
+Status: complete.
+
+Goal: Create the manual acceptance checklist and report path for 15 to 30 minute human UI demo testing.
+
+Files likely touched:
+
+- `docs/ai-manual-ui-acceptance-test.md`
+- `outbox/0027C-manual-ui-demo-acceptance-test-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior.
+
+Done criteria:
+
+- manual acceptance checklist exists;
+- human URL testing is clearly marked pending when not performed by Codex;
+- 15 and 30 minute flows are documented;
+- logging checks are documented;
+- no browser automation, screenshots, raw datasets, generated artifacts, private env files, or credentials are added.
+
+## 0027D: Seed Demo Data And Fix Local Demo Launch
+
+Status: complete.
+
+Goal: Make the local mock browser demo complete by seeding generated saved-recipe data and documenting a reliable `/demo` launch path.
+
+Files likely touched:
+
+- `ai-api/app/demo_data.py`
+- `ai-api/app/static/demo.html`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/test_demo_ui.py`
+- `scripts/seed-ai-demo-data.ps1`
+- `scripts/start-ai-demo-local.ps1`
+- `scripts/demo-ai-mock.ps1`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-manual-ui-acceptance-test.md`
+- `docs/ai-ui-integration-plan.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-demo-walkthrough.md`
+- `README.md`
+- `outbox/0027D-seed-demo-data-and-fix-local-demo-launch-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior.
+
+Done criteria:
+
+- local demo operator has a clear command to seed demo data and start the sidecar;
+- `/demo` opens at `http://127.0.0.1:8000/demo`;
+- readiness shows generated saved recipes available in mock demo mode;
+- Ask My Cookbook and Meal Planner work with generated saved-recipe citations;
+- dataset search/RAG still work with intuitive sample prompts;
+- logs remain safe and useful;
+- no production cookbook data, raw datasets, screenshots, generated artifacts, private env files, or credentials are committed.

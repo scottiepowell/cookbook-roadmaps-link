@@ -16,6 +16,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Manual OpenAI smoke | Complete, manual-only | `scripts/smoke-openai-live.py`, `scripts/demo-ai-live-smoke.ps1` | recorded manual run | Requires explicit opt-in, API key, token cap, and budget cap. |
 | Strict OpenAI structured schema | Complete | provider harness | offline fake-client tests | Normalizes Pydantic schemas for strict structured outputs. |
 | Mock demo path | Complete | `scripts/demo-ai-mock.ps1` | local script validation | Runs offline evals and endpoint checks with generated fixtures. |
+| Local browser demo launch | Complete | `scripts/start-ai-demo-local.ps1` | pytest, mock demo | Seeds generated saved recipes and dataset fixtures, starts `/demo` on `127.0.0.1:8000`. |
 | REST examples | Complete | `scripts/demo-ai-requests.http` | docs/examples | Manual request examples for portfolio walkthroughs. |
 | Sidecar demo UI | Complete | `GET /demo`, `GET /demo/ai`, `GET /demo/readiness` | TestClient UI/readiness tests | Guided browser page exercises existing endpoints without upstream UI rewrite. |
 | Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. |

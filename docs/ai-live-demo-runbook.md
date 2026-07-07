@@ -13,7 +13,12 @@ Use this runbook for a 15 to 30 minute hands-on demo of the AI cookbook sidecar.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-mock.ps1
 ```
 
-- Confirm the sidecar can start locally.
+- Start the local browser demo path:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
+```
+
 - Open the browser UI at `http://127.0.0.1:8000/demo`.
 - Open a terminal for logs.
 
@@ -22,17 +27,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-mock.ps1
 The default demo path uses the mock provider and generated fixtures. It is free, deterministic, and safe for screenshots.
 
 ```powershell
-$env:AI_PROVIDER="mock"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
+
+The start script generates a small local fixture under `.tmp-ai-demo/`, sets `AI_PROVIDER=mock`, points `COOKBOOK_DB_PATH` at a generated SQLite database, points `RECIPE_DATASET_DIR` at generated CSV data, and starts the sidecar on `127.0.0.1:8000`. It does not write to production cookbook data.
 
 The UI readiness panel shows whether:
 
 - the sidecar is healthy;
 - provider mode is mock or OpenAI;
-- saved-recipe data is available;
-- local dataset data is available.
+- saved-recipe demo data is available;
+- local dataset demo data is available.
 
-If saved-recipe or dataset data is missing, continue with the workflows that are available. Missing data should appear as a friendly recoverable condition.
+In the local mock demo path, readiness should show saved recipes available and dataset available. If either is missing, stop and rerun `scripts\start-ai-demo-local.ps1`; missing data should appear as a friendly recoverable condition, not a browser failure.
 
 ## Optional Live OpenAI Smoke Path
 
@@ -58,24 +65,28 @@ http://127.0.0.1:8000/demo
 
 Use `GET /demo/ai` as an equivalent route.
 
+Docker Compose also exposes the sidecar locally at `127.0.0.1:8000` for operator testing. Compose still relies on local environment configuration for any data paths; the PowerShell start script is the preferred complete mock demo path because it seeds generated demo data automatically.
+
 ## Suggested 15 Minute Flow
 
 1. Show the README AI showcase and explain the sidecar architecture.
 2. Open the UI and refresh readiness.
 3. Run the structured importer with the sample input.
-4. Run dataset search and point out ranked matches and provenance.
-5. Run dataset Ask/RAG and show citations.
-6. Show logs for one workflow request.
-7. Close with boundaries: no production storage, no vector DB, no UI rewrite, no live CI calls.
+4. Run saved-recipe Q&A and show recipe citations.
+5. Run dataset search and point out ranked matches and provenance.
+6. Run dataset Ask/RAG and show citations.
+7. Run meal planning and show saved-recipe citations.
+8. Show logs for one workflow request.
+9. Close with boundaries: no production storage, no vector DB, no UI rewrite, no live CI calls.
 
 ## Suggested 30 Minute Flow
 
 1. Start with the portfolio showcase and completion review.
 2. Open the UI readiness panel and explain mock/offline mode.
 3. Run importer and inspect the raw JSON details.
-4. Run saved-recipe Q&A if saved-recipe data is configured; otherwise explain the friendly missing-data message.
+4. Run saved-recipe Q&A and show the generated demo recipe citation.
 5. Run dataset search and dataset Ask/RAG.
-6. Run meal planning if saved-recipe data is configured.
+6. Run meal planning and show generated saved-recipe citations.
 7. Open `scripts/demo-ai-requests.http` and show the same API surface.
 8. Run or show offline evals.
 9. Show structured logs and request IDs.
@@ -85,8 +96,8 @@ Use `GET /demo/ai` as an equivalent route.
 
 | Symptom | Next Step |
 | --- | --- |
-| Readiness says saved recipes unavailable | Configure a local cookbook SQLite DB or skip saved-recipe Q&A and meal planning. |
-| Readiness says dataset unavailable | Configure `RECIPE_DATASET_DIR` or focus on importer and saved-recipe flows. |
+| Readiness says saved recipes unavailable | Rerun `scripts\start-ai-demo-local.ps1` or `scripts\seed-ai-demo-data.ps1`, then confirm `COOKBOOK_DB_PATH` points at the generated SQLite fixture. |
+| Readiness says dataset unavailable | Rerun `scripts\start-ai-demo-local.ps1` or confirm `RECIPE_DATASET_DIR` points at the generated dataset fixture. |
 | Workflow returns a friendly error | Check readiness, then inspect sidecar logs for request ID, endpoint, status, and safe error type. |
 | Provider unavailable | Confirm provider mode and use mock mode for normal demos. |
 | Direct Windows pytest fails | Use the Git Bash validator path documented in repo validation; the known issue is a local temp-directory ACL problem. |

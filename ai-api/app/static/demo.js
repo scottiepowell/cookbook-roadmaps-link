@@ -31,7 +31,7 @@ const workflows = {
     button: '[data-action="dataset-search-run"]',
     reset: '[data-reset="dataset-search"]',
     input: "dataset-search-query",
-    sample: "lemon beans",
+    sample: "tomato pasta",
   },
   datasetRag: {
     card: "dataset-rag",
@@ -39,7 +39,7 @@ const workflows = {
     button: '[data-action="dataset-rag-run"]',
     reset: '[data-reset="dataset-rag"]',
     input: "dataset-question",
-    sample: "What indexed recipe uses lemon?",
+    sample: "What indexed recipe uses tomato pasta?",
   },
   mealPlan: {
     card: "meal-plan",

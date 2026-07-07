@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.demo_data import seed_demo_data
 from app.main import app
 
 
@@ -46,6 +47,40 @@ def test_demo_readiness_endpoint_returns_safe_status():
     assert "available" in data["dataset"]
     assert "C:\\" not in response.text
     assert "/Users/" not in response.text
+
+
+def test_seeded_demo_data_supports_saved_recipe_workflows(tmp_path, monkeypatch):
+    paths = seed_demo_data(tmp_path)
+    monkeypatch.setenv("AI_PROVIDER", "mock")
+    monkeypatch.setenv("COOKBOOK_DB_PATH", str(paths["db_path"]))
+    monkeypatch.setenv("RECIPE_DATASET_DIR", str(paths["dataset_dir"]))
+
+    client = TestClient(app)
+
+    readiness = client.get("/demo/readiness")
+    assert readiness.status_code == 200
+    readiness_data = readiness.json()
+    assert readiness_data["saved_recipes"]["available"] is True
+    assert readiness_data["saved_recipes"]["count"] >= 3
+    assert "C:\\" not in readiness.text
+    assert "/Users/" not in readiness.text
+
+    ask_response = client.post("/ai/ask", json={"question": "What saved recipe uses lemon?", "limit": 2})
+    assert ask_response.status_code == 200
+    ask_data = ask_response.json()
+    assert ask_data["citations"]
+    assert any("Lemon" in citation["title"] for citation in ask_data["citations"])
+    assert ask_data["provider"] == "mock"
+
+    meal_response = client.post(
+        "/ai/meal-plan",
+        json={"days": 1, "meals_per_day": 1, "preferences": "lemon dinner", "candidate_limit": 3},
+    )
+    assert meal_response.status_code == 200
+    meal_data = meal_response.json()
+    assert meal_data["selection"]["candidate_count"] >= 1
+    assert meal_data["citations"]
+    assert any("Lemon" in citation["title"] for citation in meal_data["citations"])
 
 
 def test_demo_static_assets_do_not_include_sensitive_value_placeholders():

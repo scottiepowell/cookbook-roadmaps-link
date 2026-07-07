@@ -2,7 +2,41 @@
 
 This checklist is the manual acceptance script for the AI demo UI after `0027A` and `0027B`.
 
-`0027A` and `0027B` are complete. `0027C` prepared this checklist and report path, but Codex did not complete manual URL testing. Human-run URL testing is pending.
+`0027A`, `0027B`, and `0027C` are complete. Human manual testing after `0027C` found that saved-recipe workflows needed generated demo data. `0027D` adds a local mock launch path with small demo-safe saved recipes.
+
+## Human Steps
+
+Open this:
+
+```text
+http://127.0.0.1:8000/demo
+```
+
+Run this first:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
+```
+
+Look for this:
+
+- readiness shows sidecar healthy;
+- provider shows `mock / mock-basic`;
+- saved recipes show at least 3 recipe(s);
+- dataset shows available;
+- Ask My Cookbook returns a readable answer with recipe citations;
+- Meal Planner returns a readable plan with recipe citations;
+- Dataset Search and Dataset Ask/RAG still return readable results with provenance;
+- logs show request IDs, workflow labels, endpoint/status/duration, and safe metadata.
+
+Record this:
+
+- exact local URL tested;
+- browser used;
+- readiness counts and provider mode;
+- pass/fail for the 15-minute and 30-minute flows;
+- issues, confusing copy, or screenshot-readiness gaps;
+- whether the deployed `/demo` URL is exposed or still pending.
 
 ## Test Targets
 
@@ -14,7 +48,7 @@ Fill these fields during human testing:
 | Tester | Pending human test |
 | Browser | Pending human test |
 | Provider mode | Pending human test: mock, OpenAI, or both |
-| Local URL | Pending human test; planned default: `http://127.0.0.1:8000/demo` |
+| Local URL | `http://127.0.0.1:8000/demo` |
 | Deployed URL | Pending human test; fill if the sidecar demo route is publicly exposed |
 | Notes on route exposure | Pending human test |
 
@@ -22,12 +56,12 @@ Do not treat the deployed URL as accepted until a human opens the documented `/d
 
 ## Next Human Step
 
-Open the documented `/demo` URL and run both flows:
+Open the documented `/demo` URL through `scripts\start-ai-demo-local.ps1` and run both flows:
 
 - 15-minute demo flow.
 - 30-minute demo flow.
 
-Record results in `outbox/0027C-manual-ui-demo-acceptance-test-results.md` or in the follow-up task `0027D: Human UI Demo Findings And Fixes`.
+Record results in the current task outbox or a later human findings task.
 
 ## Acceptance Checklist
 
@@ -40,10 +74,10 @@ Mark each row during human testing.
 | Health/config status is understandable. | Pending human test | |
 | Provider mode is clear: mock vs OpenAI. | Pending human test | |
 | Importer flow works with sample input. | Pending human test | |
-| Ask My Cookbook flow works or clearly explains missing saved-recipe data. | Pending human test | |
+| Ask My Cookbook flow works with generated saved-recipe demo data. | Pending human test | |
 | Dataset search works or clearly explains missing dataset data. | Pending human test | |
 | Dataset ask/RAG works or clearly explains missing dataset data. | Pending human test | |
-| Meal planner works or clearly explains missing saved-recipe data. | Pending human test | |
+| Meal planner works with generated saved-recipe demo data. | Pending human test | |
 | Loading states appear while requests run. | Pending human test | |
 | Buttons are disabled while requests run. | Pending human test | |
 | Reset buttons work. | Pending human test | |
@@ -64,7 +98,7 @@ Human-run status: pending.
 3. Run importer with sample input.
 4. Run dataset search.
 5. Run dataset ask/RAG.
-6. Run meal planner or Ask My Cookbook if saved-recipe data is available.
+6. Run Ask My Cookbook and meal planner with generated saved-recipe data.
 7. Open logs and confirm request IDs and workflow events.
 8. Capture observations, issues, and screenshot readiness notes.
 
@@ -141,6 +175,6 @@ Confirm the UI can be captured with demo-safe data:
 
 ## Recommended Follow-Up
 
-Create `0027D: Human UI Demo Findings And Fixes` after a human has run the local and, if available, deployed `/demo` URL.
+Create a later human findings task after a human has rerun the local and, if available, deployed `/demo` URL.
 
 Use 0027D to address observed defects, copy polish, screenshot-safe layout issues, missing-data handling gaps, logging clarity issues, or deployment route exposure gaps. Do not fold broad UI fixes back into 0027C unless they are documentation corrections.

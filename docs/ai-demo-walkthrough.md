@@ -8,11 +8,15 @@ For a higher-level summary, start with [AI Portfolio Showcase](ai-portfolio-show
 
 Use the browser demo UI when the AI sidecar is running locally:
 
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
+```
+
 ```text
 http://127.0.0.1:8000/demo
 ```
 
-The page is served by the sidecar because this repository does not include the upstream Vanilla Cookbook frontend source tree. It exercises readiness, health/config, importer, Ask My Cookbook, dataset search, dataset ask, and meal planning through existing API endpoints. It includes sample inputs, reset buttons, loading states, answer cards, citations/provenance, warnings, and raw JSON details.
+The start script seeds small generated saved-recipe and dataset fixtures, sets mock provider mode for the sidecar process, and serves `/demo` on `127.0.0.1:8000`. The page is served by the sidecar because this repository does not include the upstream Vanilla Cookbook frontend source tree. It exercises readiness, health/config, importer, Ask My Cookbook, dataset search, dataset ask, and meal planning through existing API endpoints. It includes sample inputs, reset buttons, loading states, answer cards, citations/provenance, warnings, and raw JSON details.
 
 Use the mock/offline path for normal demos:
 
@@ -60,7 +64,7 @@ The project documents data boundaries, validation behavior, live smoke interpret
 1. Open [AI Portfolio Showcase](ai-portfolio-showcase.md) and summarize the architecture.
 2. Open [AI Feature Completion Review](ai-feature-completion-review.md) for the acceptance matrix.
 3. Open [AI Feature Status](ai-feature-status.md) and show the feature matrix.
-4. Open `http://127.0.0.1:8000/demo` if the sidecar is running.
+4. Run `scripts\start-ai-demo-local.ps1`, then open `http://127.0.0.1:8000/demo`.
 5. Follow [AI Live Demo Runbook](ai-live-demo-runbook.md) for the 15 or 30 minute flow.
 6. Run `.\scripts\demo-ai-mock.ps1`.
 7. Show `evals/ai_cookbook/workflow_cases.json` for fixture-based workflow coverage.
