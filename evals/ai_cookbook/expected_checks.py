@@ -11,6 +11,15 @@ WORKFLOW_LATENCY_MS_FAIL = 10000
 TOTAL_TOKENS_WARN = 2500
 IMPORTER_TOKENS_WARN = 900
 WORKFLOW_TOKENS_FAIL = 1200
+COST_SOURCE_ENV_OVERRIDE = "env_override"
+COST_SOURCE_DEFAULT_MODEL_RATE = "default_model_rate"
+COST_SOURCE_UNAVAILABLE = "unavailable"
+DEFAULT_MODEL_COST_RATES_PER_1M_TOKENS = {
+    "gpt-5.4-nano": {
+        "input": 0.20,
+        "output": 1.25,
+    },
+}
 
 SECRET_PATTERNS = (
     "OPENAI_API_KEY",
@@ -64,6 +73,20 @@ class CheckResult:
 
     def to_dict(self) -> dict[str, object]:
         return {"name": self.name, "passed": self.passed, "detail": self.detail}
+
+
+@dataclass(frozen=True)
+class CostEstimate:
+    estimated_cost_usd: float | None
+    cost_source: str
+    input_cost_per_1m_tokens: float | None = None
+    output_cost_per_1m_tokens: float | None = None
+
+    def to_record_fields(self) -> dict[str, object]:
+        return {
+            "estimated_cost_usd": self.estimated_cost_usd,
+            "cost_source": self.cost_source,
+        }
 
 
 def score_workflow(workflow: str, payload: dict[str, Any], expected_model: str) -> list[CheckResult]:
@@ -262,6 +285,7 @@ def summarize_records(records: list[dict[str, Any]]) -> dict[str, Any]:
     input_tokens = sum(int(record.get("input_tokens") or 0) for record in records)
     output_tokens = sum(int(record.get("output_tokens") or 0) for record in records)
     total_tokens = sum(int(record.get("total_tokens") or 0) for record in records)
+    cost_sources = sorted({str(record.get("cost_source")) for record in records if record.get("cost_source")})
     thresholds = evaluate_thresholds(records)
     return {
         "overall_passed": total > 0 and passed == total,
@@ -273,6 +297,7 @@ def summarize_records(records: list[dict[str, Any]]) -> dict[str, Any]:
         "total_output_tokens": output_tokens,
         "total_tokens": total_tokens or input_tokens + output_tokens,
         "estimated_cost_usd": round(total_cost, 8) if total_cost else None,
+        "cost_sources": cost_sources or [COST_SOURCE_UNAVAILABLE],
         "threshold_warnings": thresholds["warnings"],
         "threshold_failures": thresholds["failures"],
     }
@@ -332,18 +357,50 @@ def evaluate_thresholds(records: list[dict[str, Any]], env: dict[str, str] | Non
     return {"warnings": warnings, "failures": failures}
 
 
+def estimate_cost(
+    usage: dict[str, int] | None,
+    *,
+    model: str | None,
+    input_cost_per_1m: float | None = None,
+    output_cost_per_1m: float | None = None,
+) -> CostEstimate:
+    source = COST_SOURCE_UNAVAILABLE
+    if input_cost_per_1m is not None and output_cost_per_1m is not None:
+        source = COST_SOURCE_ENV_OVERRIDE
+    elif input_cost_per_1m is None and output_cost_per_1m is None:
+        default_rates = DEFAULT_MODEL_COST_RATES_PER_1M_TOKENS.get(str(model or ""))
+        if default_rates:
+            input_cost_per_1m = default_rates["input"]
+            output_cost_per_1m = default_rates["output"]
+            source = COST_SOURCE_DEFAULT_MODEL_RATE
+
+    if not usage or input_cost_per_1m is None or output_cost_per_1m is None:
+        return CostEstimate(None, COST_SOURCE_UNAVAILABLE)
+
+    input_tokens = int(usage.get("input_tokens") or 0)
+    output_tokens = int(usage.get("output_tokens") or 0)
+    cost = (input_tokens / 1_000_000 * input_cost_per_1m) + (output_tokens / 1_000_000 * output_cost_per_1m)
+    return CostEstimate(
+        estimated_cost_usd=round(cost, 8),
+        cost_source=source,
+        input_cost_per_1m_tokens=input_cost_per_1m,
+        output_cost_per_1m_tokens=output_cost_per_1m,
+    )
+
+
 def estimate_cost_usd(
     usage: dict[str, int] | None,
     *,
     input_cost_per_1m: float | None,
     output_cost_per_1m: float | None,
+    model: str | None = None,
 ) -> float | None:
-    if not usage or input_cost_per_1m is None or output_cost_per_1m is None:
-        return None
-    input_tokens = int(usage.get("input_tokens") or 0)
-    output_tokens = int(usage.get("output_tokens") or 0)
-    cost = (input_tokens / 1_000_000 * input_cost_per_1m) + (output_tokens / 1_000_000 * output_cost_per_1m)
-    return round(cost, 8)
+    return estimate_cost(
+        usage,
+        model=model,
+        input_cost_per_1m=input_cost_per_1m,
+        output_cost_per_1m=output_cost_per_1m,
+    ).estimated_cost_usd
 
 
 def assert_no_secret_leaks(value: Any) -> None:

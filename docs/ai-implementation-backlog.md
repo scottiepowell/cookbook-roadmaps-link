@@ -833,3 +833,39 @@ Done criteria:
 - generated demo fixture warnings about optional dataset files are filtered only when the generated fixture marker is present;
 - normal validation remains offline and no live OpenAI calls are added to CI;
 - no `.tmp-ai-demo` artifacts, API keys, private env files, screenshots, raw datasets, or credentials are committed.
+
+## 0027G: Default GPT-Nano Cost Estimates
+
+Status: complete.
+
+Goal: Make live OpenAI demo eval cost estimates populate by default for `gpt-5.4-nano` while preserving operator override support.
+
+Files likely touched:
+
+- `evals/ai_cookbook/expected_checks.py`
+- `scripts/live-openai-demo-evals.py`
+- `ai-api/tests/test_live_openai_demo_evals.py`
+- `docs/live-openai-demo-evals.md`
+- `docs/live-openai-demo-baseline-2026-07-07.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0027G-default-gpt-nano-cost-estimates-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- local rate environment variables still override cost calculation;
+- `gpt-5.4-nano` uses maintained default cost rates when local overrides are absent;
+- unknown models without local rates keep `estimated_cost_usd` as `null`;
+- generated records and summaries include `cost_source` as `env_override`, `default_model_rate`, or `unavailable`;
+- no live OpenAI calls are added to normal validation;
+- no `.tmp-ai-demo` artifacts, API keys, private env files, screenshots, raw datasets, or credentials are committed.

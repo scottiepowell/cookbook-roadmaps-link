@@ -150,7 +150,7 @@ def run_case(
     expected_model: str,
     scorer: Callable[[str, dict[str, Any], str], Any],
 ) -> dict[str, Any]:
-    from evals.ai_cookbook.expected_checks import assert_no_secret_leaks, estimate_cost_usd
+    from evals.ai_cookbook.expected_checks import assert_no_secret_leaks, estimate_cost
 
     workflow = case["workflow"]
     started = time.perf_counter()
@@ -170,8 +170,9 @@ def run_case(
 
     checks = scorer(workflow, payload, expected_model) if error_type is None else []
     usage = payload.get("usage") if isinstance(payload.get("usage"), dict) else {}
-    estimated_cost = estimate_cost_usd(
+    cost_estimate = estimate_cost(
         usage,
+        model=str(payload.get("model") or expected_model),
         input_cost_per_1m=_float_env("OPENAI_INPUT_COST_PER_1M_TOKENS"),
         output_cost_per_1m=_float_env("OPENAI_OUTPUT_COST_PER_1M_TOKENS"),
     )
@@ -192,7 +193,7 @@ def run_case(
         "input_tokens": int(usage.get("input_tokens") or 0),
         "output_tokens": int(usage.get("output_tokens") or 0),
         "total_tokens": int(usage.get("total_tokens") or 0) or int(usage.get("input_tokens") or 0) + int(usage.get("output_tokens") or 0),
-        "estimated_cost_usd": estimated_cost,
+        **cost_estimate.to_record_fields(),
         "raw_response_path": str(response_path),
         "error_type": error_type,
     }
@@ -247,22 +248,25 @@ def render_markdown_summary(summary: dict[str, Any], records: list[dict[str, Any
         f"- Total latency ms: `{summary['total_latency_ms']}`",
         f"- Total tokens: `{summary['total_tokens']}`",
         f"- Estimated cost USD: `{summary['estimated_cost_usd']}`",
+        f"- Cost sources: `{', '.join(summary['cost_sources'])}`",
         f"- Threshold warnings: `{len(summary['threshold_warnings'])}`",
         f"- Threshold failures: `{len(summary['threshold_failures'])}`",
         "",
-        "| Workflow | Result | Latency ms | Citations | Retrieved | Tokens | Response |",
-        "| --- | --- | ---: | ---: | ---: | ---: | --- |",
+        "| Workflow | Result | Latency ms | Citations | Retrieved | Tokens | Cost USD | Cost Source | Response |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |",
     ]
     for record in records:
         result = "PASS" if record["overall_passed"] else "FAIL"
         lines.append(
-            "| {workflow} | {result} | {latency} | {citations} | {retrieved} | {tokens} | `{path}` |".format(
+            "| {workflow} | {result} | {latency} | {citations} | {retrieved} | {tokens} | {cost} | {cost_source} | `{path}` |".format(
                 workflow=record["workflow"],
                 result=result,
                 latency=record["latency_ms"],
                 citations=record["citation_count"],
                 retrieved=record["retrieved_count"],
                 tokens=record["total_tokens"],
+                cost=record.get("estimated_cost_usd"),
+                cost_source=record.get("cost_source"),
                 path=record["raw_response_path"],
             )
         )

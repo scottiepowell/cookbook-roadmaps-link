@@ -43,11 +43,11 @@ It intentionally excludes local filesystem paths, raw generated artifacts, envir
 | Importer tokens | Highest token user at 602 tokens. | Keep below the initial 900-token warning threshold and watch for schema or prompt bloat. |
 | Total latency | 9967 ms across all workflows. | Keep below the initial 15000 ms warning threshold. |
 | Total tokens | 1423 tokens across live-provider workflows. | Keep below the initial 2500-token warning threshold. |
-| Cost visibility | Estimated cost was not calculated. | Provide local pricing env vars for future live runs. |
+| Cost visibility | Estimated cost was not calculated. | Future GPT-nano runs now use maintained defaults unless local pricing env vars override them. |
 
 ## Known Limitations
 
-- Estimated cost is unavailable unless local cost-rate environment variables are provided.
+- Estimated cost was unavailable for this historical run because default GPT-nano cost estimates were added later. Future `gpt-5.4-nano` evals populate estimated cost from maintained default rates unless operator override env vars are provided.
 - The baseline was produced from generated demo fixtures, not production cookbook data.
 - Dataset search remains deterministic and non-provider-backed.
 - This baseline does not cover authentication, billing, time limits, multi-tenant use, durable production storage, public deployment exposure, or admin/operator workflows.
@@ -61,7 +61,7 @@ It intentionally excludes local filesystem paths, raw generated artifacts, envir
 - Require meal plans to use only retrieved candidate IDs and match selected meal titles to citations.
 - Add latency and token thresholds so future live runs flag slow or expensive regressions.
 - Reduce generated demo fixture warning noise for missing optional dataset files without hiding real production warnings.
-- Improve cost visibility by setting:
+- Override cost visibility when needed by setting:
 
 ```powershell
 $env:OPENAI_INPUT_COST_PER_1M_TOKENS="<current input rate>"

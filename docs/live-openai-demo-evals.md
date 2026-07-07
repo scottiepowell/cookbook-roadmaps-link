@@ -66,14 +66,27 @@ The harness records provider usage fields when available:
 - output tokens;
 - total tokens.
 
-Estimated cost is written only when token usage and optional local rate inputs are available:
+Estimated cost is written when token usage is available and either local rate inputs or a maintained model default can be used. For `OPENAI_MODEL=gpt-5.4-nano`, the harness uses the current standard short-context default rates when local rate inputs are not provided:
+
+- input: 0.20 USD per 1M tokens;
+- output: 1.25 USD per 1M tokens.
+
+Pricing reference: [OpenAI API pricing](https://developers.openai.com/api/docs/pricing), checked 2026-07-07. The default uses standard short-context direct OpenAI API pricing only; it does not use cached-input, Batch, Flex, Priority, regional uplift, long-context, or Amazon Bedrock pricing.
+
+Operator-provided rate inputs override the model defaults:
 
 ```powershell
-$env:OPENAI_INPUT_COST_PER_1M_TOKENS="<local rate>"
-$env:OPENAI_OUTPUT_COST_PER_1M_TOKENS="<local rate>"
+$env:OPENAI_INPUT_COST_PER_1M_TOKENS="<current input rate>"
+$env:OPENAI_OUTPUT_COST_PER_1M_TOKENS="<current output rate>"
 ```
 
-If rates are not provided, `estimated_cost_usd` is `null`. This avoids baking changing provider pricing into source control.
+Each record includes `cost_source`:
+
+- `env_override` when both local rate inputs are provided;
+- `default_model_rate` when local rate inputs are missing and the configured model has a maintained default;
+- `unavailable` when the model is unknown or token usage is unavailable.
+
+The default rates are intentionally kept in one source-code table in `evals/ai_cookbook/expected_checks.py`. The harness does not scrape pricing automatically. If rates are not available for a model, `estimated_cost_usd` remains `null`.
 
 ## Expected Checks
 

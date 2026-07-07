@@ -7,9 +7,14 @@ from pathlib import Path
 from app.dataset_retrieval import search_dataset_recipes
 from app.demo_data import seed_demo_data
 from evals.ai_cookbook.expected_checks import (
+    COST_SOURCE_DEFAULT_MODEL_RATE,
+    COST_SOURCE_ENV_OVERRIDE,
+    COST_SOURCE_UNAVAILABLE,
+    CheckResult,
     assert_no_secret_leaks,
     assert_no_private_paths,
     apply_threshold_checks,
+    estimate_cost,
     evaluate_thresholds,
     estimate_cost_usd,
     score_ask_my_cookbook,
@@ -150,11 +155,40 @@ def test_meal_plan_expected_checks_reject_invented_ids():
 
 
 def test_metrics_summary_and_cost_estimation():
+    env_override = estimate_cost(
+        {"input_tokens": 1000, "output_tokens": 500},
+        model="custom-model",
+        input_cost_per_1m=0.10,
+        output_cost_per_1m=0.40,
+    )
+    assert env_override.estimated_cost_usd == 0.0003
+    assert env_override.cost_source == COST_SOURCE_ENV_OVERRIDE
     assert estimate_cost_usd(
         {"input_tokens": 1000, "output_tokens": 500},
         input_cost_per_1m=0.10,
         output_cost_per_1m=0.40,
     ) == 0.0003
+
+    default_nano = estimate_cost(
+        {"input_tokens": 1000, "output_tokens": 500},
+        model="gpt-5.4-nano",
+    )
+    assert default_nano.estimated_cost_usd == 0.000825
+    assert default_nano.cost_source == COST_SOURCE_DEFAULT_MODEL_RATE
+
+    unknown_model = estimate_cost(
+        {"input_tokens": 1000, "output_tokens": 500},
+        model="unknown-model",
+    )
+    assert unknown_model.estimated_cost_usd is None
+    assert unknown_model.cost_source == COST_SOURCE_UNAVAILABLE
+
+    sub_cent = estimate_cost(
+        {"input_tokens": 1, "output_tokens": 1},
+        model="gpt-5.4-nano",
+    )
+    assert sub_cent.estimated_cost_usd == 0.00000145
+    assert sub_cent.estimated_cost_usd > 0
 
     summary = summarize_records(
         [
@@ -165,6 +199,7 @@ def test_metrics_summary_and_cost_estimation():
                 "output_tokens": 50,
                 "total_tokens": 150,
                 "estimated_cost_usd": 0.01,
+                "cost_source": COST_SOURCE_DEFAULT_MODEL_RATE,
             },
             {
                 "overall_passed": False,
@@ -173,6 +208,7 @@ def test_metrics_summary_and_cost_estimation():
                 "output_tokens": 5,
                 "total_tokens": 15,
                 "estimated_cost_usd": None,
+                "cost_source": COST_SOURCE_UNAVAILABLE,
             },
         ]
     )
@@ -180,6 +216,40 @@ def test_metrics_summary_and_cost_estimation():
     assert summary["workflow_count"] == 2
     assert summary["passed_workflow_count"] == 1
     assert summary["total_tokens"] == 165
+    assert summary["cost_sources"] == [COST_SOURCE_DEFAULT_MODEL_RATE, COST_SOURCE_UNAVAILABLE]
+
+
+def test_run_case_records_default_cost_source_metadata(monkeypatch):
+    live_evals = load_live_eval_module()
+    monkeypatch.delenv("OPENAI_INPUT_COST_PER_1M_TOKENS", raising=False)
+    monkeypatch.delenv("OPENAI_OUTPUT_COST_PER_1M_TOKENS", raising=False)
+    responses_dir = Path(".tmp-ai-demo") / "live-evals" / "cost-source-offline-test" / "responses"
+    shutil.rmtree(responses_dir.parent, ignore_errors=True)
+    responses_dir.mkdir(parents=True, exist_ok=True)
+
+    def runner(_case):
+        return {
+            "provider": "openai",
+            "model": "gpt-5.4-nano",
+            "usage": {"input_tokens": 1000, "output_tokens": 500, "total_tokens": 1500},
+        }
+
+    def scorer(_workflow, _payload, _expected_model):
+        return [CheckResult("offline pass", True, "passed")]
+
+    try:
+        record = live_evals.run_case(
+            {"workflow": "importer", "endpoint": "POST /ai/import-recipe", "input_summary": "offline", "expected_checks": []},
+            runner,
+            responses_dir,
+            "gpt-5.4-nano",
+            scorer,
+        )
+
+        assert record["estimated_cost_usd"] == 0.000825
+        assert record["cost_source"] == COST_SOURCE_DEFAULT_MODEL_RATE
+    finally:
+        shutil.rmtree(Path(".tmp-ai-demo"), ignore_errors=True)
 
 
 def test_threshold_warnings_and_failures_are_generated():
@@ -252,6 +322,7 @@ def test_result_files_are_written_under_ignored_generated_path():
             "output_tokens": 0,
             "total_tokens": 0,
             "estimated_cost_usd": None,
+            "cost_source": COST_SOURCE_UNAVAILABLE,
             "raw_response_path": str(run_dir / "responses" / "readiness.json"),
             "error_type": None,
         }
