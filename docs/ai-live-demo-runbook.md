@@ -55,6 +55,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-live-smoke.p
 
 `OPENAI_API_KEY` must come from a local ignored environment source. Never show the key or environment file contents during the demo.
 
+## Optional Live OpenAI Demo Evals
+
+Use this when measuring live-provider quality and metrics for the complete demo flow. It is manual-only and is not part of normal validation.
+
+```powershell
+$env:AI_PROVIDER="openai"
+$env:OPENAI_ENABLE_LIVE_TESTS="true"
+$env:OPENAI_LIVE_TEST_BUDGET_CENTS="25"
+$env:AI_MAX_OUTPUT_TOKENS="300"
+$env:OPENAI_MODEL="gpt-5.4-nano"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-evals.ps1
+```
+
+The command seeds generated demo data, runs readiness, importer, Ask My Cookbook, dataset search, dataset Ask/RAG, and meal planning, then writes ignored results under `.tmp-ai-demo/live-evals/<timestamp>/`.
+
+See [Live OpenAI Demo Evals](live-openai-demo-evals.md).
+
 ## Open The UI
 
 Start the sidecar, then open:
@@ -143,3 +160,7 @@ Follow [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md). Do not com
 ## Boundaries And Non-Goals
 
 This demo does not add production storage, deployment changes, Cloudflare changes, control-plane workflows, live provider tests in CI, Qdrant, Postgres, pgvector, embeddings, vector DB, persistent generated indexes, upstream Vanilla Cookbook frontend rewrites, browser automation, committed screenshots, raw dataset commits, generated artifact commits, private environment files, or credentials.
+
+## Future Production Hardening
+
+Future paid or time-limited application work should be split into separate tasks. Likely areas include authenticated access, time-limited sessions, monetization gates, usage metering, user/session isolation, durable storage, multi-use-case routing, deployment exposure controls, provider cost controls, and an admin/operator dashboard.

@@ -750,3 +750,46 @@ Done criteria:
 - dataset search/RAG still work with intuitive sample prompts;
 - logs remain safe and useful;
 - no production cookbook data, raw datasets, screenshots, generated artifacts, private env files, or credentials are committed.
+
+## 0027E: Live OpenAI Demo Evals And Metrics
+
+Status: complete.
+
+Goal: Prepare the cookbook AI demo for controlled OpenAI-backed operation by adding repeatable live-provider evals and metrics reporting.
+
+Files likely touched:
+
+- `scripts/run-openai-demo-evals.ps1`
+- `scripts/live-openai-demo-evals.py`
+- `evals/ai_cookbook/live_cases.json`
+- `evals/ai_cookbook/expected_checks.py`
+- `ai-api/tests/test_live_openai_demo_evals.py`
+- `docs/live-openai-demo-evals.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0027E-live-openai-demo-evals-and-metrics-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- live eval wrapper requires explicit OpenAI opt-in controls before live calls;
+- generated demo-safe data is seeded for live evals;
+- readiness, importer, Ask My Cookbook, dataset search baseline, dataset Ask/RAG, and meal planning are covered;
+- expected checks are defined before the run;
+- artifacts include JSONL results, JSON summary, Markdown summary, and per-workflow response JSON;
+- metrics include latency, citations, retrieved counts, warnings, usage tokens when available, and estimated cost when local rates are provided;
+- generated eval artifacts remain under ignored `.tmp-ai-demo/`;
+- no live OpenAI calls are added to CI or normal validation;
+- no secrets, private environment files, raw datasets, generated artifacts, screenshots, or credentials are committed.
+
+Future production hardening tasks may include authenticated access, time-limited sessions, paid access or monetization gates, usage metering, user/session isolation, durable storage, multi-use-case routing, deployment exposure controls, provider cost controls, and an admin/operator dashboard. Those are intentionally not implemented in 0027E.

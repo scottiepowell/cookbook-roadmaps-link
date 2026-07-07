@@ -1,0 +1,99 @@
+[
+  {
+    "workflow": "readiness",
+    "endpoint": "GET /demo/readiness",
+    "input_summary": "Readiness check for seeded demo data and OpenAI provider mode.",
+    "expected_checks": [
+      "sidecar is healthy",
+      "provider mode is openai",
+      "model matches configured OPENAI_MODEL",
+      "saved recipes are available",
+      "dataset is available"
+    ]
+  },
+  {
+    "workflow": "importer",
+    "endpoint": "POST /ai/import-recipe",
+    "input_summary": "Import a small lemon beans recipe note.",
+    "request": {
+      "text": "Lemon herb white beans: warm white beans with olive oil, garlic, lemon juice, and parsley. Serve with toast.",
+      "source": "0027E live eval fixture"
+    },
+    "expected_checks": [
+      "response parses as expected schema",
+      "title is non-empty",
+      "ingredient list is non-empty",
+      "instructions are non-empty",
+      "provider is OpenAI",
+      "model matches configured OpenAI model",
+      "no warnings unless justified"
+    ]
+  },
+  {
+    "workflow": "ask_my_cookbook",
+    "endpoint": "POST /ai/ask",
+    "input_summary": "Question: What saved recipe uses lemon?",
+    "request": {
+      "question": "What saved recipe uses lemon?",
+      "limit": 2
+    },
+    "expected_checks": [
+      "answer mentions or cites Lemon Herb White Beans",
+      "at least one citation is returned",
+      "citation includes saved recipe id 1 or matching title",
+      "retrieved count greater than zero",
+      "no hallucinated recipe title outside retrieved citations"
+    ]
+  },
+  {
+    "workflow": "dataset_search",
+    "endpoint": "GET /dataset/search",
+    "input_summary": "Deterministic baseline search: tomato pasta.",
+    "request": {
+      "query": "tomato pasta",
+      "limit": 3,
+      "dataset_limit": 25
+    },
+    "expected_checks": [
+      "deterministic baseline returns at least one result",
+      "top results include Tomato Pasta Skillet",
+      "result source id includes demo-dataset-1",
+      "provider is not used"
+    ]
+  },
+  {
+    "workflow": "dataset_ask",
+    "endpoint": "POST /dataset/ask",
+    "input_summary": "Question: What indexed recipe uses tomato pasta?",
+    "request": {
+      "question": "What indexed recipe uses tomato pasta?",
+      "limit": 2,
+      "dataset_limit": 25
+    },
+    "expected_checks": [
+      "answer mentions or cites Tomato Pasta Skillet",
+      "at least one citation is returned",
+      "citation source id includes demo-dataset-1",
+      "retrieved count greater than zero",
+      "answer does not invent unsupported dataset recipes"
+    ]
+  },
+  {
+    "workflow": "meal_plan",
+    "endpoint": "POST /ai/meal-plan",
+    "input_summary": "Preferences: lemon dinner.",
+    "request": {
+      "days": 1,
+      "meals_per_day": 1,
+      "preferences": "lemon dinner",
+      "candidate_limit": 3
+    },
+    "expected_checks": [
+      "plan has at least one day and one meal",
+      "selected recipe is from retrieved saved recipe candidates",
+      "expected likely recipe is Lemon Herb White Beans",
+      "citations are present",
+      "no invented recipe ids"
+    ]
+  }
+]

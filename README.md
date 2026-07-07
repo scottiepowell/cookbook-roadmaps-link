@@ -28,6 +28,7 @@ Demo and evidence links:
 - [AI UI integration plan](docs/ai-ui-integration-plan.md)
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
+- [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -48,6 +49,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 ```
 
 Then open `http://127.0.0.1:8000/demo` for the guided browser demo UI.
+
+Run the live OpenAI demo eval wrapper only with explicit live opt-in settings:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-evals.ps1
+```
+
+Without opt-in settings, it skips cleanly and performs no live calls.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
@@ -85,6 +94,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [AI UI integration plan](docs/ai-ui-integration-plan.md)
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
+- [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
