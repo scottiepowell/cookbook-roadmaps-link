@@ -96,6 +96,8 @@ Docker Compose also exposes the sidecar locally at `127.0.0.1:8000` for operator
 8. Show logs for one workflow request.
 9. Close with boundaries: no production storage, no vector DB, no UI rewrite, no live CI calls.
 
+Optional input-quality check: enter `!!!!!` in dataset search to show the "Input not usable yet" card, then enter `plan dinner` in meal planning to show the one-question clarification behavior. These responses should be deterministic and should not require provider calls.
+
 ## Suggested 30 Minute Flow
 
 1. Start with the portfolio showcase and completion review.
@@ -116,6 +118,8 @@ Docker Compose also exposes the sidecar locally at `127.0.0.1:8000` for operator
 | Readiness says saved recipes unavailable | Rerun `scripts\start-ai-demo-local.ps1` or `scripts\seed-ai-demo-data.ps1`, then confirm `COOKBOOK_DB_PATH` points at the generated SQLite fixture. |
 | Readiness says dataset unavailable | Rerun `scripts\start-ai-demo-local.ps1` or confirm `RECIPE_DATASET_DIR` points at the generated dataset fixture. |
 | Workflow returns a friendly error | Check readiness, then inspect sidecar logs for request ID, endpoint, status, and safe error type. |
+| Workflow shows "Needs one more detail" | Add one ingredient, recipe name, cooking method, or meal scope; the app intentionally asks only one bounded clarification question. |
+| Workflow shows "Input not usable yet" | Replace empty, symbol-only, placeholder, or junk text with a concrete cooking request. |
 | Provider unavailable | Confirm provider mode and use mock mode for normal demos. |
 | Direct Windows pytest fails | Use the Git Bash validator path documented in repo validation; the known issue is a local temp-directory ACL problem. |
 

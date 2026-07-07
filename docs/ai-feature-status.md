@@ -12,6 +12,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Local dataset search | Complete | `GET /dataset/search`, `POST /dataset/search` | pytest, mock demo | Uses bounded deterministic keyword retrieval over generated fixtures. |
 | Dataset Ask/RAG | Complete | `POST /dataset/ask` | pytest, offline evals, live smoke | Answers from retrieved dataset records with provenance citations. |
 | Saved-recipe meal planning | Complete | `POST /ai/meal-plan` | pytest, offline evals, live smoke | Plans from selected saved recipe candidates; no DB write-back. |
+| Bounded input quality | Complete | importer, Ask, dataset search/RAG, meal planning | pytest, offline evals | Rejects unusable input before provider calls, asks at most one clarification question for recoverable vague input, and lets weak usable input proceed with warnings. |
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
 | Manual OpenAI smoke | Complete, manual-only | `scripts/smoke-openai-live.py`, `scripts/demo-ai-live-smoke.ps1` | recorded manual run | Requires explicit opt-in, API key, token cap, and budget cap. |
 | Live OpenAI demo evals | Complete, manual-only | `scripts/run-openai-demo-evals.ps1` | offline harness tests; first GPT-nano baseline | Requires explicit opt-in and writes ignored metrics/results under `.tmp-ai-demo/live-evals/`. Includes usefulness checks, latency/token thresholds, and GPT-nano cost estimates with `cost_source`. |

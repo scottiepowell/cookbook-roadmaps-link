@@ -869,3 +869,43 @@ Done criteria:
 - generated records and summaries include `cost_source` as `env_override`, `default_model_rate`, or `unavailable`;
 - no live OpenAI calls are added to normal validation;
 - no `.tmp-ai-demo` artifacts, API keys, private env files, screenshots, raw datasets, or credentials are committed.
+
+## 0028A: Bounded Input Quality And Clarification Handling
+
+Status: complete.
+
+Goal: Add production-oriented handling for weak, vague, malformed, or nonsensical user input across cookbook AI workflows.
+
+Files likely touched:
+
+- `ai-api/app/input_quality.py`
+- `ai-api/app/schemas.py`
+- `ai-api/app/importer.py`
+- `ai-api/app/rag.py`
+- `ai-api/app/dataset_retrieval.py`
+- `ai-api/app/dataset_rag.py`
+- `ai-api/app/meal_plan_endpoint.py`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/`
+- `evals/ai_cookbook/run_evals.py`
+- `scripts/live-openai-demo-evals.py`
+- docs and outbox
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- input quality is classified as `ready`, `weak_but_usable`, `needs_clarification`, or `rejected`;
+- empty, whitespace-only, symbol-only, no-alpha, repeated junk, placeholder, too-short, and too-long inputs can be rejected before provider calls;
+- vague but recoverable inputs return one bounded clarification question;
+- weak usable inputs proceed with warnings or assumptions;
+- importer, Ask My Cookbook, dataset search, dataset Ask/RAG, and meal planning expose `input_quality` metadata;
+- live eval records include input-quality and provider-call-avoidance metrics;
+- no open-ended chat loop, multi-turn state, normal-validation live calls, generated live artifacts, secrets, private env files, raw datasets, screenshots, logs, or credentials are added.

@@ -114,7 +114,11 @@ def test_dataset_ask_rejects_empty_question(monkeypatch):
 
     response = TestClient(app).post("/dataset/ask", json={"question": "   "})
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    data = response.json()
+    assert data["provider"] == "none"
+    assert data["citations"] == []
+    assert data["input_quality"]["status"] == "rejected"
 
 
 def test_dataset_ask_does_not_create_index_artifacts(tmp_path, monkeypatch):

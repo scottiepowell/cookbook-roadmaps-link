@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 
 from app.config import get_ai_settings
+from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_meal_plan_preferences
 from app.meal_planner import (
     build_no_match_meal_plan_response,
     deterministic_partial_meal_plan,
@@ -36,12 +37,33 @@ def create_meal_plan(
     request: MealPlanRequest,
     provider: LLMProvider | None = None,
 ) -> MealPlanResponse:
+    input_quality = classify_meal_plan_preferences(_meal_plan_quality_text(request))
+    if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
+        return MealPlanResponse(
+            plan=MealPlanDraft(days=[]),
+            citations=[],
+            provider="none",
+            model="none",
+            selection=MealPlanSelectionMetadata(
+                candidate_count=0,
+                matched_recipe_ids=[],
+                requested_slots=request.days * request.meals_per_day,
+            ),
+            warnings=input_quality.warnings,
+            usage=None,
+            input_quality=input_quality.to_dict(),
+        )
+
     foundation_request = _foundation_request(request)
     recipes = load_recipe_documents()
     foundation = select_meal_plan_candidates(recipes, foundation_request)
 
     if not foundation.candidates:
-        return build_no_match_meal_plan_response(request, foundation)
+        response = build_no_match_meal_plan_response(request, foundation)
+        response.input_quality = input_quality.to_dict()
+        if input_quality.status == WEAK_BUT_USABLE:
+            response.warnings = [*input_quality.warnings, *response.warnings]
+        return response
 
     active_provider = provider or _get_configured_provider()
     try:
@@ -64,6 +86,8 @@ def create_meal_plan(
 
     plan = _coerce_to_saved_candidates(provider_plan, request, foundation.candidates)
     warnings = [*foundation.warnings]
+    if input_quality.status == WEAK_BUT_USABLE:
+        warnings.extend(input_quality.warnings)
     if _planned_meal_count(plan) < request.days * request.meals_per_day:
         warnings.append("Meal plan is partial because there were fewer saved recipe candidates than requested slots.")
 
@@ -79,6 +103,7 @@ def create_meal_plan(
         ),
         warnings=warnings,
         usage=provider_response.usage,
+        input_quality=input_quality.to_dict(),
     )
 
 
@@ -95,6 +120,17 @@ def _foundation_request(request: MealPlanRequest) -> MealPlanRequest:
         exclude_ingredients=request.exclude_ingredients,
         candidate_limit=request.candidate_limit,
     )
+
+
+def _meal_plan_quality_text(request: MealPlanRequest) -> str | None:
+    parts = [
+        request.preferences or "",
+        request.query or "",
+        " ".join(request.include_tags),
+        " ".join(request.tags),
+    ]
+    text = " ".join(part for part in parts if part).strip()
+    return text or None
 
 
 def _get_configured_provider() -> LLMProvider:

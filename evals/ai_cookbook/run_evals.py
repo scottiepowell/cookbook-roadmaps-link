@@ -48,6 +48,8 @@ def main() -> int:
         evals.append(("dataset_ask", case))
     for case in _load_json("workflow_cases.json"):
         evals.append((case["type"], case))
+    for case in _input_quality_cases():
+        evals.append(("input_quality", case))
     evals.append(("provider_config", {"name": "provider_config_does_not_leak_fake_secrets"}))
 
     failures: list[str] = []
@@ -83,6 +85,8 @@ def _run_case(case_type: str, case: dict[str, Any]) -> None:
         _run_import_recipe_case(case)
     elif case_type == "meal_plan":
         _run_meal_plan_case(case)
+    elif case_type == "input_quality":
+        _run_input_quality_case(case)
     elif case_type == "provider_config":
         _run_provider_config_case()
     else:
@@ -238,6 +242,83 @@ def _run_provider_config_case() -> None:
     _assert_no_secret_leaks("provider config", payload)
 
 
+def _input_quality_cases() -> list[dict[str, Any]]:
+    return [
+        {"name": "input_quality_empty_importer_rejected", "workflow": "importer", "input": "", "expected_status": "rejected"},
+        {"name": "input_quality_symbol_importer_rejected", "workflow": "importer", "input": "!!!!!", "expected_status": "rejected"},
+        {"name": "input_quality_vague_importer_clarifies", "workflow": "importer", "input": "make food", "expected_status": "needs_clarification"},
+        {"name": "input_quality_weak_importer_warns", "workflow": "importer", "input": "Lemon beans toast", "expected_status": "weak_but_usable"},
+        {"name": "input_quality_empty_saved_question_rejected", "workflow": "ask", "input": "", "expected_status": "rejected"},
+        {"name": "input_quality_vague_meal_plan_clarifies", "workflow": "meal_plan", "input": "plan dinner", "expected_status": "needs_clarification"},
+        {"name": "input_quality_nonsense_dataset_search_rejected", "workflow": "dataset_search", "input": "??????", "expected_status": "rejected"},
+        {"name": "input_quality_valid_classifier_ready", "workflow": "classifier", "input": "What saved recipe uses lemon?", "expected_status": "ready"},
+    ]
+
+
+def _run_input_quality_case(case: dict[str, Any]) -> None:
+    workflow = case["workflow"]
+    expected_status = case["expected_status"]
+    if workflow == "importer":
+        from app.importer import import_recipe_text
+        from app.schemas import RecipeImportRequest
+
+        provider = (
+            StructuredFixtureProvider(
+                {
+                    "title": "Lemon Beans Toast",
+                    "description": "Lemon beans on toast.",
+                    "ingredients": [{"name": "lemon"}, {"name": "beans"}, {"name": "toast"}],
+                    "instructions": [{"step": 1, "text": "Warm beans."}],
+                    "notes": "Quantities are unspecified.",
+                }
+            )
+            if expected_status == "weak_but_usable"
+            else FailingProvider()
+        )
+        response = import_recipe_text(RecipeImportRequest(text=case["input"]), provider=provider)
+        assert response.input_quality is not None
+        assert response.input_quality.status == expected_status
+        if expected_status in {"rejected", "needs_clarification"}:
+            assert response.provider == "none", "provider was called for deterministic importer input-quality case"
+        if expected_status == "weak_but_usable":
+            assert response.warnings, "weak importer input should include warnings"
+    elif workflow == "ask":
+        from app.rag import ask_cookbook
+        from app.schemas import AskRequest
+
+        response = ask_cookbook(AskRequest(question=case["input"]), provider=FailingProvider(), recipes=[])
+        assert response.input_quality is not None
+        assert response.input_quality.status == expected_status
+        assert response.provider == "none", "provider was called for deterministic saved-recipe input-quality case"
+    elif workflow == "meal_plan":
+        from app.meal_plan_endpoint import create_meal_plan
+        from app.schemas import MealPlanRequest
+
+        response = create_meal_plan(MealPlanRequest(preferences=case["input"]), provider=FailingProvider())
+        assert response.input_quality is not None
+        assert response.input_quality.status == expected_status
+        assert response.provider == "none", "provider was called for deterministic meal-plan input-quality case"
+    elif workflow == "dataset_search":
+        from app.dataset_retrieval import search_dataset_recipes
+
+        with _env_guard():
+            os.environ["RECIPE_DATASET_DIR"] = "missing-dataset-for-input-quality"
+            response = search_dataset_recipes(case["input"], dataset_limit=10)
+        assert response.input_quality is not None
+        assert response.input_quality.status == expected_status
+        assert response.index.build_metadata["mode"] == "input_quality"
+    elif workflow == "classifier":
+        from app.input_quality import classify_question_input
+
+        response = classify_question_input(case["input"])
+        assert response.status == expected_status
+    else:
+        raise AssertionError(f"unknown input-quality workflow {workflow!r}")
+
+    payload = response.model_dump() if hasattr(response, "model_dump") else response.to_dict()
+    _assert_no_secret_leaks(case["name"], payload)
+
+
 def _assert_dataset_citations(citations: list[Any]) -> None:
     assert citations, "missing citations"
     for citation in citations:
@@ -368,6 +449,17 @@ class StructuredFixtureProvider:
             model=self.model,
             usage={"input_tokens": len(request.prompt.split()), "output_tokens": len(self.data)},
         )
+
+
+class FailingProvider:
+    name = "failing"
+    model = "none"
+
+    def generate_text(self, request: Any) -> Any:
+        raise AssertionError("provider should not be called")
+
+    def generate_structured(self, request: Any) -> Any:
+        raise AssertionError("provider should not be called")
 
 
 if __name__ == "__main__":

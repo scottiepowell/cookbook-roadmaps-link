@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 
 from app.config import get_ai_settings
+from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_recipe_import_input
 from app.providers import LLMProvider, StructuredLLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError
 from app.schemas import RecipeImportDraft, RecipeImportRequest, RecipeImportResponse
@@ -28,6 +29,17 @@ def import_recipe_text(
     request: RecipeImportRequest,
     provider: LLMProvider | None = None,
 ) -> RecipeImportResponse:
+    input_quality = classify_recipe_import_input(request.text)
+    if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
+        return RecipeImportResponse(
+            draft=None,
+            provider="none",
+            model="none",
+            warnings=input_quality.warnings,
+            usage=None,
+            input_quality=input_quality.to_dict(),
+        )
+
     active_provider = provider or _get_configured_provider()
     schema = RecipeImportDraft.model_json_schema()
     try:
@@ -52,8 +64,9 @@ def import_recipe_text(
         draft=draft,
         provider=provider_response.provider,
         model=provider_response.model,
-        warnings=[],
+        warnings=input_quality.warnings if input_quality.status == WEAK_BUT_USABLE else [],
         usage=provider_response.usage,
+        input_quality=input_quality.to_dict(),
     )
 
 

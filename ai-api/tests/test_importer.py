@@ -60,7 +60,11 @@ def test_import_endpoint_rejects_empty_text(monkeypatch):
 
     response = TestClient(app).post("/ai/import-recipe", json={"text": "   "})
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    data = response.json()
+    assert data["provider"] == "none"
+    assert data["draft"] is None
+    assert data["input_quality"]["status"] == "rejected"
 
 
 def test_import_endpoint_does_not_write_to_cookbook_db(tmp_path, monkeypatch):

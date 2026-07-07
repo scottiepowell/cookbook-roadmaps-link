@@ -48,7 +48,7 @@ def test_post_dataset_search_works_with_fixture_data(tmp_path, monkeypatch):
     assert data["index"]["build_metadata"]["dataset_dir"] == "configured"
 
 
-def test_dataset_search_empty_query_returns_summary_without_results(tmp_path, monkeypatch):
+def test_dataset_search_empty_query_rejects_before_dataset_inspection(tmp_path, monkeypatch):
     (tmp_path / "13k-recipes.csv").write_text(
         "recipe_id,title,ingredients,instructions\nabc,Lentil Soup,lentils,Simmer\n",
         encoding="utf-8",
@@ -61,7 +61,9 @@ def test_dataset_search_empty_query_returns_summary_without_results(tmp_path, mo
     data = response.json()
     assert data["count"] == 0
     assert data["results"] == []
-    assert data["index"]["document_count"] == 1
+    assert data["index"]["document_count"] == 0
+    assert data["index"]["build_metadata"]["mode"] == "input_quality"
+    assert data["input_quality"]["status"] == "rejected"
 
 
 def test_dataset_search_missing_dataset_returns_controlled_warning(tmp_path, monkeypatch):

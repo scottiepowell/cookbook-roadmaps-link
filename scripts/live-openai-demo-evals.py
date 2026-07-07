@@ -170,6 +170,8 @@ def run_case(
 
     checks = scorer(workflow, payload, expected_model) if error_type is None else []
     usage = payload.get("usage") if isinstance(payload.get("usage"), dict) else {}
+    input_quality = payload.get("input_quality") if isinstance(payload.get("input_quality"), dict) else {}
+    provider_called = _provider_called(workflow, payload)
     cost_estimate = estimate_cost(
         usage,
         model=str(payload.get("model") or expected_model),
@@ -189,6 +191,11 @@ def run_case(
         "warning_count": len(payload.get("warnings") or []),
         "citation_count": len(payload.get("citations") or []),
         "retrieved_count": _retrieved_count(payload),
+        "input_quality_status": input_quality.get("status"),
+        "input_quality_reason": input_quality.get("reason"),
+        "clarification_question_present": bool(input_quality.get("clarifying_question")),
+        "rejected_before_provider": input_quality.get("status") == "rejected" and not provider_called,
+        "provider_called": provider_called,
         "latency_ms": latency_ms,
         "input_tokens": int(usage.get("input_tokens") or 0),
         "output_tokens": int(usage.get("output_tokens") or 0),
@@ -358,6 +365,12 @@ def _retrieved_count(payload: dict[str, Any]) -> int:
     if isinstance(payload.get("selection"), dict):
         return int(payload["selection"].get("candidate_count") or 0)
     return int(payload.get("count") or 0)
+
+
+def _provider_called(workflow: str, payload: dict[str, Any]) -> bool:
+    if workflow in {"readiness", "dataset_search"}:
+        return False
+    return str(payload.get("provider") or "none") != "none"
 
 
 def _float_env(name: str) -> float | None:

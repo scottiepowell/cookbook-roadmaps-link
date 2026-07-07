@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.config import get_ai_settings
+from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_question_input
 from app.providers import LLMProvider, LLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError
 from app.recipe_reader import load_recipe_documents
@@ -55,6 +56,19 @@ def ask_cookbook(
     provider: LLMProvider | None = None,
     recipes: list[RecipeDocument] | None = None,
 ) -> AskResponse:
+    input_quality = classify_question_input(request.question)
+    if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
+        return AskResponse(
+            answer=input_quality.clarifying_question or "I need a little more useful cookbook detail before searching saved recipes.",
+            citations=[],
+            provider="none",
+            model="none",
+            retrieval=AskRetrievalMetadata(query=request.question, retrieved_count=0, limit=request.limit, matched_recipe_ids=[]),
+            warnings=input_quality.warnings,
+            usage=None,
+            input_quality=input_quality.to_dict(),
+        )
+
     documents = recipes if recipes is not None else load_recipe_documents()
     retrieved = retrieve_recipe_context(documents, request.question, request.limit)
     retrieval = AskRetrievalMetadata(
@@ -73,6 +87,7 @@ def ask_cookbook(
             retrieval=retrieval,
             warnings=["No matching saved recipes were found; no provider call was made."],
             usage=None,
+            input_quality=input_quality.to_dict(),
         )
 
     active_provider = provider or _get_configured_provider()
@@ -94,8 +109,9 @@ def ask_cookbook(
         provider=provider_response.provider,
         model=provider_response.model,
         retrieval=retrieval,
-        warnings=[],
+        warnings=input_quality.warnings if input_quality.status == WEAK_BUT_USABLE else [],
         usage=provider_response.usage,
+        input_quality=input_quality.to_dict(),
     )
 
 

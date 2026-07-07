@@ -61,6 +61,13 @@ class DatasetIndexSummaryResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class InputQualityResponse(BaseModel):
+    status: str
+    reason: str
+    clarifying_question: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
 class DatasetSearchProvenance(BaseModel):
     dataset: str = "Food Ingredients and Recipes Dataset with Images"
     creator: str = "pes12017000148"
@@ -90,19 +97,13 @@ class DatasetSearchResponse(BaseModel):
     results: list[DatasetSearchResult] = Field(default_factory=list)
     index: DatasetIndexSummaryResponse
     warnings: list[str] = Field(default_factory=list)
+    input_quality: InputQualityResponse | None = None
 
 
 class DatasetAskRequest(BaseModel):
-    question: str = Field(min_length=1)
+    question: str
     limit: int = Field(default=3, ge=1, le=10)
     dataset_limit: int | None = Field(default=None, ge=1, le=5000)
-
-    @field_validator("question")
-    @classmethod
-    def question_must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("Question must not be empty.")
-        return value
 
 
 class DatasetAskCitation(BaseModel):
@@ -131,18 +132,12 @@ class DatasetAskResponse(BaseModel):
     retrieval: DatasetAskRetrievalMetadata
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
+    input_quality: InputQualityResponse | None = None
 
 
 class RecipeImportRequest(BaseModel):
-    text: str = Field(min_length=1)
+    text: str
     source: str | None = None
-
-    @field_validator("text")
-    @classmethod
-    def text_must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("Recipe text must not be empty.")
-        return value
 
 
 class RecipeIngredientDraft(BaseModel):
@@ -168,23 +163,17 @@ class RecipeImportDraft(BaseModel):
 
 
 class RecipeImportResponse(BaseModel):
-    draft: RecipeImportDraft
+    draft: RecipeImportDraft | None = None
     provider: str
     model: str
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
+    input_quality: InputQualityResponse | None = None
 
 
 class AskRequest(BaseModel):
-    question: str = Field(min_length=1)
+    question: str
     limit: int = Field(default=3, ge=1, le=10)
-
-    @field_validator("question")
-    @classmethod
-    def question_must_not_be_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("Question must not be empty.")
-        return value
 
 
 class AskCitation(BaseModel):
@@ -208,6 +197,7 @@ class AskResponse(BaseModel):
     retrieval: AskRetrievalMetadata
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
+    input_quality: InputQualityResponse | None = None
 
 
 class MealPlanFoundationRequest(BaseModel):
@@ -310,3 +300,4 @@ class MealPlanResponse(BaseModel):
     selection: MealPlanSelectionMetadata
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
+    input_quality: InputQualityResponse | None = None

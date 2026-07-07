@@ -32,6 +32,17 @@ Cases are defined in `evals/ai_cookbook/live_cases.json`. Deterministic scoring 
 
 The first successful live GPT-nano baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](live-openai-demo-baseline-2026-07-07.md).
 
+## Input Quality Metrics
+
+The API applies deterministic input-quality checks before retrieval or provider calls. Responses may include `input_quality.status`:
+
+- `ready`: process normally;
+- `weak_but_usable`: process with bounded warnings or assumptions;
+- `needs_clarification`: return exactly one short clarification question and do not call the main generation path;
+- `rejected`: return friendly recovery guidance without a provider call.
+
+Live eval records include `input_quality_status`, `input_quality_reason`, `clarification_question_present`, `rejected_before_provider`, and `provider_called` when available. These fields make bad-input handling measurable without adding an open-ended chat loop or extra live calls.
+
 ## Guardrails
 
 The wrapper exits without live calls unless all required settings are present:

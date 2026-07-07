@@ -1,5 +1,6 @@
 from app.config import get_ai_settings, get_recipe_dataset_index_limit
-from app.dataset_retrieval import search_dataset_recipes
+from app.dataset_retrieval import empty_dataset_index_summary, search_dataset_recipes
+from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_dataset_question_input
 from app.providers import LLMProvider, LLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError
 from app.schemas import (
@@ -57,6 +58,26 @@ def ask_dataset_recipes(
     provider: LLMProvider | None = None,
 ) -> DatasetAskResponse:
     dataset_limit = request.dataset_limit or get_recipe_dataset_index_limit()
+    input_quality = classify_dataset_question_input(request.question)
+    if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
+        return DatasetAskResponse(
+            answer=input_quality.clarifying_question or "I need a more useful dataset question before searching indexed recipes.",
+            citations=[],
+            provider="none",
+            model="none",
+            retrieval=DatasetAskRetrievalMetadata(
+                query=request.question,
+                retrieved_count=0,
+                limit=request.limit,
+                dataset_limit=dataset_limit,
+                matched_result_ids=[],
+                index=empty_dataset_index_summary(dataset_limit, input_quality.warnings),
+            ),
+            warnings=input_quality.warnings,
+            usage=None,
+            input_quality=input_quality.to_dict(),
+        )
+
     search_query = _retrieval_query(request.question)
     if not search_query:
         search_query = request.question
@@ -87,6 +108,7 @@ def ask_dataset_recipes(
             retrieval=retrieval,
             warnings=warnings,
             usage=None,
+            input_quality=input_quality.to_dict(),
         )
 
     active_provider = provider or _get_configured_provider()
@@ -108,8 +130,9 @@ def ask_dataset_recipes(
         provider=provider_response.provider,
         model=provider_response.model,
         retrieval=retrieval,
-        warnings=retrieval_response.warnings,
+        warnings=[*retrieval_response.warnings, *input_quality.warnings] if input_quality.status == WEAK_BUT_USABLE else retrieval_response.warnings,
         usage=provider_response.usage,
+        input_quality=input_quality.to_dict(),
     )
 
 

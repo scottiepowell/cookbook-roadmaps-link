@@ -3,6 +3,7 @@ from pathlib import Path
 from app.config import get_recipe_dataset_dir, get_recipe_dataset_index_limit
 from app.dataset_adapter import inspect_recipe_dataset, iter_recipe_dataset_records
 from app.dataset_index import build_recipe_index, search_recipe_index
+from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_dataset_search_input
 from app.schemas import (
     DatasetIndexSummaryResponse,
     DatasetSearchProvenance,
@@ -13,9 +14,20 @@ from app.schemas import (
 
 
 def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | None = None) -> DatasetSearchResponse:
+    input_quality = classify_dataset_search_input(query)
+    if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
+        return DatasetSearchResponse(
+            query=query,
+            count=0,
+            results=[],
+            index=empty_dataset_index_summary(dataset_limit or get_recipe_dataset_index_limit(), input_quality.warnings),
+            warnings=input_quality.warnings,
+            input_quality=input_quality.to_dict(),
+        )
+
     dataset_dir = Path(get_recipe_dataset_dir())
     record_limit = dataset_limit or get_recipe_dataset_index_limit()
-    warnings: list[str] = []
+    warnings: list[str] = [*input_quality.warnings] if input_quality.status == WEAK_BUT_USABLE else []
 
     if not dataset_dir.exists():
         warnings.append("Configured recipe dataset directory does not exist.")
@@ -27,7 +39,7 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
             build_metadata={"mode": "in_memory", "input_records": 0, "dataset_dir": "configured", "record_limit": record_limit},
             warnings=warnings,
         )
-        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=warnings)
+        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=warnings, input_quality=input_quality.to_dict())
 
     inspection = inspect_recipe_dataset(dataset_dir)
     warnings.extend(inspection.warnings)
@@ -51,7 +63,7 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
     )
 
     if not query.strip():
-        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=summary_warnings)
+        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=summary_warnings, input_quality=input_quality.to_dict())
 
     results = [
         DatasetSearchResult(
@@ -78,6 +90,18 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
         results=results,
         index=index_summary,
         warnings=summary_warnings,
+        input_quality=input_quality.to_dict(),
+    )
+
+
+def empty_dataset_index_summary(record_limit: int, warnings: list[str] | None = None) -> DatasetIndexSummaryResponse:
+    return DatasetIndexSummaryResponse(
+        document_count=0,
+        source_counts={},
+        fields_indexed=[],
+        token_count=0,
+        build_metadata={"mode": "input_quality", "input_records": 0, "dataset_dir": "not_inspected", "record_limit": record_limit},
+        warnings=warnings or [],
     )
 
 

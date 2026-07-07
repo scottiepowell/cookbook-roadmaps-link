@@ -232,11 +232,30 @@ function withWorkflowHeader(options, workflow) {
 
 function renderSuccess(target, data, view) {
   target.innerHTML = "";
+  if (data.input_quality?.status === "needs_clarification") {
+    target.append(inputQualityCard("Needs one more detail", data.input_quality));
+    target.append(warningSection(data.warnings || data.input_quality?.warnings || []));
+    target.append(jsonDetails(data));
+    return;
+  }
+  if (data.input_quality?.status === "rejected") {
+    target.append(inputQualityCard("Input not usable yet", data.input_quality));
+    target.append(warningSection(data.warnings || data.input_quality?.warnings || []));
+    target.append(jsonDetails(data));
+    return;
+  }
   target.append(answerCard(view.title(data), view.answer(data)));
   target.append(metadataGrid(view.meta(data)));
   target.append(citationSection(view.citations(data)));
   target.append(warningSection(data.warnings || []));
   target.append(jsonDetails(data));
+}
+
+function inputQualityCard(title, inputQuality) {
+  const body = [inputQuality?.clarifying_question, inputQuality?.reason].filter(Boolean).join("\n");
+  const card = answerCard(title, body || "Please add one specific cooking detail and try again.");
+  card.classList.add(inputQuality?.status === "rejected" ? "error-card" : "warning-card");
+  return card;
 }
 
 function renderError(target, message) {

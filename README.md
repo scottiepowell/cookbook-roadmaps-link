@@ -12,6 +12,7 @@ Completed AI workflows:
 - Ask My Cookbook: `POST /ai/ask` answers over saved recipes with recipe citations.
 - Dataset search/RAG: `GET/POST /dataset/search` and `POST /dataset/ask` use bounded local dataset fixtures with provenance citations.
 - Meal planning: `POST /ai/meal-plan` builds plans from saved recipe candidates.
+- Bounded input quality: weak or vague input gets deterministic warnings or one clarification question, while empty or nonsensical input is rejected before provider calls.
 - Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows.
 - Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
 
@@ -59,7 +60,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-eval
 
 Without opt-in settings, it skips cleanly and performs no live calls.
 
-The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). Future live eval runs should compare correctness, usefulness, latency, token use, and cost visibility against that baseline. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
+The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). Future live eval runs should compare correctness, usefulness, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that baseline. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
@@ -129,7 +130,7 @@ Numbered `inbox/` specifications drive work. Codex inspects, implements, validat
 
 ## AI Sidecar Status
 
-The `ai-api` service provides health/config endpoints, deterministic saved-recipe search, structured recipe import drafts, Ask My Cookbook RAG over saved recipes, a saved-recipe meal-plan endpoint, read-only cookbook DB inspection, local-only Kaggle recipe dataset search/RAG, offline evals, and a manual-only live OpenAI smoke script. Automated validation uses the mock provider and generated fixtures; it does not require provider keys, live AI calls, the Vanilla Cookbook database, or committed raw dataset files.
+The `ai-api` service provides health/config endpoints, deterministic saved-recipe search, structured recipe import drafts, Ask My Cookbook RAG over saved recipes, a saved-recipe meal-plan endpoint, read-only cookbook DB inspection, local-only Kaggle recipe dataset search/RAG, deterministic input-quality handling, offline evals, and a manual-only live OpenAI smoke script. Automated validation uses the mock provider and generated fixtures; it does not require provider keys, live AI calls, the Vanilla Cookbook database, or committed raw dataset files.
 
 For a portfolio or interview walkthrough, start with [AI demo walkthrough](docs/ai-demo-walkthrough.md), [AI feature status](docs/ai-feature-status.md), and the mock demo helper:
 
