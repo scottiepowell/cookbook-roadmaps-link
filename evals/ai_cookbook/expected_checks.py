@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any
 
+
+TOTAL_LATENCY_MS_WARN = 15000
+IMPORTER_LATENCY_MS_WARN = 7000
+WORKFLOW_LATENCY_MS_FAIL = 10000
+TOTAL_TOKENS_WARN = 2500
+IMPORTER_TOKENS_WARN = 900
+WORKFLOW_TOKENS_FAIL = 1200
 
 SECRET_PATTERNS = (
     "OPENAI_API_KEY",
@@ -24,6 +32,27 @@ KNOWN_DATASET_TITLES = (
     "Tomato Pasta Skillet",
     "Lemon White Bean Toasts",
     "Cucumber Chickpea Salad",
+)
+
+IMPORTER_INPUT_INGREDIENTS = ("white beans", "olive oil", "garlic", "lemon", "parsley", "toast")
+UNRELATED_IMPORTER_FOODS = ("chicken", "beef", "paneer", "shrimp", "chocolate", "banana")
+GENERIC_TITLES = ("mock-value", "recipe", "untitled", "dish", "meal")
+ACTION_VERBS = (
+    "add",
+    "bake",
+    "boil",
+    "combine",
+    "cook",
+    "finish",
+    "heat",
+    "mix",
+    "serve",
+    "simmer",
+    "spoon",
+    "stir",
+    "toast",
+    "toss",
+    "warm",
 )
 
 
@@ -65,14 +94,42 @@ def score_readiness(payload: dict[str, Any], expected_model: str) -> list[CheckR
 
 def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckResult]:
     draft = payload.get("draft") if isinstance(payload.get("draft"), dict) else {}
+    title = str(draft.get("title", "")).strip()
+    description = str(draft.get("description") or "")
+    notes = str(draft.get("notes") or "")
+    ingredients = _ingredient_names(draft.get("ingredients") or [])
+    instructions = _instruction_texts(draft.get("instructions") or [])
+    mentioned_description_ingredients = [
+        ingredient for ingredient in IMPORTER_INPUT_INGREDIENTS if ingredient in description.lower()
+    ]
+    unrelated = [
+        ingredient for ingredient in ingredients if any(food in ingredient.lower() for food in UNRELATED_IMPORTER_FOODS)
+    ]
     return [
         _check("response parses as expected schema", bool(draft)),
-        _check("title is non-empty", bool(str(draft.get("title", "")).strip())),
+        _check("title is non-empty", bool(title)),
         _check("ingredient list is non-empty", bool(draft.get("ingredients"))),
         _check("instructions are non-empty", bool(draft.get("instructions"))),
         _check("provider is OpenAI", payload.get("provider") == "openai"),
         _check("model matches configured OpenAI model", payload.get("model") == expected_model),
         _check("no warnings unless justified", len(payload.get("warnings") or []) == 0),
+        _check("title should not be a generic placeholder", bool(title) and title.lower() not in GENERIC_TITLES),
+        _check(
+            "description should mention at least two input ingredients",
+            len(mentioned_description_ingredients) >= 2,
+            f"mentioned={mentioned_description_ingredients}",
+        ),
+        _check(
+            "notes should mention missing quantities or unspecified details when source input is sparse",
+            any(term in notes.lower() for term in ("missing", "unspecified", "quantity", "quantities", "not specified")),
+        ),
+        _check(
+            "instructions should be concise and action-oriented",
+            bool(instructions)
+            and all(len(instruction.split()) <= 24 for instruction in instructions)
+            and all(_starts_with_action_verb(instruction) for instruction in instructions),
+        ),
+        _check("ingredient names should not include unrelated foods", not unrelated, f"unrelated={unrelated}"),
     ]
 
 
@@ -104,6 +161,18 @@ def score_ask_my_cookbook(payload: dict[str, Any], expected_model: str) -> list[
             mentioned_known_titles.issubset(cited_titles),
             f"mentioned={sorted(mentioned_known_titles)} cited={sorted(cited_titles)}",
         ),
+        _check("answer should be concise", _word_count(answer) <= 90, f"words={_word_count(answer)}"),
+        _check(
+            "answer should not claim more than retrieved citations support",
+            mentioned_known_titles.issubset(cited_titles),
+            f"mentioned={sorted(mentioned_known_titles)} cited={sorted(cited_titles)}",
+        ),
+        _check("answer should include recipe titles from citations", bool(cited_titles) and all(title in answer for title in cited_titles)),
+        _check(
+            "answer should not include unsupported saved recipe titles",
+            mentioned_known_titles.issubset(cited_titles),
+            f"mentioned={sorted(mentioned_known_titles)} cited={sorted(cited_titles)}",
+        ),
     ]
 
 
@@ -121,6 +190,7 @@ def score_dataset_ask(payload: dict[str, Any], expected_model: str) -> list[Chec
     citations = payload.get("citations") or []
     answer = str(payload.get("answer") or "")
     cited_titles = {str(citation.get("title") or "") for citation in citations if isinstance(citation, dict)}
+    cited_source_ids = {str(citation.get("source_id") or "") for citation in citations if isinstance(citation, dict)}
     mentioned_known_titles = _mentioned_titles(answer, KNOWN_DATASET_TITLES)
     retrieved_count = payload.get("retrieval", {}).get("retrieved_count", 0)
     return [
@@ -141,6 +211,17 @@ def score_dataset_ask(payload: dict[str, Any], expected_model: str) -> list[Chec
             mentioned_known_titles.issubset(cited_titles),
             f"mentioned={sorted(mentioned_known_titles)} cited={sorted(cited_titles)}",
         ),
+        _check("answer should include cited source title", bool(cited_titles) and all(title in answer for title in cited_titles)),
+        _check(
+            "answer should include source id or enough provenance for traceability",
+            any(source_id and source_id in answer for source_id in cited_source_ids) or bool(citations),
+            f"source_ids={sorted(cited_source_ids)}",
+        ),
+        _check(
+            "answer should not introduce unsupported dataset titles",
+            mentioned_known_titles.issubset(cited_titles),
+            f"mentioned={sorted(mentioned_known_titles)} cited={sorted(cited_titles)}",
+        ),
     ]
 
 
@@ -149,8 +230,10 @@ def score_meal_plan(payload: dict[str, Any], expected_model: str) -> list[CheckR
     meals = [meal for day in days if isinstance(day, dict) for meal in day.get("meals", []) if isinstance(meal, dict)]
     citations = payload.get("citations") or []
     candidate_ids = set(payload.get("selection", {}).get("matched_recipe_ids") or [])
+    requested_slots = int(payload.get("selection", {}).get("requested_slots") or 0)
     meal_ids = {str(meal.get("recipe_id")) for meal in meals if meal.get("recipe_id") is not None}
-    citation_titles = {str(citation.get("title") or "") for citation in citations if isinstance(citation, dict)}
+    citation_by_id = {str(citation.get("recipe_id")): str(citation.get("title") or "") for citation in citations if isinstance(citation, dict)}
+    citation_titles = {title for title in citation_by_id.values() if title}
     return [
         _check("provider is OpenAI", payload.get("provider") == "openai"),
         _check("model matches configured OpenAI model", payload.get("model") == expected_model),
@@ -159,6 +242,16 @@ def score_meal_plan(payload: dict[str, Any], expected_model: str) -> list[CheckR
         _check("expected likely recipe is Lemon Herb White Beans", "1" in candidate_ids or "Lemon Herb White Beans" in citation_titles),
         _check("citations are present", bool(citations)),
         _check("no invented recipe ids", meal_ids.issubset(candidate_ids), f"meal_ids={sorted(meal_ids)} candidate_ids={sorted(candidate_ids)}"),
+        _check(
+            "selected meal title should match cited recipe title",
+            bool(meals) and all(str(meal.get("title") or "") == citation_by_id.get(str(meal.get("recipe_id"))) for meal in meals),
+        ),
+        _check(
+            "reason should refer to user preference",
+            bool(meals) and any(term in str(meal.get("reason") or "").lower() for meal in meals for term in ("lemon", "dinner")),
+        ),
+        _check("selected recipe ids must be a subset of retrieved candidate ids", bool(meal_ids) and meal_ids.issubset(candidate_ids)),
+        _check("plan should not include invented extra meals", requested_slots == 0 or len(meals) <= requested_slots),
     ]
 
 
@@ -169,6 +262,7 @@ def summarize_records(records: list[dict[str, Any]]) -> dict[str, Any]:
     input_tokens = sum(int(record.get("input_tokens") or 0) for record in records)
     output_tokens = sum(int(record.get("output_tokens") or 0) for record in records)
     total_tokens = sum(int(record.get("total_tokens") or 0) for record in records)
+    thresholds = evaluate_thresholds(records)
     return {
         "overall_passed": total > 0 and passed == total,
         "workflow_count": total,
@@ -179,7 +273,63 @@ def summarize_records(records: list[dict[str, Any]]) -> dict[str, Any]:
         "total_output_tokens": output_tokens,
         "total_tokens": total_tokens or input_tokens + output_tokens,
         "estimated_cost_usd": round(total_cost, 8) if total_cost else None,
+        "threshold_warnings": thresholds["warnings"],
+        "threshold_failures": thresholds["failures"],
     }
+
+
+def apply_threshold_checks(records: list[dict[str, Any]], env: dict[str, str] | None = None) -> list[dict[str, Any]]:
+    thresholds = _threshold_values(env)
+    updated: list[dict[str, Any]] = []
+    for record in records:
+        copy = {**record}
+        checks = [*copy.get("checks", [])]
+        workflow = str(copy.get("workflow") or "")
+        latency = int(copy.get("latency_ms") or 0)
+        tokens = int(copy.get("total_tokens") or 0)
+        if latency > thresholds["WORKFLOW_LATENCY_MS_FAIL"]:
+            checks.append(
+                CheckResult(
+                    "workflow latency below failure threshold",
+                    False,
+                    f"{latency}ms > {thresholds['WORKFLOW_LATENCY_MS_FAIL']}ms",
+                ).to_dict()
+            )
+        if tokens > thresholds["WORKFLOW_TOKENS_FAIL"]:
+            checks.append(
+                CheckResult(
+                    "workflow token usage below failure threshold",
+                    False,
+                    f"{tokens} > {thresholds['WORKFLOW_TOKENS_FAIL']}",
+                ).to_dict()
+            )
+        copy["checks"] = checks
+        copy["threshold_warnings"] = _workflow_threshold_warnings(workflow, latency, tokens, thresholds)
+        copy["overall_passed"] = bool(copy.get("overall_passed")) and all(check.get("passed") for check in checks)
+        updated.append(copy)
+    return updated
+
+
+def evaluate_thresholds(records: list[dict[str, Any]], env: dict[str, str] | None = None) -> dict[str, list[str]]:
+    thresholds = _threshold_values(env)
+    warnings: list[str] = []
+    failures: list[str] = []
+    total_latency = sum(int(record.get("latency_ms") or 0) for record in records)
+    total_tokens = sum(int(record.get("total_tokens") or 0) for record in records)
+    if total_latency > thresholds["TOTAL_LATENCY_MS_WARN"]:
+        warnings.append(f"total latency {total_latency}ms exceeds warning threshold {thresholds['TOTAL_LATENCY_MS_WARN']}ms")
+    if total_tokens > thresholds["TOTAL_TOKENS_WARN"]:
+        warnings.append(f"total tokens {total_tokens} exceeds warning threshold {thresholds['TOTAL_TOKENS_WARN']}")
+    for record in records:
+        workflow = str(record.get("workflow") or "")
+        latency = int(record.get("latency_ms") or 0)
+        tokens = int(record.get("total_tokens") or 0)
+        warnings.extend(_workflow_threshold_warnings(workflow, latency, tokens, thresholds))
+        if latency > thresholds["WORKFLOW_LATENCY_MS_FAIL"]:
+            failures.append(f"{workflow} latency {latency}ms exceeds failure threshold {thresholds['WORKFLOW_LATENCY_MS_FAIL']}ms")
+        if tokens > thresholds["WORKFLOW_TOKENS_FAIL"]:
+            failures.append(f"{workflow} tokens {tokens} exceed failure threshold {thresholds['WORKFLOW_TOKENS_FAIL']}")
+    return {"warnings": warnings, "failures": failures}
 
 
 def estimate_cost_usd(
@@ -205,6 +355,16 @@ def assert_no_secret_leaks(value: Any) -> None:
             raise AssertionError(f"secret-like pattern leaked: {pattern}")
 
 
+def assert_no_private_paths(value: Any) -> None:
+    import json
+
+    text = value if isinstance(value, str) else json.dumps(value, sort_keys=True)
+    private_markers = ("C:\\Users\\", "/Users/", "\\.env", "/.env")
+    for marker in private_markers:
+        if marker in text:
+            raise AssertionError(f"private local path marker leaked: {marker}")
+
+
 def _check(name: str, passed: bool, detail: str | None = None) -> CheckResult:
     return CheckResult(name=name, passed=bool(passed), detail=detail or ("passed" if passed else "failed"))
 
@@ -216,3 +376,61 @@ def _mentioned_titles(answer: str, titles: tuple[str, ...]) -> set[str]:
 
 def _title(value: Any) -> str:
     return str(value.get("title") or "") if isinstance(value, dict) else ""
+
+
+def _ingredient_names(ingredients: list[Any]) -> list[str]:
+    names = []
+    for ingredient in ingredients:
+        if isinstance(ingredient, dict):
+            names.append(str(ingredient.get("name") or "").strip())
+        else:
+            names.append(str(ingredient).strip())
+    return [name for name in names if name]
+
+
+def _instruction_texts(instructions: list[Any]) -> list[str]:
+    texts = []
+    for instruction in instructions:
+        if isinstance(instruction, dict):
+            texts.append(str(instruction.get("text") or "").strip())
+        else:
+            texts.append(str(instruction).strip())
+    return [text for text in texts if text]
+
+
+def _starts_with_action_verb(text: str) -> bool:
+    first_word = text.strip().split(" ", 1)[0].lower().strip(".,:;!")
+    return first_word in ACTION_VERBS
+
+
+def _word_count(text: str) -> int:
+    return len([word for word in text.split() if word.strip()])
+
+
+def _threshold_values(env: dict[str, str] | None = None) -> dict[str, int]:
+    source = env if env is not None else os.environ
+    defaults = {
+        "TOTAL_LATENCY_MS_WARN": TOTAL_LATENCY_MS_WARN,
+        "IMPORTER_LATENCY_MS_WARN": IMPORTER_LATENCY_MS_WARN,
+        "WORKFLOW_LATENCY_MS_FAIL": WORKFLOW_LATENCY_MS_FAIL,
+        "TOTAL_TOKENS_WARN": TOTAL_TOKENS_WARN,
+        "IMPORTER_TOKENS_WARN": IMPORTER_TOKENS_WARN,
+        "WORKFLOW_TOKENS_FAIL": WORKFLOW_TOKENS_FAIL,
+    }
+    return {name: _int_setting(source, name, default) for name, default in defaults.items()}
+
+
+def _int_setting(source: dict[str, str], name: str, default: int) -> int:
+    try:
+        return int(source.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _workflow_threshold_warnings(workflow: str, latency: int, tokens: int, thresholds: dict[str, int]) -> list[str]:
+    warnings: list[str] = []
+    if workflow == "importer" and latency > thresholds["IMPORTER_LATENCY_MS_WARN"]:
+        warnings.append(f"importer latency {latency}ms exceeds warning threshold {thresholds['IMPORTER_LATENCY_MS_WARN']}ms")
+    if workflow == "importer" and tokens > thresholds["IMPORTER_TOKENS_WARN"]:
+        warnings.append(f"importer tokens {tokens} exceed warning threshold {thresholds['IMPORTER_TOKENS_WARN']}")
+    return warnings

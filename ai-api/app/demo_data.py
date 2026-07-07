@@ -5,6 +5,8 @@ import sqlite3
 from pathlib import Path
 
 
+DEMO_DATASET_MARKER = ".ai-demo-fixture.json"
+
 DEMO_RECIPES = [
     {
         "id": 1,
@@ -70,6 +72,7 @@ def seed_demo_data(output_dir: str | Path) -> dict[str, Path]:
 
     _write_recipe_db(db_path)
     _write_dataset_csv(dataset_dir / "13k-recipes.csv")
+    _write_dataset_marker(dataset_dir / DEMO_DATASET_MARKER)
 
     return {"db_path": db_path, "dataset_dir": dataset_dir}
 
@@ -121,6 +124,21 @@ def _write_dataset_csv(path: Path) -> None:
         writer = csv.DictWriter(handle, fieldnames=["recipe_id", "title", "ingredients", "instructions", "cuisine"])
         writer.writeheader()
         writer.writerows(DEMO_DATASET_ROWS)
+
+
+def _write_dataset_marker(path: Path) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "kind": "cookbook-ai-demo-fixture",
+                "version": 1,
+                "purpose": "generated local demo data",
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def main() -> int:

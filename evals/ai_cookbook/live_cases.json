@@ -26,7 +26,12 @@
       "instructions are non-empty",
       "provider is OpenAI",
       "model matches configured OpenAI model",
-      "no warnings unless justified"
+      "no warnings unless justified",
+      "title should not be a generic placeholder",
+      "description should mention at least two input ingredients",
+      "notes should mention missing quantities or unspecified details when source input is sparse",
+      "instructions should be concise and action-oriented",
+      "ingredient names should not include unrelated foods"
     ]
   },
   {
@@ -42,7 +47,11 @@
       "at least one citation is returned",
       "citation includes saved recipe id 1 or matching title",
       "retrieved count greater than zero",
-      "no hallucinated recipe title outside retrieved citations"
+      "no hallucinated recipe title outside retrieved citations",
+      "answer should be concise",
+      "answer should not claim more than retrieved citations support",
+      "answer should include recipe titles from citations",
+      "answer should not include unsupported saved recipe titles"
     ]
   },
   {
@@ -75,7 +84,10 @@
       "at least one citation is returned",
       "citation source id includes demo-dataset-1",
       "retrieved count greater than zero",
-      "answer does not invent unsupported dataset recipes"
+      "answer does not invent unsupported dataset recipes",
+      "answer should include cited source title",
+      "answer should include source id or enough provenance for traceability",
+      "answer should not introduce unsupported dataset titles"
     ]
   },
   {
@@ -93,7 +105,11 @@
       "selected recipe is from retrieved saved recipe candidates",
       "expected likely recipe is Lemon Herb White Beans",
       "citations are present",
-      "no invented recipe ids"
+      "no invented recipe ids",
+      "selected meal title should match cited recipe title",
+      "reason should refer to user preference",
+      "selected recipe ids must be a subset of retrieved candidate ids",
+      "plan should not include invented extra meals"
     ]
   }
 ]

@@ -29,6 +29,7 @@ Demo and evidence links:
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
+- [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -57,6 +58,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-eval
 ```
 
 Without opt-in settings, it skips cleanly and performs no live calls.
+
+The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). Future live eval runs should compare correctness, usefulness, latency, token use, and cost visibility against that baseline.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
@@ -95,6 +98,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
+- [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)

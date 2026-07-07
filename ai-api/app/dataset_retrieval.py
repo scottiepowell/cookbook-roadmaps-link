@@ -31,6 +31,8 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
 
     inspection = inspect_recipe_dataset(dataset_dir)
     warnings.extend(inspection.warnings)
+    if _is_generated_demo_dataset(dataset_dir):
+        warnings = _filter_generated_demo_warnings(warnings)
 
     records = iter_recipe_dataset_records(dataset_dir, limit=record_limit)
     index = build_recipe_index(records)
@@ -77,3 +79,25 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
         index=index_summary,
         warnings=summary_warnings,
     )
+
+
+def _is_generated_demo_dataset(dataset_dir: Path) -> bool:
+    marker = dataset_dir / ".ai-demo-fixture.json"
+    if not marker.is_file():
+        return False
+    try:
+        data = marker.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return "cookbook-ai-demo-fixture" in data
+
+
+def _filter_generated_demo_warnings(warnings: list[str]) -> list[str]:
+    optional_missing = {
+        "13k-recipes.db is missing.",
+        "5k-recipes.db is missing.",
+        "metadata.json is missing.",
+        "README.md is missing.",
+        "tutorial.md is missing.",
+    }
+    return [warning for warning in warnings if warning not in optional_missing]

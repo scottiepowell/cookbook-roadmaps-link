@@ -207,12 +207,14 @@ def write_run_outputs(
     cases: list[dict[str, Any]],
     expected_model: str,
 ) -> dict[str, Any]:
-    from evals.ai_cookbook.expected_checks import assert_no_secret_leaks, summarize_records
+    from evals.ai_cookbook.expected_checks import apply_threshold_checks, assert_no_secret_leaks, summarize_records
 
     run_dir.mkdir(parents=True, exist_ok=True)
     results_path = run_dir / "results.jsonl"
     summary_json_path = run_dir / "summary.json"
     summary_md_path = run_dir / "summary.md"
+
+    records = apply_threshold_checks(records)
 
     with results_path.open("w", encoding="utf-8") as handle:
         for record in records:
@@ -245,6 +247,8 @@ def render_markdown_summary(summary: dict[str, Any], records: list[dict[str, Any
         f"- Total latency ms: `{summary['total_latency_ms']}`",
         f"- Total tokens: `{summary['total_tokens']}`",
         f"- Estimated cost USD: `{summary['estimated_cost_usd']}`",
+        f"- Threshold warnings: `{len(summary['threshold_warnings'])}`",
+        f"- Threshold failures: `{len(summary['threshold_failures'])}`",
         "",
         "| Workflow | Result | Latency ms | Citations | Retrieved | Tokens | Response |",
         "| --- | --- | ---: | ---: | ---: | ---: | --- |",
@@ -275,6 +279,22 @@ def render_markdown_summary(summary: dict[str, Any], records: list[dict[str, Any
             failed_any = True
             lines.append(f"- `{record['workflow']}` failed with `{record['error_type']}`.")
     if not failed_any:
+        lines.append("- None.")
+    lines.append("")
+    lines.append("## Threshold Warnings")
+    lines.append("")
+    if summary["threshold_warnings"]:
+        for warning in summary["threshold_warnings"]:
+            lines.append(f"- {warning}")
+    else:
+        lines.append("- None.")
+    lines.append("")
+    lines.append("## Threshold Failures")
+    lines.append("")
+    if summary["threshold_failures"]:
+        for failure in summary["threshold_failures"]:
+            lines.append(f"- {failure}")
+    else:
         lines.append("- None.")
     lines.append("")
     return "\n".join(lines)

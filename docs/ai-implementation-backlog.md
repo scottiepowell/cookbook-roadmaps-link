@@ -793,3 +793,43 @@ Done criteria:
 - no secrets, private environment files, raw datasets, generated artifacts, screenshots, or credentials are committed.
 
 Future production hardening tasks may include authenticated access, time-limited sessions, paid access or monetization gates, usage metering, user/session isolation, durable storage, multi-use-case routing, deployment exposure controls, provider cost controls, and an admin/operator dashboard. Those are intentionally not implemented in 0027E.
+
+## 0027F: Live GPT-Nano Quality Baseline And Thresholds
+
+Status: complete.
+
+Goal: Preserve the first successful live GPT-nano eval as a sanitized baseline and tighten quality gates for usefulness, latency, token usage, cost visibility, and demo readiness.
+
+Files likely touched:
+
+- `docs/live-openai-demo-baseline-2026-07-07.md`
+- `docs/live-openai-demo-evals.md`
+- `evals/ai_cookbook/expected_checks.py`
+- `evals/ai_cookbook/live_cases.json`
+- `scripts/live-openai-demo-evals.py`
+- `ai-api/app/demo_data.py`
+- `ai-api/app/dataset_retrieval.py`
+- `ai-api/tests/test_live_openai_demo_evals.py`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0027F-live-gpt-nano-quality-baseline-and-thresholds-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- sanitized GPT-nano baseline exists without local paths, secrets, raw response artifacts, or generated eval contents;
+- live eval checks include correctness plus answer usefulness and demo-readiness checks;
+- latency and token thresholds produce warnings or failed checks by severity;
+- cost visibility guidance remains environment-driven instead of hardcoding volatile rates;
+- generated demo fixture warnings about optional dataset files are filtered only when the generated fixture marker is present;
+- normal validation remains offline and no live OpenAI calls are added to CI;
+- no `.tmp-ai-demo` artifacts, API keys, private env files, screenshots, raw datasets, or credentials are committed.
