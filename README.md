@@ -60,7 +60,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-eval
 
 Without opt-in settings, it skips cleanly and performs no live calls.
 
-The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). Future live eval runs should compare correctness, usefulness, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that baseline. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
+The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). Future live eval runs should compare correctness, usefulness, importer ingredient preservation, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that baseline. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 

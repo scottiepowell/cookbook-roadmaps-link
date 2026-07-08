@@ -9,7 +9,9 @@ from app.schemas import RecipeImportDraft, RecipeImportRequest, RecipeImportResp
 
 IMPORTER_SYSTEM_PROMPT = (
     "Extract a recipe draft from pasted user text. Return only fields that fit the provided schema. "
-    "Do not invent database IDs, do not write to any database, and keep uncertain details in notes."
+    "Use a one-sentence description with one or two core ingredients when possible. "
+    "Keep missing quantities, timing, or unspecified details in notes. "
+    "Do not invent unrelated ingredients, do not invent database IDs, and do not write to any database."
 )
 
 

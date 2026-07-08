@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -44,8 +45,17 @@ KNOWN_DATASET_TITLES = (
 )
 
 IMPORTER_INPUT_INGREDIENTS = ("white beans", "olive oil", "garlic", "lemon", "parsley", "toast")
+IMPORTER_INGREDIENT_ALIASES = {
+    "white beans": ("white beans", "beans", "bean"),
+    "olive oil": ("olive oil", "oil"),
+    "garlic": ("garlic",),
+    "lemon": ("lemon", "lemon juice", "citrus"),
+    "parsley": ("parsley", "herbs", "herb"),
+    "toast": ("toast", "bread"),
+}
 UNRELATED_IMPORTER_FOODS = ("chicken", "beef", "paneer", "shrimp", "chocolate", "banana")
 GENERIC_TITLES = ("mock-value", "recipe", "untitled", "dish", "meal")
+GENERIC_FIELD_VALUES = (*GENERIC_TITLES, "mock value", "n/a", "none")
 ACTION_VERBS = (
     "add",
     "bake",
@@ -122,12 +132,11 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
     notes = str(draft.get("notes") or "")
     ingredients = _ingredient_names(draft.get("ingredients") or [])
     instructions = _instruction_texts(draft.get("instructions") or [])
-    mentioned_description_ingredients = [
-        ingredient for ingredient in IMPORTER_INPUT_INGREDIENTS if ingredient in description.lower()
-    ]
-    unrelated = [
-        ingredient for ingredient in ingredients if any(food in ingredient.lower() for food in UNRELATED_IMPORTER_FOODS)
-    ]
+    field_texts = [title, description, *ingredients, *instructions]
+    structured_evidence = _importer_ingredient_evidence(field_texts)
+    description_evidence = _importer_ingredient_evidence([description])
+    unrelated = _mentioned_terms(field_texts, UNRELATED_IMPORTER_FOODS)
+    generic_values = _generic_field_values([title, *ingredients, *instructions])
     return [
         _check("response parses as expected schema", bool(draft)),
         _check("title is non-empty", bool(title)),
@@ -138,9 +147,14 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
         _check("no warnings unless justified", len(payload.get("warnings") or []) == 0),
         _check("title should not be a generic placeholder", bool(title) and title.lower() not in GENERIC_TITLES),
         _check(
-            "description should mention at least two input ingredients",
-            len(mentioned_description_ingredients) >= 2,
-            f"mentioned={mentioned_description_ingredients}",
+            "draft should preserve at least two input ingredients across structured fields",
+            len(structured_evidence) >= 2,
+            f"evidence={sorted(structured_evidence)}",
+        ),
+        _check(
+            "description should be ingredient-grounded when present",
+            not description.strip() or bool(description_evidence),
+            f"evidence={sorted(description_evidence)}",
         ),
         _check(
             "notes should mention missing quantities or unspecified details when source input is sparse",
@@ -152,7 +166,8 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
             and all(len(instruction.split()) <= 24 for instruction in instructions)
             and all(_starts_with_action_verb(instruction) for instruction in instructions),
         ),
-        _check("ingredient names should not include unrelated foods", not unrelated, f"unrelated={unrelated}"),
+        _check("structured fields should not be generic placeholders", not generic_values, f"generic={generic_values}"),
+        _check("draft should not include unrelated foods", not unrelated, f"unrelated={sorted(unrelated)}"),
     ]
 
 
@@ -429,6 +444,34 @@ def _check(name: str, passed: bool, detail: str | None = None) -> CheckResult:
 def _mentioned_titles(answer: str, titles: tuple[str, ...]) -> set[str]:
     lowered = answer.lower()
     return {title for title in titles if title.lower() in lowered}
+
+
+def _importer_ingredient_evidence(texts: list[str]) -> set[str]:
+    haystack = " ".join(text.lower() for text in texts if text)
+    evidence: set[str] = set()
+    for canonical, aliases in IMPORTER_INGREDIENT_ALIASES.items():
+        if any(_contains_term(haystack, alias) for alias in aliases):
+            evidence.add(canonical)
+    return evidence
+
+
+def _mentioned_terms(texts: list[str], terms: tuple[str, ...]) -> set[str]:
+    haystack = " ".join(text.lower() for text in texts if text)
+    return {term for term in terms if _contains_term(haystack, term)}
+
+
+def _contains_term(haystack: str, term: str) -> bool:
+    pattern = r"(?<![a-z0-9])" + re.escape(term.lower()) + r"(?![a-z0-9])"
+    return re.search(pattern, haystack) is not None
+
+
+def _generic_field_values(values: list[str]) -> list[str]:
+    generic = []
+    for value in values:
+        lowered = value.strip().lower()
+        if lowered in GENERIC_FIELD_VALUES:
+            generic.append(value)
+    return generic
 
 
 def _title(value: Any) -> str:

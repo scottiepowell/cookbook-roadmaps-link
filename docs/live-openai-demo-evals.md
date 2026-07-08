@@ -101,7 +101,7 @@ The default rates are intentionally kept in one source-code table in `evals/ai_c
 
 ## Expected Checks
 
-Importer checks include schema shape, non-empty title, ingredients, instructions, provider/model, warning count, non-placeholder title, ingredient-grounded description, missing-quantity or unspecified-detail notes, concise action-oriented instructions, and unrelated-food avoidance.
+Importer checks include schema shape, non-empty title, ingredients, instructions, provider/model, warning count, non-placeholder title, at least two preserved input ingredients across structured fields, ingredient-grounded descriptions when descriptions are present, missing-quantity or unspecified-detail notes, concise action-oriented instructions, generic-placeholder avoidance, and unrelated-food avoidance. Ingredient evidence uses canonical alias groups, so useful outputs can pass when ingredients are preserved in the title, ingredient list, or instructions even if the description is absent or worded differently.
 
 Ask My Cookbook checks that the answer or citations include `Lemon Herb White Beans`, citations are present, retrieved count is positive, the answer is concise, cited recipe titles appear in the answer, and no known saved-recipe title outside retrieved citations is mentioned.
 

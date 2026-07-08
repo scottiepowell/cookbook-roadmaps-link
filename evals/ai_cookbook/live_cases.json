@@ -28,10 +28,12 @@
       "model matches configured OpenAI model",
       "no warnings unless justified",
       "title should not be a generic placeholder",
-      "description should mention at least two input ingredients",
+      "draft should preserve at least two input ingredients across structured fields",
+      "description should be ingredient-grounded when present",
       "notes should mention missing quantities or unspecified details when source input is sparse",
       "instructions should be concise and action-oriented",
-      "ingredient names should not include unrelated foods"
+      "structured fields should not be generic placeholders",
+      "draft should not include unrelated foods"
     ]
   },
   {

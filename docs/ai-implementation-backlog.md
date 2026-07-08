@@ -909,3 +909,40 @@ Done criteria:
 - importer, Ask My Cookbook, dataset search, dataset Ask/RAG, and meal planning expose `input_quality` metadata;
 - live eval records include input-quality and provider-call-avoidance metrics;
 - no open-ended chat loop, multi-turn state, normal-validation live calls, generated live artifacts, secrets, private env files, raw datasets, screenshots, logs, or credentials are added.
+
+## 0028B: Live Importer Quality Check Tuning
+
+Status: complete.
+
+Goal: Fix the first post-0028A live eval failure by tuning importer quality checks so useful GPT-nano importer responses do not false-fail when ingredient evidence appears outside `description`.
+
+Files likely touched:
+
+- `evals/ai_cookbook/expected_checks.py`
+- `evals/ai_cookbook/live_cases.json`
+- `ai-api/app/importer.py`
+- `ai-api/tests/test_live_openai_demo_evals.py`
+- `docs/live-openai-demo-evals.md`
+- `docs/live-openai-demo-baseline-2026-07-07.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0028B-live-importer-quality-check-tuning-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- importer scoring accepts ingredient evidence from title, description, ingredient names, and instructions;
+- canonical ingredient alias groups are used for white beans, olive oil, garlic, lemon, parsley, and toast;
+- descriptions are checked for ingredient grounding only when present;
+- generic placeholder, unrelated ingredient, and truly ungrounded outputs still fail;
+- normal validation remains offline and no live OpenAI calls are added to CI;
+- no generated live eval artifacts, API keys, private env files, screenshots, raw datasets, logs, or credentials are committed.

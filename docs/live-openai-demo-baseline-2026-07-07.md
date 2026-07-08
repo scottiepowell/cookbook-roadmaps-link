@@ -52,10 +52,11 @@ It intentionally excludes local filesystem paths, raw generated artifacts, envir
 - Dataset search remains deterministic and non-provider-backed.
 - This baseline does not cover authentication, billing, time limits, multi-tenant use, durable production storage, public deployment exposure, or admin/operator workflows.
 - Human review is still useful for tone, usefulness, and demo narrative even when deterministic checks pass.
+- A post-0028A live run showed the importer check was too strict when it required ingredient evidence only in `description`; 0028B tuned this so title, ingredient names, and instructions also count as structured ingredient evidence.
 
 ## Next Tuning Targets
 
-- Tighten importer usefulness checks around non-placeholder titles, ingredient-grounded descriptions, missing-quantity notes, concise instructions, and unrelated ingredient avoidance.
+- Continue monitoring importer usefulness checks around non-placeholder titles, structured ingredient preservation, ingredient-grounded descriptions when present, missing-quantity notes, concise instructions, and unrelated ingredient avoidance.
 - Add concise answer and citation-support checks for Ask My Cookbook.
 - Require dataset answers to include cited source titles and traceable source IDs or equivalent provenance.
 - Require meal plans to use only retrieved candidate IDs and match selected meal titles to citations.

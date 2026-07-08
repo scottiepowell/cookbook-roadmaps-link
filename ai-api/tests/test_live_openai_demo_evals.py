@@ -112,7 +112,90 @@ def test_importer_expected_checks_pass_and_fail():
 
     unrelated = {**passing, "draft": {**passing["draft"], "ingredients": [{"name": "white beans"}, {"name": "chicken"}]}}
     unrelated_results = score_importer(unrelated, "gpt-5.4-nano")
-    assert any(check.name == "ingredient names should not include unrelated foods" and not check.passed for check in unrelated_results)
+    assert any(check.name == "draft should not include unrelated foods" and not check.passed for check in unrelated_results)
+
+
+def test_importer_expected_checks_accept_structured_evidence_without_description():
+    payload = {
+        "draft": {
+            "title": "Lemon Herb White Beans",
+            "description": None,
+            "ingredients": [
+                {"name": "white beans (warm)"},
+                {"name": "olive oil"},
+                {"name": "garlic"},
+                {"name": "lemon juice"},
+                {"name": "parsley"},
+                {"name": "toast"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "Warm the white beans."},
+                {"step": 2, "text": "Stir in olive oil, garlic, lemon juice, and parsley."},
+                {"step": 3, "text": "Serve the beans with toast."},
+            ],
+            "notes": "Quantities and timing are not specified in the source input.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "warnings": [],
+    }
+
+    results = score_importer(payload, "gpt-5.4-nano")
+    assert all(check.passed for check in results)
+
+
+def test_importer_expected_checks_accept_alias_evidence():
+    payload = {
+        "draft": {
+            "title": "Citrus Bean Toasts",
+            "description": "A citrus bean topping served on bread.",
+            "ingredients": [{"name": "beans"}, {"name": "oil"}, {"name": "herbs"}, {"name": "bread"}],
+            "instructions": [{"step": 1, "text": "Warm beans with oil."}, {"step": 2, "text": "Serve on bread with herbs."}],
+            "notes": "Quantities are unspecified.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "warnings": [],
+    }
+
+    results = score_importer(payload, "gpt-5.4-nano")
+    assert all(check.passed for check in results)
+
+
+def test_importer_expected_checks_reject_generic_and_ungrounded_outputs():
+    generic = {
+        "draft": {
+            "title": "Recipe",
+            "description": "A nice meal.",
+            "ingredients": [{"name": "mock-value"}],
+            "instructions": [{"step": 1, "text": "Cook until done."}],
+            "notes": "Quantities are unspecified.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "warnings": [],
+    }
+    generic_results = score_importer(generic, "gpt-5.4-nano")
+    assert any(check.name == "title should not be a generic placeholder" and not check.passed for check in generic_results)
+    assert any(check.name == "structured fields should not be generic placeholders" and not check.passed for check in generic_results)
+
+    ungrounded = {
+        "draft": {
+            "title": "Pantry Supper",
+            "description": "A simple supper.",
+            "ingredients": [{"name": "salt"}, {"name": "water"}],
+            "instructions": [{"step": 1, "text": "Cook until warm."}],
+            "notes": "Quantities are unspecified.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "warnings": [],
+    }
+    ungrounded_results = score_importer(ungrounded, "gpt-5.4-nano")
+    assert any(
+        check.name == "draft should preserve at least two input ingredients across structured fields" and not check.passed
+        for check in ungrounded_results
+    )
 
 
 def test_ask_and_dataset_expected_checks_detect_unsupported_titles():
