@@ -18,10 +18,22 @@ Run this first:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
+This starts safe mock mode by default. For intentional live OpenAI manual acceptance, set `OPENAI_API_KEY` in the environment and run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests
+```
+
+The live launch defaults to `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, and `AI_MAX_OUTPUT_TOKENS=500`. Use explicit parameters when testing a different local port or bounded output limit:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 600 -LiveTestBudgetCents 50 -Port 8001
+```
+
 Look for this:
 
 - readiness shows sidecar healthy;
-- provider shows `mock / mock-basic`;
+- provider shows `mock / mock-basic` for the default path, or OpenAI/model details for an intentional live run;
 - saved recipes show at least 3 recipe(s);
 - dataset shows available;
 - Ask My Cookbook returns a readable answer with recipe citations;

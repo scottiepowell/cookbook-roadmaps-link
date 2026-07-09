@@ -32,6 +32,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 
 The start script generates a small local fixture under `.tmp-ai-demo/`, sets `AI_PROVIDER=mock`, points `COOKBOOK_DB_PATH` at a generated SQLite database, points `RECIPE_DATASET_DIR` at generated CSV data, and starts the sidecar on `127.0.0.1:8000`. It does not write to production cookbook data.
 
+The script also supports an intentional provider override for manual acceptance. It respects existing environment variables unless explicit script parameters are supplied.
+
+Live OpenAI browser demo mode:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests
+```
+
+Live OpenAI browser demo mode with explicit limits:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 600 -LiveTestBudgetCents 50 -Port 8001
+```
+
+`OPENAI_API_KEY` must already exist in the environment for `-Provider openai`. The start script does not prompt for it and does not print it. OpenAI mode defaults to `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, and `AI_MAX_OUTPUT_TOKENS=500` unless environment variables or explicit parameters override those values.
+
 The UI readiness panel shows whether:
 
 - the sidecar is healthy;

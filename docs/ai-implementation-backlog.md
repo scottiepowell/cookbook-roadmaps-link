@@ -1035,6 +1035,46 @@ Notes:
 - This number is reserved for manual recipe-entry acceptance.
 - Production-readiness implementation resumes with `0029C`.
 
+## 0029B-1: Start AI Demo Provider Override
+
+Status: complete.
+
+Goal: Fix `scripts/start-ai-demo-local.ps1` so manual end-user recipe-entry acceptance can intentionally run with either safe mock mode or live OpenAI mode.
+
+Files likely touched:
+
+- `scripts/start-ai-demo-local.ps1`
+- `ai-api/tests/test_start_ai_demo_local_script.py`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-manual-ui-acceptance-test.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-1-start-ai-demo-provider-override-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- diff whitespace check;
+- Docker Compose config check;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior;
+- safe mock launch validation.
+
+Done criteria:
+
+- `start-ai-demo-local.ps1` defaults to mock safely;
+- `start-ai-demo-local.ps1` supports `-Provider openai -EnableLiveTests`;
+- live manual-demo defaults are available for model, budget cents, and max output tokens;
+- existing environment variables are respected unless explicit script parameters override them;
+- missing `OPENAI_API_KEY` fails fast only for OpenAI mode;
+- startup summary is useful and secret-safe;
+- normal validation remains offline;
+- no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

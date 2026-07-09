@@ -56,6 +56,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 
 Then open `http://127.0.0.1:8000/demo` for the guided browser demo UI.
 
+For intentional live OpenAI manual demo mode, keep `OPENAI_API_KEY` in the local environment and run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests
+```
+
+Optional bounded live overrides:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 600 -LiveTestBudgetCents 50 -Port 8001
+```
+
+The start script defaults to mock mode, respects existing provider environment variables unless explicit parameters override them, and never prints API keys or environment file contents.
+
 Run the live OpenAI demo eval wrapper only with explicit live opt-in settings:
 
 ```powershell
