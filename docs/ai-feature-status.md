@@ -7,7 +7,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Feature | Status | Endpoint or Script | Proof | Notes |
 | --- | --- | --- | --- | --- |
 | Health/config | Complete | `GET /health`, `GET /ai/config` | pytest, mock demo | Reports readiness and non-secret provider availability. |
-| Structured recipe import/create | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted notes, defaults to 4 servings in application behavior, estimates missing quantities with notes, uses bounded local dataset examples for structure/provenance when available, applies anchor-aware retrieval relevance so exact dish names and core ingredients outrank broad category matches, warns when RAG support is weak, and strips unsupported strict-schema metadata before OpenAI structured calls. Manual live importer validation now recommends `AI_MAX_OUTPUT_TOKENS=900`. |
+| Structured recipe import/create | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted notes, defaults to 4 servings in application behavior, estimates missing quantities with notes, uses bounded local dataset examples for structure/provenance when available, packs only concise relevance-ranked snippets into the provider prompt, applies anchor-aware retrieval relevance so exact dish names and core ingredients outrank broad category matches, warns when RAG support is weak, and strips unsupported strict-schema metadata before OpenAI structured calls. Manual live importer validation now recommends `AI_MAX_OUTPUT_TOKENS=900`. |
 | Ask My Cookbook | Complete | `POST /ai/ask` | pytest, offline evals, live smoke | Retrieves saved recipes first and cites recipe IDs/titles. |
 | Local dataset search | Complete | `GET /dataset/search`, `POST /dataset/search` | pytest, mock demo | Uses bounded deterministic keyword retrieval over generated fixtures. |
 | Dataset Ask/RAG | Complete | `POST /dataset/ask` | pytest, offline evals, live smoke | Answers from retrieved dataset records with provenance citations. |
@@ -67,6 +67,7 @@ status=passed
 | Input quality guardrails | Pass | `0028A` offline tests |
 | Importer eval robustness | Pass | `0028B` tests plus post-fix live pass |
 | Retrieval relevance regression checks | Pass | deterministic offline eval harness |
+| Retrieval context packing | Pass | bounded prompt packer tests plus importer metadata/UI checks |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 

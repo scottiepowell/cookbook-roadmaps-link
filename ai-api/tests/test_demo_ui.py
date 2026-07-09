@@ -41,9 +41,16 @@ def test_demo_static_assets_load():
     assert "No importer citations were returned for this response." in js_response.text
     assert "Citation(s) returned" not in js_response.text
     assert "Retrieval metadata" in js_response.text
+    assert "retrieved_examples" in js_response.text
     assert "Source ID:" in js_response.text
     assert "Provenance:" in js_response.text
     assert "Snippet:" in js_response.text
+    assert "packed_examples" in js_response.text
+    assert "packed_ids" in js_response.text
+    assert "dropped_ids" in js_response.text
+    assert "context_chars_used" in js_response.text
+    assert "weak_examples_included" in js_response.text
+    assert "context_budget_warning" in js_response.text
     assert "anchors:" in js_response.text
     assert "relevance:" in js_response.text
     assert "matched_ids:" in js_response.text

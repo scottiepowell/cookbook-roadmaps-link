@@ -101,6 +101,7 @@ async function runImporter() {
       ...providerMetadata(data),
       servings: data.draft?.servings ?? "none",
       retrieved: data.retrieval?.retrieved_count ?? 0,
+      packed_examples: data.retrieval?.packed_count ?? 0,
       citations: (data.citations || []).length,
       dataset_limit: data.retrieval?.dataset_limit ?? "none",
     }),
@@ -330,7 +331,7 @@ function importerEvidenceSection(data) {
   const retrieval = data?.retrieval || {};
   const summary = document.createElement("p");
   summary.className = "hint";
-  summary.textContent = `${citations.length} citation(s) returned${retrieval.retrieved_count !== undefined ? ` from ${retrieval.retrieved_count} retrieved example(s)` : ""}.`;
+  summary.textContent = `${citations.length} citation(s) returned${retrieval.retrieved_count !== undefined ? ` from ${retrieval.retrieved_count} retrieved example(s)` : ""}${retrieval.packed_count !== undefined ? `; ${retrieval.packed_count} packed for prompt context` : ""}.`;
   section.append(summary);
 
   if (!citations.length) {
@@ -364,7 +365,14 @@ function importerEvidenceSection(data) {
     section.append(retrievalHeading, metadataGrid({
       query: retrieval.query || "none",
       anchors: (retrieval.anchors_used || []).join(", ") || "none",
-      retrieved: retrieval.retrieved_count ?? 0,
+      retrieved_examples: retrieval.retrieved_count ?? 0,
+      packed_examples: retrieval.packed_count ?? 0,
+      packed_ids: (retrieval.packed_ids || []).join(", ") || "none",
+      dropped_ids: (retrieval.dropped_ids || []).join(", ") || "none",
+      context_chars_used: retrieval.packed_context_chars ?? 0,
+      max_context_chars: retrieval.max_context_chars ?? "none",
+      weak_examples_included: retrieval.weak_examples_included ? "yes" : "no",
+      context_budget_warning: retrieval.context_budget_warning || "none",
       limit: retrieval.limit ?? "none",
       dataset_limit: retrieval.dataset_limit ?? "none",
       matched_ids: (retrieval.matched_result_ids || []).join(", ") || "none",

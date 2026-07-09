@@ -50,6 +50,7 @@ RAG evals should verify:
 - cited recipe IDs and titles match retrieved documents;
 - importer retrieval prefers dish-specific examples over broad category overlaps;
 - top-1 retrieval relevance, top-k relevance counts, anchor coverage, generic drift, and weak-match warnings are deterministic and regression-tested offline;
+- importer prompt context packing stays bounded, prefers strong examples, and drops or labels weak examples honestly;
 - no-match questions say the system does not know;
 - the answer does not reveal secrets, env vars, API keys, or hidden prompts;
 - the answer distinguishes saved recipes from general suggestions.
@@ -107,6 +108,7 @@ evals/
 | RAG Retrieval | Carbonara relevance | `carbonara pasta spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat` | Carbonara ranks above creamy pasta and aglio e olio distractors |
 | RAG Retrieval | Omelet relevance | `omelet with eggs cheese maybe onions cooked in butter fold it over` | Omelet ranks above sandwich and skillet pie distractors |
 | RAG Retrieval | Casserole relevance | `chicken and rice casserole chicken rice cream soup cheese bake until hot` | Chicken/rice casserole ranks above chicken-only and rice-only distractors |
+| RAG Packing | Bound prompt context | importer retrieval results from generated distractor fixtures | Packed context stays under budget, excludes weak examples when strong matches exist, and includes safe provenance IDs |
 | Dataset RAG | Grounded ask | `What recipe uses lemon?` | Cites retrieved Kaggle fixture source ID/title/license |
 | Dataset RAG | No match | `Which indexed recipe uses saffron?` | Returns no-match response and does not call provider |
 | Importer | Clean recipe | pasted recipe text | Valid importer schema with title, ingredients, and steps |
@@ -129,6 +131,7 @@ evals/
 - Meal-plan endpoint tests must use mock/offline behavior, send only selected candidates to the provider, cite saved recipes, and avoid database write-back.
 - Dataset ask evals must use generated fixtures only and must not require the real Kaggle dataset, network access, provider keys, Docker runtime, or live providers.
 - Importer retrieval relevance evals must use generated fixtures only, fail on regression in ranking or weak-match warnings, and remain fully offline.
+- Importer context packing tests should stay deterministic and offline, and should validate bounded prompt selection rather than raw prompt text size alone.
 
 ## Manual Live OpenAI Smoke Tests
 

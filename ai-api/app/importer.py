@@ -2,10 +2,16 @@ import re
 
 from pydantic import ValidationError
 
-from app.config import get_ai_settings
+from app.config import get_ai_settings, get_recipe_dataset_dir
 from app.dataset_index import WEAK_MATCH_SCORE_THRESHOLD, analyze_recipe_query
 from app.dataset_retrieval import search_dataset_recipes
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_recipe_import_input
+from app.rag_context import (
+    DEFAULT_IMPORTER_CONTEXT_MAX_CHARS,
+    DEFAULT_IMPORTER_CONTEXT_MAX_EXAMPLES,
+    PackedImporterContext,
+    pack_importer_rag_context,
+)
 from app.providers import LLMProvider, StructuredLLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError
 from app.schemas import (
@@ -61,13 +67,18 @@ def import_recipe_text(
             input_quality=input_quality.to_dict(),
         )
 
-    retrieval, citations, retrieval_warnings = _retrieve_importer_examples(request.text)
+    retrieval, citations, retrieval_warnings, context_pack = _retrieve_importer_examples(request.text)
     active_provider = provider or _get_configured_provider()
     schema = RecipeImportDraft.model_json_schema()
     try:
         provider_response = active_provider.generate_structured(
             StructuredLLMRequest(
-                prompt=_build_prompt(request, citations, retrieval.warning if retrieval else None),
+                prompt=_build_prompt(
+                    request,
+                    citations,
+                    retrieval.warning if retrieval else None,
+                    context_pack=context_pack,
+                ),
                 system=IMPORTER_SYSTEM_PROMPT,
                 schema_name="RecipeImportDraft",
                 schema=schema,
@@ -105,7 +116,9 @@ def _get_configured_provider() -> LLMProvider:
         raise RecipeImportProviderError("Recipe importer provider is not configured.") from exc
 
 
-def _retrieve_importer_examples(text: str) -> tuple[RecipeImportRetrievalMetadata | None, list[RecipeImportCitation], list[str]]:
+def _retrieve_importer_examples(
+    text: str,
+) -> tuple[RecipeImportRetrievalMetadata | None, list[RecipeImportCitation], list[str], PackedImporterContext | None]:
     analysis = analyze_recipe_query(text)
     retrieval_response = search_dataset_recipes(text, limit=IMPORTER_RAG_LIMIT)
     citations = [
@@ -122,6 +135,14 @@ def _retrieve_importer_examples(text: str) -> tuple[RecipeImportRetrievalMetadat
     dataset_limit = int(retrieval_response.index.build_metadata.get("record_limit", 0) or 0)
     scores = [result.score for result in retrieval_response.results[:IMPORTER_RAG_LIMIT]]
     relevance_category, warning = _importer_relevance_category(citations, scores, analysis)
+    context_pack = pack_importer_rag_context(
+        text,
+        retrieval_response.results[:IMPORTER_RAG_LIMIT],
+        dataset_dir=get_recipe_dataset_dir(),
+        dataset_limit=dataset_limit or None,
+        max_examples=DEFAULT_IMPORTER_CONTEXT_MAX_EXAMPLES,
+        max_context_chars=DEFAULT_IMPORTER_CONTEXT_MAX_CHARS,
+    )
     retrieval = RecipeImportRetrievalMetadata(
         query=text.strip(),
         retrieved_count=len(citations),
@@ -132,21 +153,33 @@ def _retrieve_importer_examples(text: str) -> tuple[RecipeImportRetrievalMetadat
         matched_result_scores=scores,
         relevance_category=relevance_category,
         warning=warning,
+        packed_count=context_pack.packed_count,
+        packed_ids=context_pack.packed_ids,
+        dropped_ids=context_pack.dropped_ids,
+        max_examples=context_pack.max_examples,
+        max_context_chars=context_pack.max_context_chars,
+        packed_context_chars=context_pack.packed_context_chars,
+        weak_examples_included=context_pack.weak_examples_included,
+        context_budget_warning=context_pack.context_budget_warning,
         index=retrieval_response.index,
     )
     warnings = list(retrieval_response.warnings)
     if warning:
         warnings.append(warning)
-    return retrieval, citations, warnings
+    if context_pack.context_budget_warning:
+        warnings.append(context_pack.context_budget_warning)
+    return retrieval, citations, warnings, context_pack
 
 
 def _build_prompt(
     request: RecipeImportRequest,
     citations: list[RecipeImportCitation] | None = None,
     retrieval_warning: str | None = None,
+    *,
+    context_pack=None,
 ) -> str:
     source_line = f"Source: {request.source.strip()}\n" if request.source and request.source.strip() else ""
-    example_context = _format_retrieved_examples(citations or [])
+    example_context = context_pack.render_for_prompt() if context_pack is not None else _format_retrieved_examples(citations or [])
     retrieval_note = (
         "\nRetrieval note: Retrieved examples were weak matches; rely primarily on the user's notes and general recipe structure.\n"
         if retrieval_warning

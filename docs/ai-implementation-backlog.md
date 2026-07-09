@@ -1289,6 +1289,35 @@ Done criteria:
 - normal validation remains offline and mock-only;
 - no live OpenAI calls, raw datasets, generated live artifacts, secrets, env files, screenshots, logs, or credentials are committed.
 
+## 0029B-7: RAG Context Packing And Token Budget
+
+Status: complete.
+
+Goal: Add a deterministic bounded prompt-context packer so importer/provider prompts include only concise, relevance-ranked dataset snippets and safe packing metadata.
+
+Files likely touched:
+
+- `ai-api/app/rag_context.py`
+- `ai-api/app/importer.py`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/test_rag_context.py`
+- `ai-api/tests/test_importer.py`
+- `ai-api/tests/test_demo_ui.py`
+- `docs/ai-evals-plan.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-7-rag-context-packing-and-token-budget-results.md`
+
+Done criteria:
+
+- the importer prompt receives a bounded packed context block instead of full retrieved records;
+- strong/moderate examples are preferred, weak examples are dropped or explicitly labeled when unavoidable, and total prompt context stays within deterministic character budgets;
+- response metadata exposes packed counts, IDs, dropped IDs, budget warnings, and weak-example status without leaking private paths or raw provider prompts;
+- demo UI surfaces the safe packing metadata;
+- deterministic tests cover selection, truncation, budget limits, weak-example handling, and prompt construction.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

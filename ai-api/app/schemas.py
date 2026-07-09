@@ -172,6 +172,17 @@ class RecipeImportCitation(BaseModel):
     provenance: DatasetSearchProvenance
 
 
+class RecipeImportContextPackingMetadata(BaseModel):
+    packed_count: int = 0
+    packed_ids: list[str] = Field(default_factory=list)
+    dropped_ids: list[str] = Field(default_factory=list)
+    max_examples: int = 0
+    max_context_chars: int = 0
+    packed_context_chars: int = 0
+    weak_examples_included: bool = False
+    context_budget_warning: str | None = None
+
+
 class RecipeImportRetrievalMetadata(BaseModel):
     query: str
     retrieved_count: int
@@ -182,6 +193,14 @@ class RecipeImportRetrievalMetadata(BaseModel):
     matched_result_scores: list[int] = Field(default_factory=list)
     relevance_category: str | None = None
     warning: str | None = None
+    packed_count: int = 0
+    packed_ids: list[str] = Field(default_factory=list)
+    dropped_ids: list[str] = Field(default_factory=list)
+    max_examples: int = 0
+    max_context_chars: int = 0
+    packed_context_chars: int = 0
+    weak_examples_included: bool = False
+    context_budget_warning: str | None = None
     index: DatasetIndexSummaryResponse | None = None
 
 

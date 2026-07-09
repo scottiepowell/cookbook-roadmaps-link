@@ -76,6 +76,8 @@ In the local mock demo path, readiness should show saved recipes available and d
 
 The generated `.tmp-ai-demo` fixture dataset still contains only three records. That is enough for smoke testing, but importer citations there can be semantically weak. Use the full `recipe-dataset` path with `-RecipeDatasetIndexLimit 5000` for meaningful RAG validation.
 
+The importer prompt now packs a bounded snippet set instead of sending raw retrieved records. The demo UI exposes `retrieved_examples`, `packed_examples`, `context_chars_used`, `weak_examples_included`, and `context_budget_warning` so you can tell whether the provider saw strong support or only weak structure-only examples.
+
 ## Importer-Only Diagnostic
 
 Prefer the dedicated live importer smoke script:
@@ -208,6 +210,8 @@ Optional input-quality check: enter `!!!!!` in dataset search to show the "Input
 `POST /ai/import-recipe` now handles rough recipe creation notes as well as pasted recipe text. It defaults to 4 servings unless the user states another serving count. When quantities are missing, the draft should include reasonable estimates and disclose that they are estimated in `notes`.
 
 When `RECIPE_DATASET_DIR` is configured and available, the importer retrieves a small bounded set of similar dataset recipes before the provider call. The retrieval is anchor-aware: exact dish names, core ingredients, and dish-specific phrases outrank broad dessert, pasta, or chicken matches. These examples are used only for structure, proportion hints, and step completeness. The model must preserve the user's core ingredients and dish intent, avoid copying retrieved recipes verbatim, and return citations/provenance for the examples that informed the draft. If retrieval is weak, the API returns a warning and the UI should treat the examples as structure-only guidance.
+
+The provider prompt uses a deterministic context pack with small character budgets, so manual live validation should expect only 2 or 3 packed examples and a short snippet block instead of full raw recipe records.
 
 The live importer `503` issue observed during manual recipe-entry testing was caused by strict structured-output schema metadata that OpenAI rejected. `ai-api/app/providers/openai_schema.py` now strips unsupported metadata such as `default`, `examples`, `title`, and `description` recursively before the request is sent, while application-side importer behavior still defaults servings to 4.
 

@@ -76,6 +76,9 @@ def test_importer_uses_dataset_rag_when_available(tmp_path, monkeypatch):
 
     assert response.retrieval is not None
     assert response.retrieval.retrieved_count == 1
+    assert response.retrieval.packed_count == 1
+    assert response.retrieval.packed_context_chars <= response.retrieval.max_context_chars
+    assert response.retrieval.packed_ids == [response.citations[0].id]
     assert response.retrieval.relevance_category == "strong"
     assert response.retrieval.warning is None
     assert response.citations[0].source_id == "omelet-1"
@@ -121,6 +124,7 @@ def test_importer_falls_back_when_dataset_unavailable(tmp_path, monkeypatch):
     assert response.provider == "capture"
     assert response.retrieval is not None
     assert response.retrieval.retrieved_count == 0
+    assert response.retrieval.packed_count == 0
     assert response.retrieval.relevance_category == "unavailable"
     assert response.retrieval.warning is not None
     assert response.citations == []
