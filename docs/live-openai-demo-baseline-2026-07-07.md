@@ -2,6 +2,8 @@
 
 This sanitized baseline preserves the first successful live GPT-nano demo eval run after `0027E`.
 
+For the post-`0028A` regression, `0028B` importer-check fix, and current post-fix acceptance baseline, see [Live OpenAI Demo Regression Notes: 2026-07-08](live-openai-demo-regression-notes-2026-07-08.md).
+
 It intentionally excludes local filesystem paths, raw generated artifacts, environment files, API keys, provider secrets, and response JSON contents. Generated `.tmp-ai-demo/live-evals/` artifacts are not committed.
 
 ## Run Summary
@@ -53,6 +55,14 @@ It intentionally excludes local filesystem paths, raw generated artifacts, envir
 - This baseline does not cover authentication, billing, time limits, multi-tenant use, durable production storage, public deployment exposure, or admin/operator workflows.
 - Human review is still useful for tone, usefulness, and demo narrative even when deterministic checks pass.
 - A post-0028A live run showed the importer check was too strict when it required ingredient evidence only in `description`; 0028B tuned this so title, ingredient names, and instructions also count as structured ingredient evidence.
+
+## Later Acceptance History
+
+| Date | Run | Result | Notes |
+| --- | --- | --- | --- |
+| 2026-07-07 | First GPT-nano live eval baseline | Pass, 6/6 workflows | Preserved in this file as the original baseline. |
+| 2026-07-08 | Post-`0028A` live eval | Fail, 5/6 workflows | Importer false-failed because the evaluator required ingredient evidence only in `description`. |
+| 2026-07-08 | Post-`0028B` live eval | Pass, 6/6 workflows | Current acceptance baseline: 0 threshold warnings, 0 threshold failures, 1467 tokens, estimated cost USD 0.0007029. |
 
 ## Next Tuning Targets
 

@@ -21,6 +21,7 @@ Validation proof:
 - Offline evals cover dataset ask, saved-recipe ask, importer, meal plan, provider config hygiene, citations, and secret-like leakage checks.
 - Repository validation runs pytest and offline evals without provider keys, Docker-only services, the real Kaggle dataset, or a production cookbook database.
 - Manual live OpenAI smoke validation passed with `provider=openai`, `model=gpt-5.4-nano`, `live_calls=4`, `estimated_usage_tokens=1200`, `workflows=importer,ask_my_cookbook,dataset_ask,meal_plan`, `budget_cents=25`, `status=passed`.
+- Live GPT-nano demo eval acceptance is current through the post-`0028B` `2026-07-08` run: 6/6 workflows passed, `default_model_rate` cost populated, and latency/token thresholds had 0 warnings and 0 failures. A post-`0028A` importer false failure is preserved as sanitized regression evidence.
 
 Demo and evidence links:
 
@@ -31,6 +32,7 @@ Demo and evidence links:
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
 - [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
+- [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -60,7 +62,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-eval
 
 Without opt-in settings, it skips cleanly and performs no live calls.
 
-The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). Future live eval runs should compare correctness, usefulness, importer ingredient preservation, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that baseline. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
+The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). The current acceptance baseline is the post-`0028B` 6/6 run recorded in [Live OpenAI Demo Regression Notes: 2026-07-08](docs/live-openai-demo-regression-notes-2026-07-08.md), after the post-`0028A` importer evaluator false failure was fixed. Future live eval runs should compare correctness, usefulness, importer ingredient preservation, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that acceptance history. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
@@ -100,6 +102,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
 - [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
+- [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)

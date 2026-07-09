@@ -30,7 +30,7 @@ The case set mirrors the UI workflow order:
 
 Cases are defined in `evals/ai_cookbook/live_cases.json`. Deterministic scoring helpers live in `evals/ai_cookbook/expected_checks.py`.
 
-The first successful live GPT-nano baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](live-openai-demo-baseline-2026-07-07.md).
+The first successful live GPT-nano baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](live-openai-demo-baseline-2026-07-07.md). The post-`0028A` regression, `0028B` importer-check fix, and current post-fix acceptance baseline are recorded in [Live OpenAI Demo Regression Notes: 2026-07-08](live-openai-demo-regression-notes-2026-07-08.md).
 
 ## Input Quality Metrics
 
@@ -123,6 +123,28 @@ The harness applies initial quality thresholds after workflow checks. Warning th
 | `WORKFLOW_TOKENS_FAIL` | 1200 | failed check |
 
 Override these with environment variables when tuning live eval strictness.
+
+## Acceptance History
+
+| Date | Context | Result | Evidence |
+| --- | --- | --- | --- |
+| 2026-07-07 | First successful GPT-nano live eval baseline | Pass, 6/6 workflows | `docs/live-openai-demo-baseline-2026-07-07.md` |
+| 2026-07-08 | Post-`0028A` live eval | Fail, 5/6 workflows | Importer false failure: description-only ingredient check was too brittle. |
+| 2026-07-08 | Post-`0028B` live eval | Pass, 6/6 workflows | Current acceptance baseline: 0 threshold warnings, 0 threshold failures, `default_model_rate` cost populated. |
+
+Current acceptance matrix:
+
+| Area | Status | Evidence |
+| --- | --- | --- |
+| Mock demo | Pass | `scripts/demo-ai-mock.ps1` |
+| Seeded local UI demo | Pass | generated fixtures |
+| Live OpenAI eval | Pass | post-`0028B` 6/6 run |
+| Cost estimate | Pass | `default_model_rate` cost populated |
+| Latency thresholds | Pass | 0 warnings / 0 failures |
+| Token thresholds | Pass | 0 warnings / 0 failures |
+| Input quality guardrails | Pass | `0028A` offline tests |
+| Importer eval robustness | Pass | `0028B` tests plus post-fix live pass |
+| Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 
 ## Generated Demo Fixture Warnings
 

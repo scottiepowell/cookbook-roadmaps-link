@@ -15,7 +15,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Bounded input quality | Complete | importer, Ask, dataset search/RAG, meal planning | pytest, offline evals | Rejects unusable input before provider calls, asks at most one clarification question for recoverable vague input, and lets weak usable input proceed with warnings. |
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
 | Manual OpenAI smoke | Complete, manual-only | `scripts/smoke-openai-live.py`, `scripts/demo-ai-live-smoke.ps1` | recorded manual run | Requires explicit opt-in, API key, token cap, and budget cap. |
-| Live OpenAI demo evals | Complete, manual-only | `scripts/run-openai-demo-evals.ps1` | offline harness tests; first GPT-nano baseline | Requires explicit opt-in and writes ignored metrics/results under `.tmp-ai-demo/live-evals/`. Includes usefulness checks, tuned importer ingredient-evidence checks, latency/token thresholds, and GPT-nano cost estimates with `cost_source`. |
+| Live OpenAI demo evals | Complete, manual-only | `scripts/run-openai-demo-evals.ps1` | offline harness tests; first GPT-nano baseline; post-0028B 6/6 acceptance run | Requires explicit opt-in and writes ignored metrics/results under `.tmp-ai-demo/live-evals/`. Includes usefulness checks, tuned importer ingredient-evidence checks, latency/token thresholds, and GPT-nano cost estimates with `cost_source`. |
 | Strict OpenAI structured schema | Complete | provider harness | offline fake-client tests | Normalizes Pydantic schemas for strict structured outputs. |
 | Mock demo path | Complete | `scripts/demo-ai-mock.ps1` | local script validation | Runs offline evals and endpoint checks with generated fixtures. |
 | Local browser demo launch | Complete | `scripts/start-ai-demo-local.ps1` | pytest, mock demo | Seeds generated saved recipes and dataset fixtures, starts `/demo` on `127.0.0.1:8000`. |
@@ -48,6 +48,20 @@ status=passed
 | Raw dataset commits | Not allowed | `recipe-dataset/` remains ignored. |
 | Private env/provider keys | Not allowed | `.env` and secrets stay untracked. |
 
+## Current Acceptance Matrix
+
+| Area | Status | Evidence |
+| --- | --- | --- |
+| Mock demo | Pass | `scripts/demo-ai-mock.ps1` |
+| Seeded local UI demo | Pass | generated fixtures |
+| Live OpenAI eval | Pass | post-`0028B` 6/6 run |
+| Cost estimate | Pass | `default_model_rate` cost populated |
+| Latency thresholds | Pass | 0 warnings / 0 failures |
+| Token thresholds | Pass | 0 warnings / 0 failures |
+| Input quality guardrails | Pass | `0028A` offline tests |
+| Importer eval robustness | Pass | `0028B` tests plus post-fix live pass |
+| Provider-call avoidance | Pass | rejected and clarification paths tested offline |
+
 ## Demo Starting Points
 
 - [AI Portfolio Showcase](ai-portfolio-showcase.md)
@@ -59,4 +73,5 @@ status=passed
 - [Manual Live OpenAI Smoke Tests](live-openai-smoke-tests.md)
 - [Live OpenAI Demo Evals](live-openai-demo-evals.md)
 - [Live OpenAI Demo Baseline: 2026-07-07](live-openai-demo-baseline-2026-07-07.md)
+- [Live OpenAI Demo Regression Notes: 2026-07-08](live-openai-demo-regression-notes-2026-07-08.md)
 - [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md)

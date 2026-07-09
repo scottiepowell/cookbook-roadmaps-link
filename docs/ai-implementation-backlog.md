@@ -946,3 +946,40 @@ Done criteria:
 - generic placeholder, unrelated ingredient, and truly ungrounded outputs still fail;
 - normal validation remains offline and no live OpenAI calls are added to CI;
 - no generated live eval artifacts, API keys, private env files, screenshots, raw datasets, logs, or credentials are committed.
+
+## 0028C: Live Eval Regression Notes And Acceptance Baseline
+
+Status: complete.
+
+Goal: Preserve the post-`0028A` live eval regression, the `0028B` importer-check fix, and the latest passing live GPT-nano acceptance run as sanitized project evidence.
+
+Files likely touched:
+
+- `docs/live-openai-demo-regression-notes-2026-07-08.md`
+- `docs/live-openai-demo-baseline-2026-07-07.md`
+- `docs/live-openai-demo-evals.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0028C-live-eval-regression-notes-and-acceptance-baseline-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior;
+- Docker Compose config check;
+- diff whitespace check.
+
+Done criteria:
+
+- the post-`0028A` failed live run is documented without private paths, raw response JSON, secrets, or generated live artifacts;
+- root cause is recorded as a brittle description-only importer check rather than a model-quality failure;
+- the `0028B` fix is recorded;
+- the post-`0028B` 6/6 passing live run is recorded as the current acceptance baseline;
+- a concise acceptance matrix records mock demo, seeded UI demo, live eval, cost, thresholds, input guardrails, importer robustness, and provider-call avoidance;
+- normal validation remains offline and no live OpenAI calls are added to CI;
+- no generated live eval artifacts, API keys, private env files, screenshots, raw datasets, logs, credentials, or `.tmp-ai-demo/` artifacts are committed.
