@@ -983,3 +983,96 @@ Done criteria:
 - a concise acceptance matrix records mock demo, seeded UI demo, live eval, cost, thresholds, input guardrails, importer robustness, and provider-call avoidance;
 - normal validation remains offline and no live OpenAI calls are added to CI;
 - no generated live eval artifacts, API keys, private env files, screenshots, raw datasets, logs, credentials, or `.tmp-ai-demo/` artifacts are committed.
+
+## 0029A: Production Access, Metering, And Time-Limited AI Sessions Architecture
+
+Status: complete.
+
+Goal: Design the production architecture for safely exposing the Cookbook AI demo as a controlled product experience with authentication, metering, time-limited sessions, provider cost controls, and future paid access.
+
+Files likely touched:
+
+- `docs/production-access-metering-architecture.md`
+- `docs/ai-production-readiness-roadmap.md`
+- `docs/ai-session-metering-data-model.md`
+- `docs/ai-access-control-threat-model.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029A-production-access-metering-and-time-limited-ai-sessions-architecture-results.md`
+
+Validation:
+
+- repo validation;
+- diff whitespace check;
+- Docker Compose config check;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- architecture docs exist for production access, metering, and time-limited AI sessions;
+- access modes are defined for local/offline developer, private operator demo, invite-only demo, future paid access, and admin/operator mode;
+- session and per-call metering data models are documented;
+- budget enforcement flow is documented in the required order;
+- authentication options are compared with an incremental recommendation;
+- future paid access is bounded but not implemented;
+- multi-use-case data boundary pattern preserves the rule that shared infrastructure is allowed but each demo owns its own data boundary;
+- deployment exposure controls explicitly prohibit unauthenticated public live AI endpoints;
+- threat model exists;
+- follow-on tasks are listed with `0029B` reserved for manual end-user recipe-entry acceptance and production-readiness implementation continuing at `0029C`;
+- normal validation remains offline;
+- no runtime auth, billing, public live route exposure, payment integration, migrations, secrets, env files, raw datasets, generated artifacts, screenshots, logs, credentials, or `.tmp-ai-demo/` artifacts are committed.
+
+## 0029B: Manual End-User Recipe Entry Acceptance
+
+Status: planned.
+
+Goal: Validate the manual end-user recipe-entry path before production access and metering implementation begins.
+
+Notes:
+
+- This number is reserved for manual recipe-entry acceptance.
+- Production-readiness implementation resumes with `0029C`.
+
+## 0029C: Session And Metering Schema Draft
+
+Status: planned.
+
+Goal: Draft schemas and tests for sessions, access grants, meter events, and admin audit events without enabling public live AI.
+
+## 0029D: Local Operator Access Gate
+
+Status: planned.
+
+Goal: Add a local/private operator gate for controlled AI demo access before invite-only or public exposure.
+
+## 0029E: Provider Call Budget Enforcement
+
+Status: planned.
+
+Goal: Centralize provider-call budget checks for call count, token caps, estimated cost, and global provider disable.
+
+## 0029F: Invite-Only Demo Session Flow
+
+Status: planned.
+
+Goal: Add short-lived invite sessions with expiry, revocation, and per-session provider budgets.
+
+## 0029G: Admin Usage Report Prototype
+
+Status: planned.
+
+Goal: Prototype an operator report for active sessions, provider calls, estimated spend, quality failures, and threshold warnings.
+
+## 0029H: Public Route Exposure Review
+
+Status: planned.
+
+Goal: Review Cloudflare, reverse proxy, CORS, and route exposure before any public live provider-backed AI access.
+
+## 0029I: Paid Access Integration ADR
+
+Status: planned.
+
+Goal: Decide the future payment/entitlement integration boundary without implementing payment in earlier tasks.

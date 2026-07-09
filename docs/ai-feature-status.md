@@ -22,6 +22,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | REST examples | Complete | `scripts/demo-ai-requests.http` | docs/examples | Manual request examples for portfolio walkthroughs. |
 | Sidecar demo UI | Complete | `GET /demo`, `GET /demo/ai`, `GET /demo/readiness` | TestClient UI/readiness tests | Guided browser page exercises existing endpoints without upstream UI rewrite. |
 | Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. |
+| Production access and metering architecture | Proposed | docs only | `docs/production-access-metering-architecture.md` | Designs gated access, time-limited sessions, metering, cost controls, threat model, and paid-access boundary. No runtime auth, billing, public live AI exposure, migrations, or route changes are implemented. |
 
 ## Recorded Live Smoke
 
@@ -40,6 +41,9 @@ status=passed
 | Boundary | Status | Reason |
 | --- | --- | --- |
 | Production AI storage | Not implemented | Kept out of scope until a dedicated architecture task. |
+| Production AI access layer | Proposed, not implemented | Public live provider-backed AI requires auth/session/metering work first. |
+| Public unauthenticated live AI endpoint | Not allowed | Provider-backed endpoints must be protected before public exposure. |
+| Payment integration | Deferred | Paid access requires a later ADR and entitlement design. |
 | Embeddings/vector DB | Not implemented | Deterministic retrieval is enough for the current demo and eval scope. |
 | Qdrant/Postgres/pgvector | Not implemented | Avoids unnecessary infrastructure for this feature slice. |
 | Persistent generated indexes | Not implemented | Dataset indexes are request-time/in-memory only. |
@@ -74,4 +78,8 @@ status=passed
 - [Live OpenAI Demo Evals](live-openai-demo-evals.md)
 - [Live OpenAI Demo Baseline: 2026-07-07](live-openai-demo-baseline-2026-07-07.md)
 - [Live OpenAI Demo Regression Notes: 2026-07-08](live-openai-demo-regression-notes-2026-07-08.md)
+- [Production Access Metering Architecture](production-access-metering-architecture.md)
+- [AI Production Readiness Roadmap](ai-production-readiness-roadmap.md)
+- [AI Session Metering Data Model](ai-session-metering-data-model.md)
+- [AI Access Control Threat Model](ai-access-control-threat-model.md)
 - [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md)

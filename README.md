@@ -33,6 +33,8 @@ Demo and evidence links:
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
 - [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
 - [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
+- [Production access metering architecture](docs/production-access-metering-architecture.md)
+- [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -65,6 +67,8 @@ Without opt-in settings, it skips cleanly and performs no live calls.
 The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). The current acceptance baseline is the post-`0028B` 6/6 run recorded in [Live OpenAI Demo Regression Notes: 2026-07-08](docs/live-openai-demo-regression-notes-2026-07-08.md), after the post-`0028A` importer evaluator false failure was fixed. Future live eval runs should compare correctness, usefulness, importer ingredient preservation, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that acceptance history. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
+
+Production access architecture is proposed, not implemented. Before any public live provider-backed AI exposure, the AI demo needs an access layer with time-limited sessions, per-call metering, provider budget enforcement, a global live-provider disable switch, protected routes, and metadata-only logging by default. Payment integration is deferred, and the platform rule remains: shared infrastructure is allowed, but each demo owns its own data boundary.
 
 ## Architecture
 
@@ -103,6 +107,10 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)
 - [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
 - [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
+- [Production access metering architecture](docs/production-access-metering-architecture.md)
+- [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
+- [AI session metering data model](docs/ai-session-metering-data-model.md)
+- [AI access control threat model](docs/ai-access-control-threat-model.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
