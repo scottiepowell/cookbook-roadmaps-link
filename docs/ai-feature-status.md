@@ -72,6 +72,7 @@ status=passed
 | Retrieval context packing | Pass | bounded prompt packer tests plus importer metadata/UI checks |
 | RAG support honesty policy | Pass | deterministic support classification tests plus importer metadata/UI checks |
 | Local retrieval cache | Pass | deterministic cache hit/miss tests plus safe fingerprint metadata |
+| RAG importer E2E integration | Pass | real `/ai/import-recipe` route test with generated dataset fixtures and mock provider |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 

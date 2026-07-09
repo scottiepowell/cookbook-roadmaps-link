@@ -54,6 +54,7 @@ RAG evals should verify:
 - importer prompt context packing stays bounded, prefers strong examples, and drops or labels weak examples honestly;
 - importer RAG honesty policy classifies support as strong, moderate, weak, or none and labels citations accordingly;
 - dataset retrieval and index caching stay deterministic, bounded, and safe, with cache hit/miss metadata and no disk artifacts;
+- importer RAG E2E tests exercise the real `/ai/import-recipe` route with generated fixture data and verify retrieval, normalization, context packing, support policy, citations, schema validation, and cache metadata together;
 - no-match questions say the system does not know;
 - the answer does not reveal secrets, env vars, API keys, or hidden prompts;
 - the answer distinguishes saved recipes from general suggestions.
@@ -85,6 +86,7 @@ ai-api/
     test_ai_ask.py
     test_import_recipe.py
     test_meal_plan.py
+    test_rag_e2e_integration.py
     fixtures/
       recipes.sqlite
       recipe_docs.json
@@ -117,6 +119,7 @@ evals/
 | RAG Retrieval | Carbonara alias | `carbonara for 4 with spaghetti parmigiano-reggiano eggs pancetta black pepper pasta water off heat no heavy cream` | Parmigiano-reggiano normalizes to parmesan for carbonara ranking |
 | RAG Retrieval | Casserole soup phrase | `chicken and rice casserole for 4 with cooked chicken rice cream of chicken soup cheddar bake until bubbly` | Cream of chicken soup supports chicken/rice casserole ranking |
 | RAG Packing | Bound prompt context | importer retrieval results from generated distractor fixtures | Packed context stays under budget, excludes weak examples when strong matches exist, and includes safe provenance IDs |
+| RAG E2E | Importer route integration | cheesecake, carbonara, omelette, casserole, and broad dessert notes | Real `/ai/import-recipe` route returns schema-valid mock drafts with RAG metadata, citations/provenance, support labels, and cache status |
 | Dataset RAG | Grounded ask | `What recipe uses lemon?` | Cites retrieved Kaggle fixture source ID/title/license |
 | Dataset RAG | No match | `Which indexed recipe uses saffron?` | Returns no-match response and does not call provider |
 | Importer | Clean recipe | pasted recipe text | Valid importer schema with title, ingredients, and steps |
@@ -141,6 +144,7 @@ evals/
 - Importer retrieval relevance evals must use generated fixtures only, fail on regression in ranking or weak-match warnings, and remain fully offline.
 - Importer context packing tests should stay deterministic and offline, and should validate bounded prompt selection rather than raw prompt text size alone.
 - Retrieval cache tests should verify index/retrieval reuse, invalidation, eviction, and safe fingerprint metadata without requiring the real dataset.
+- Importer RAG E2E tests must use generated fixtures and the mock provider, exercise the public API route, and remain light enough for normal repository validation.
 
 ## Manual Live OpenAI Smoke Tests
 

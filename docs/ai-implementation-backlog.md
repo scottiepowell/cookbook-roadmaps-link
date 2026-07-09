@@ -1387,7 +1387,7 @@ Done criteria:
 
 ## 0029B-10: Local In-Memory Retrieval Cache
 
-Status: planned.
+Status: complete.
 
 Goal: Add a process-local in-memory cache for deterministic dataset indexing and retrieval so repeated importer and dataset search calls can reuse work without writing generated indexes to disk.
 
@@ -1419,6 +1419,31 @@ Done criteria:
 - no disk cache, generated index artifact, Redis, SQLite, or production persistent memory is introduced;
 - normal validation remains offline and mock-only;
 - no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
+## 0029B-11: RAG End-To-End Integration Test Harness
+
+Status: complete.
+
+Goal: Add an automated offline E2E integration test for the RAG-informed importer path through the real `/ai/import-recipe` API route.
+
+Files likely touched:
+
+- `ai-api/tests/test_rag_e2e_integration.py`
+- `docs/ai-evals-plan.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-11-rag-end-to-end-integration-test-harness-results.md`
+
+Done criteria:
+
+- generated fixture dataset includes strong cheesecake, carbonara, omelet, and chicken/rice casserole records plus generic distractors;
+- E2E cases exercise `/ai/import-recipe` with the mock provider and no live OpenAI calls;
+- assertions cover schema-valid drafts, input quality, retrieval metadata, normalization signals, context packing, support policy, citations/provenance, safe responses, and cache hit behavior on repeated requests;
+- a broad dessert prompt verifies weak/partial support is not claimed as strong grounding;
+- normal validation remains offline and mock-only;
+- no raw dataset files, disk cache, generated persistent index, live artifacts, screenshots, browser automation artifacts, `.env` files, logs, credentials, or secrets are committed.
 
 ## 0029C: Session And Metering Schema Draft
 

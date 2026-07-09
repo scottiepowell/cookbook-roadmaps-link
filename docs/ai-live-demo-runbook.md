@@ -217,6 +217,8 @@ The importer UI also shows a `RAG support` label and short message. Strong suppo
 
 The demo UI also shows cache status for dataset search and importer retrieval. A cache hit means the current process reused an existing in-memory index or retrieval result; the metadata only exposes short fingerprints and bounded entry counts.
 
+The automated E2E integration test `ai-api/tests/test_rag_e2e_integration.py` covers the same importer route offline with generated dataset fixtures and the mock provider. Use it as the regression safety net before manual live RAG checks.
+
 The dataset index now normalizes conservative aliases and phrase variants such as `omelette` -> `omelet`, `parmigiano-reggiano` -> `parmesan`, `no-bake` -> `no bake`, and `graham crackers` -> `graham cracker` while preserving the original recipe values for citations and display.
 
 The live importer `503` issue observed during manual recipe-entry testing was caused by strict structured-output schema metadata that OpenAI rejected. `ai-api/app/providers/openai_schema.py` now strips unsupported metadata such as `default`, `examples`, `title`, and `description` recursively before the request is sent, while application-side importer behavior still defaults servings to 4.
