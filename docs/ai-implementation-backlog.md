@@ -1250,6 +1250,45 @@ Done criteria:
 - normal validation remains offline;
 - no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
 
+## 0029B-6: RAG Retrieval Evaluation Harness
+
+Status: complete.
+
+Goal: Add a deterministic offline harness that scores importer retrieval relevance so ranking regressions can be tested instead of judged only by manual UI inspection.
+
+Files likely touched:
+
+- `evals/ai_cookbook/retrieval_cases.yaml`
+- `evals/ai_cookbook/retrieval_eval.py`
+- `evals/ai_cookbook/run_evals.py`
+- `ai-api/tests/test_retrieval_eval_harness.py`
+- `docs/ai-evals-plan.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-6-rag-retrieval-evaluation-harness-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repository validation;
+- diff whitespace check;
+- Docker Compose config check;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- retrieval eval cases are hand-maintainable and cover cheesecake, carbonara, omelet, chicken/rice casserole, and baked-versus-no-bake style contrasts;
+- the offline eval runner includes retrieval relevance cases and fails non-zero on ranking regressions;
+- deterministic tests cover top-1 relevance, top-k relevance counts, anchor coverage, generic drift, category classification, and weak-match warnings with distractor-only fixtures;
+- manual live capture guidance records provider/model, dataset limit, document count, relevance category, warning state, top-1 title, top-3 titles, and relevant-count notes without committing raw live JSON artifacts;
+- normal validation remains offline and mock-only;
+- no live OpenAI calls, raw datasets, generated live artifacts, secrets, env files, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

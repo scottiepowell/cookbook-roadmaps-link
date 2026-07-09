@@ -109,6 +109,17 @@ If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_cat
 
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was fine for smaller smoke tests, but not for RAG-informed structured drafts like cheesecake.
 
+## Manual Live RAG Capture Matrix
+
+Use this matrix when recording manual live importer or retrieval checks. Keep the notes terse and do not commit raw live JSON artifacts.
+
+| Input text | Provider/model | Dataset limit | Document count | Relevance category | Warning | Top-1 title | Top-3 titles | Relevant count in top 3 | Notes |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | ---: | --- |
+| `cheesecake cream cheese sugar eggs vanilla graham cracker crust bake and chill` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Classic Baked Cheesecake` | `Classic Baked Cheesecake; No-Bake Cheesecake Bars; Apple Crumble with Vanilla Ice Cream` | `2/3` | Full `recipe-dataset` path used; citations rendered. |
+| `carbonara pasta spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Spaghetti Carbonara` | `Spaghetti Carbonara; Creamy Garlic Pasta; Aglio e Olio Pasta` | `2/3` | Carbonara-specific examples outrank broad pasta matches. |
+| `omelet with eggs cheese maybe onions cooked in butter fold it over` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Cheese Omelet` | `Cheese Omelet; Breakfast Sandwich; Skillet Pie` | `2/3` | Omelet ranking should not depend on generic breakfast terms. |
+| `chicken and rice casserole chicken rice cream soup cheese bake until hot` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Chicken and Rice Casserole` | `Chicken and Rice Casserole; Lemon Chicken Skillet; Rice Pilaf` | `2/3` | Casserole-specific result should outrank chicken-only and rice-only distractors. |
+
 ## Optional Live OpenAI Smoke Path
 
 Use this only when intentionally proving the live provider path. It is not part of normal validation.

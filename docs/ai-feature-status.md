@@ -14,6 +14,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Saved-recipe meal planning | Complete | `POST /ai/meal-plan` | pytest, offline evals, live smoke | Plans from selected saved recipe candidates; no DB write-back. |
 | Bounded input quality | Complete | importer, Ask, dataset search/RAG, meal planning | pytest, offline evals | Rejects unusable input before provider calls, asks at most one clarification question for recoverable vague input, and lets weak usable input proceed with warnings. |
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
+| Retrieval relevance eval harness | Complete | `evals/ai_cookbook/run_evals.py` | offline eval tests | Deterministically scores importer retrieval relevance against generated distractor fixtures, including top-1 dish match, top-k material relevance, anchor coverage, and weak-match warnings. |
 | Manual OpenAI smoke | Complete, manual-only | `scripts/smoke-openai-live.py`, `scripts/demo-ai-live-smoke.ps1` | recorded manual run | Requires explicit opt-in, API key, token cap, and budget cap. |
 | Importer live diagnostic | Complete, manual-only | `scripts/smoke-openai-importer-live.py`, `scripts/smoke-openai-importer-live.ps1` | offline smoke tests | Runs importer-only live checks without the browser, prints safe counts and classifications, and supports token/timeout/provider-debug overrides. |
 | Live OpenAI demo evals | Complete, manual-only | `scripts/run-openai-demo-evals.ps1` | offline harness tests; first GPT-nano baseline; post-0028B 6/6 acceptance run | Requires explicit opt-in and writes ignored metrics/results under `.tmp-ai-demo/live-evals/`. Includes usefulness checks, tuned importer ingredient-evidence checks, latency/token thresholds, and GPT-nano cost estimates with `cost_source`. |
@@ -65,6 +66,7 @@ status=passed
 | Token thresholds | Pass | 0 warnings / 0 failures |
 | Input quality guardrails | Pass | `0028A` offline tests |
 | Importer eval robustness | Pass | `0028B` tests plus post-fix live pass |
+| Retrieval relevance regression checks | Pass | deterministic offline eval harness |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 

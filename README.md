@@ -19,6 +19,7 @@ Completed AI workflows:
 Validation proof:
 
 - Offline evals cover dataset ask, saved-recipe ask, importer, meal plan, provider config hygiene, citations, and secret-like leakage checks.
+- Retrieval relevance evals now regression-test importer ranking against deterministic cheesecake, carbonara, omelet, and chicken/rice casserole distractor fixtures.
 - Repository validation runs pytest and offline evals without provider keys, Docker-only services, the real Kaggle dataset, or a production cookbook database.
 - Manual live OpenAI smoke validation passed with `provider=openai`, `model=gpt-5.4-nano`, `live_calls=4`, `estimated_usage_tokens=1200`, `workflows=importer,ask_my_cookbook,dataset_ask,meal_plan`, `budget_cents=25`, `status=passed`.
 - Live GPT-nano demo eval acceptance is current through the post-`0028B` `2026-07-08` run: 6/6 workflows passed, `default_model_rate` cost populated, and latency/token thresholds had 0 warnings and 0 failures. A post-`0028A` importer false failure is preserved as sanitized regression evidence.

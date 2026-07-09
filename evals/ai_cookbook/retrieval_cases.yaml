@@ -1,0 +1,209 @@
+[
+  {
+    "id": "cheesecake_baked",
+    "name": "cheesecake_baked",
+    "query": "cheesecake cream cheese sugar eggs vanilla graham cracker crust bake and chill",
+    "required_anchors": [
+      "cheesecake",
+      "cream cheese",
+      "graham cracker crust",
+      "bake",
+      "chill"
+    ],
+    "preferred_title_terms": [
+      "cheesecake"
+    ],
+    "preferred_ingredient_terms": [
+      "cream cheese",
+      "graham crackers",
+      "eggs",
+      "vanilla"
+    ],
+    "preferred_instruction_terms": [
+      "beat",
+      "bake",
+      "cool",
+      "chill"
+    ],
+    "negative_title_terms": [
+      "crumble",
+      "pear"
+    ],
+    "negative_generic_terms": [
+      "dessert",
+      "cream",
+      "sugar"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Baked cheesecake should outrank broad dessert distractors."
+  },
+  {
+    "id": "cheesecake_no_bake",
+    "name": "cheesecake_no_bake",
+    "query": "no bake cheesecake cream cheese graham cracker crust chill set",
+    "required_anchors": [
+      "cheesecake",
+      "cream cheese",
+      "graham cracker",
+      "chill"
+    ],
+    "preferred_title_terms": [
+      "cheesecake",
+      "no-bake"
+    ],
+    "preferred_ingredient_terms": [
+      "cream cheese",
+      "graham crackers",
+      "vanilla"
+    ],
+    "preferred_instruction_terms": [
+      "press",
+      "mix",
+      "chill",
+      "slice"
+    ],
+    "negative_title_terms": [
+      "crumble",
+      "pear"
+    ],
+    "negative_generic_terms": [
+      "dessert",
+      "cream",
+      "sugar",
+      "bake"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "No-bake cheesecake should rank above generic baked desserts when the query asks for chill/set behavior."
+  },
+  {
+    "id": "carbonara_classic",
+    "name": "carbonara_classic",
+    "query": "carbonara pasta spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat",
+    "required_anchors": [
+      "carbonara",
+      "spaghetti",
+      "eggs",
+      "parmesan",
+      "pancetta",
+      "black pepper"
+    ],
+    "preferred_title_terms": [
+      "carbonara"
+    ],
+    "preferred_ingredient_terms": [
+      "spaghetti",
+      "eggs",
+      "parmesan",
+      "pancetta",
+      "black pepper"
+    ],
+    "preferred_instruction_terms": [
+      "whisk",
+      "off heat",
+      "pasta water",
+      "toss"
+    ],
+    "negative_title_terms": [
+      "creamy",
+      "aglio"
+    ],
+    "negative_generic_terms": [
+      "pasta",
+      "cream",
+      "garlic"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 1,
+    "top_k": 3,
+    "notes": "Carbonara should outrank cream-pasta and garlic-only pasta variants without requiring heavy cream."
+  },
+  {
+    "id": "omelet_basic",
+    "name": "omelet_basic",
+    "query": "omelet with eggs cheese maybe onions cooked in butter fold it over",
+    "required_anchors": [
+      "omelet",
+      "eggs",
+      "cheese",
+      "butter",
+      "fold"
+    ],
+    "preferred_title_terms": [
+      "omelet",
+      "omelette"
+    ],
+    "preferred_ingredient_terms": [
+      "eggs",
+      "cheese",
+      "butter",
+      "onion"
+    ],
+    "preferred_instruction_terms": [
+      "beat",
+      "cook",
+      "fold",
+      "scramble"
+    ],
+    "negative_title_terms": [
+      "sandwich",
+      "toast",
+      "skillet pie"
+    ],
+    "negative_generic_terms": [
+      "breakfast",
+      "egg",
+      "cheese"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Omelet should rank omelet records ahead of breakfast sandwich or pie distractors."
+  },
+  {
+    "id": "chicken_rice_casserole",
+    "name": "chicken_rice_casserole",
+    "query": "chicken and rice casserole chicken rice cream soup cheese bake until hot",
+    "required_anchors": [
+      "chicken",
+      "rice",
+      "casserole",
+      "cream soup",
+      "cheese",
+      "bake"
+    ],
+    "preferred_title_terms": [
+      "casserole",
+      "chicken and rice casserole"
+    ],
+    "preferred_ingredient_terms": [
+      "chicken",
+      "rice",
+      "cream soup",
+      "cheese"
+    ],
+    "preferred_instruction_terms": [
+      "preheat",
+      "combine",
+      "bake",
+      "hot",
+      "165"
+    ],
+    "negative_title_terms": [
+      "skillet",
+      "pilaf"
+    ],
+    "negative_generic_terms": [
+      "chicken",
+      "rice",
+      "dinner"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Chicken and rice casserole should outrank chicken-only and rice-only records."
+  }
+]
