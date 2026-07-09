@@ -1318,6 +1318,36 @@ Done criteria:
 - demo UI surfaces the safe packing metadata;
 - deterministic tests cover selection, truncation, budget limits, weak-example handling, and prompt construction.
 
+## 0029B-8: Dataset Normalization For Deterministic RAG
+
+Status: complete.
+
+Goal: Normalize dataset text deterministically before indexing and scoring so retrieval is more robust while original display values remain unchanged.
+
+Files likely touched:
+
+- `ai-api/app/dataset_normalization.py`
+- `ai-api/app/dataset_index.py`
+- `evals/ai_cookbook/retrieval_eval.py`
+- `evals/ai_cookbook/retrieval_cases.yaml`
+- `ai-api/tests/test_dataset_normalization.py`
+- `ai-api/tests/test_dataset_index.py`
+- `ai-api/tests/test_retrieval_eval_harness.py`
+- `docs/ai-evals-plan.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-8-dataset-normalization-for-deterministic-rag-results.md`
+
+Done criteria:
+
+- the index normalizes punctuation, quotes, dashes, accents, aliases, and common singular/plural variants before scoring;
+- important food phrases such as cream cheese, graham cracker crust, black pepper, no bake, and cream of chicken soup remain matchable;
+- retrieval evals cover alias and phrase-sensitive cases like omelette, no-bake cheesecake, parmigiano-reggiano carbonara, and cream of chicken soup casserole;
+- original recipe values remain intact for citations, snippets, and display;
+- normal validation remains offline and mock-only.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

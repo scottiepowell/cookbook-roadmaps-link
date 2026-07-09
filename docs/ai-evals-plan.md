@@ -50,6 +50,7 @@ RAG evals should verify:
 - cited recipe IDs and titles match retrieved documents;
 - importer retrieval prefers dish-specific examples over broad category overlaps;
 - top-1 retrieval relevance, top-k relevance counts, anchor coverage, generic drift, and weak-match warnings are deterministic and regression-tested offline;
+- dataset normalization preserves important recipe phrases, aliases, and singular/plural variants without changing original display values;
 - importer prompt context packing stays bounded, prefers strong examples, and drops or labels weak examples honestly;
 - no-match questions say the system does not know;
 - the answer does not reveal secrets, env vars, API keys, or hidden prompts;
@@ -108,6 +109,10 @@ evals/
 | RAG Retrieval | Carbonara relevance | `carbonara pasta spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat` | Carbonara ranks above creamy pasta and aglio e olio distractors |
 | RAG Retrieval | Omelet relevance | `omelet with eggs cheese maybe onions cooked in butter fold it over` | Omelet ranks above sandwich and skillet pie distractors |
 | RAG Retrieval | Casserole relevance | `chicken and rice casserole chicken rice cream soup cheese bake until hot` | Chicken/rice casserole ranks above chicken-only and rice-only distractors |
+| RAG Retrieval | Normalized aliases | `omelette for 4 with eggs cheddar onions butter folded in a skillet` | Omelet matches despite spelling variant |
+| RAG Retrieval | Normalized phrases | `no-bake cheesecake for 4 with cream cheese vanilla sugar graham cracker crust chill until firm` | No-bake cheesecake matches consistently with phrase-preserving normalization |
+| RAG Retrieval | Carbonara alias | `carbonara for 4 with spaghetti parmigiano-reggiano eggs pancetta black pepper pasta water off heat no heavy cream` | Parmigiano-reggiano normalizes to parmesan for carbonara ranking |
+| RAG Retrieval | Casserole soup phrase | `chicken and rice casserole for 4 with cooked chicken rice cream of chicken soup cheddar bake until bubbly` | Cream of chicken soup supports chicken/rice casserole ranking |
 | RAG Packing | Bound prompt context | importer retrieval results from generated distractor fixtures | Packed context stays under budget, excludes weak examples when strong matches exist, and includes safe provenance IDs |
 | Dataset RAG | Grounded ask | `What recipe uses lemon?` | Cites retrieved Kaggle fixture source ID/title/license |
 | Dataset RAG | No match | `Which indexed recipe uses saffron?` | Returns no-match response and does not call provider |

@@ -15,6 +15,12 @@ def test_retrieval_eval_cases_load_and_are_named():
         "carbonara_classic",
         "omelet_basic",
         "chicken_rice_casserole",
+        "omelette_alias",
+        "no_bake_cheesecake_space",
+        "no_bake_cheesecake_hyphen",
+        "graham_crackers_cheesecake",
+        "parmigiano_reggiano_carbonara",
+        "cream_of_chicken_soup_casserole",
     ]
     assert all(case["name"] == case["id"] for case in cases)
     assert all(case["top_k"] == 3 for case in cases)
@@ -30,7 +36,7 @@ def test_retrieval_eval_harness_scores_fixture_cases():
     results = [retrieval_eval.evaluate_retrieval_case(case, dataset_dir=dataset_root / case["id"]) for case in cases]
 
     assert all(result.passed for result in results)
-    assert all(result.document_count == 13 for result in results)
+    assert all(result.document_count == 14 for result in results)
     assert all(result.dataset_limit == 5000 for result in results)
     assert all(result.warning_expected is False for result in results)
     assert all(result.warning_observed is False for result in results)
@@ -39,6 +45,12 @@ def test_retrieval_eval_harness_scores_fixture_cases():
     assert results[2].top1_title == "Spaghetti Carbonara"
     assert results[3].top1_title == "Cheese Omelet"
     assert results[4].top1_title == "Chicken and Rice Casserole"
+    assert results[5].top1_title == "Cheese Omelet"
+    assert results[6].top1_title == "No-Bake Cheesecake Bars"
+    assert results[7].top1_title == "No-Bake Cheesecake Bars"
+    assert results[8].top1_title == "No-Bake Cheesecake Bars"
+    assert results[9].top1_title == "Spaghetti Carbonara"
+    assert results[10].top1_title == "Chicken and Rice Casserole"
     assert all(result.relevant_in_top_k >= int(case["min_relevant_in_top_k"]) for result, case in zip(results, cases, strict=True))
     assert all("top3_relevant=" in result.summary for result in results)
     assert all("relevance=" in result.summary for result in results)

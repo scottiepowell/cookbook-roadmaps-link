@@ -311,6 +311,13 @@ def _retrieval_fixture_rows() -> list[dict[str, str]]:
             "cuisine": "dessert",
         },
         {
+            "recipe_id": "cheesecake-frosting-1",
+            "title": "Cream Cheese Frosting",
+            "ingredients": "cream cheese; butter; sugar; vanilla",
+            "instructions": "Beat cream cheese and butter; Add sugar; Mix until fluffy",
+            "cuisine": "dessert",
+        },
+        {
             "recipe_id": "cheesecake-crumble-1",
             "title": "Apple Crumble with Vanilla Ice Cream",
             "ingredients": "apples; sugar; butter; oats; cream",
@@ -369,8 +376,8 @@ def _retrieval_fixture_rows() -> list[dict[str, str]]:
         {
             "recipe_id": "casserole-1",
             "title": "Chicken and Rice Casserole",
-            "ingredients": "chicken; rice; cream soup; cheese; onion",
-            "instructions": "Preheat oven; Combine chicken, rice, soup, and cheese; Bake until hot and chicken reaches 165 F",
+            "ingredients": "chicken; rice; cream of chicken soup; cheese; onion",
+            "instructions": "Preheat oven; Combine chicken, rice, cream of chicken soup, and cheese; Bake until hot and chicken reaches 165 F",
             "cuisine": "dinner",
         },
         {

@@ -86,6 +86,9 @@ def test_recipe_index_summary_and_deterministic_ranking():
     assert index.summary.token_count > 0
     assert index.summary.build_metadata == {"mode": "in_memory", "input_records": 3}
     assert index.summary.warnings == []
+    assert index.documents[0].normalized_fields["title"] == "lemon beans"
+    assert index.documents[0].normalized_field_tokens["ingredients"] == ["bean", "lemon"]
+    assert index.documents[0].normalized_field_phrases["title"] == []
 
     results = search_recipe_index(index, "beans", limit=10)
 

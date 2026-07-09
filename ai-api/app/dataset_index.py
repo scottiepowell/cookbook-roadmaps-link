@@ -1,11 +1,9 @@
-import re
 from collections import Counter
 from dataclasses import dataclass, field
 
 from app.dataset_adapter import ExternalRecipeRecord, iter_recipe_dataset_records
+from app.dataset_normalization import extract_phrases, normalize_index_text, normalize_text, safe_tokenize
 
-
-TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
 FIELD_WEIGHTS = {
     "title": 12,
@@ -77,12 +75,20 @@ class IndexableRecipeDocument:
     tags: list[str] = field(default_factory=list)
     source_file: str = ""
     source_table: str | None = None
+    normalized_title: str = ""
+    normalized_ingredients: str = ""
+    normalized_instructions: str = ""
+    normalized_tags: str = ""
+    phrases: list[str] = field(default_factory=list)
+    aliases_applied: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class IndexedRecipeDocument:
     document: IndexableRecipeDocument
-    field_tokens: dict[str, list[str]]
+    normalized_fields: dict[str, str]
+    normalized_field_tokens: dict[str, list[str]]
+    normalized_field_phrases: dict[str, list[str]]
     original_index: int
 
 
@@ -118,6 +124,7 @@ class RecipeIndexSearchResult:
 class RecipeQueryAnalysis:
     query: str
     tokens: list[str]
+    phrases: list[str]
     strong_anchors: list[str]
     anchors: list[str]
     specific_terms: list[str]
@@ -125,23 +132,26 @@ class RecipeQueryAnalysis:
 
 
 def analyze_recipe_query(query: str) -> RecipeQueryAnalysis:
-    tokens = _tokenize(query)
+    tokens = safe_tokenize(query)
+    phrases = extract_phrases(query)
     if not tokens:
-        return RecipeQueryAnalysis(query=query, tokens=[], strong_anchors=[], anchors=[], specific_terms=[], broad_terms=[])
+        return RecipeQueryAnalysis(query=query, tokens=[], phrases=phrases, strong_anchors=[], anchors=[], specific_terms=[], broad_terms=[])
 
     meaningful_tokens = [token for token in tokens if token not in QUERY_STOP_WORDS]
     broad_terms = [token for token in meaningful_tokens if token in BROAD_QUERY_TERMS]
     specific_terms = [token for token in meaningful_tokens if token not in BROAD_QUERY_TERMS]
-    strong_anchors = _dedupe_preserve_order(_infer_strong_dish_anchors(tokens))
+    strong_anchors = _dedupe_preserve_order(_infer_strong_dish_anchors(tokens, phrases))
     anchors = _dedupe_preserve_order(
         [
-            *_infer_dish_anchors(tokens),
+            *_infer_dish_anchors(tokens, phrases),
+            *phrases,
             *_phrase_anchors(meaningful_tokens),
         ]
     )
     return RecipeQueryAnalysis(
         query=query,
         tokens=tokens,
+        phrases=phrases,
         strong_anchors=strong_anchors,
         anchors=anchors,
         specific_terms=specific_terms,
@@ -160,19 +170,35 @@ def build_recipe_index(records: list[ExternalRecipeRecord]) -> RecipeDatasetInde
 
     for original_index, record in enumerate(records):
         document = normalize_external_record(record)
-        field_tokens = {
-            "title": _tokenize(document.title),
-            "tags": _tokenize(" ".join(document.tags)),
-            "ingredients": _tokenize(" ".join(document.ingredients)),
-            "instructions": _tokenize(" ".join(document.instructions)),
-            "source": _tokenize(" ".join(value for value in (document.source_file, document.source_table or "") if value)),
+        normalized_fields = {
+            "title": normalize_text(document.title),
+            "tags": normalize_text(" ".join(document.tags)),
+            "ingredients": normalize_text(" ".join(document.ingredients)),
+            "instructions": normalize_text(" ".join(document.instructions)),
+            "source": normalize_text(" ".join(value for value in (document.source_file, document.source_table or "") if value)),
         }
-        token_count += sum(len(tokens) for tokens in field_tokens.values())
+        normalized_field_tokens = {
+            "title": normalize_index_text(document.title).tokens,
+            "tags": normalize_index_text(" ".join(document.tags)).tokens,
+            "ingredients": normalize_index_text(" ".join(document.ingredients)).tokens,
+            "instructions": normalize_index_text(" ".join(document.instructions)).tokens,
+            "source": normalize_index_text(" ".join(value for value in (document.source_file, document.source_table or "") if value)).tokens,
+        }
+        normalized_field_phrases = {
+            "title": normalize_index_text(document.title).phrases,
+            "tags": normalize_index_text(" ".join(document.tags)).phrases,
+            "ingredients": normalize_index_text(" ".join(document.ingredients)).phrases,
+            "instructions": normalize_index_text(" ".join(document.instructions)).phrases,
+            "source": normalize_index_text(" ".join(value for value in (document.source_file, document.source_table or "") if value)).phrases,
+        }
+        token_count += sum(len(tokens) for tokens in normalized_field_tokens.values())
         source_counts[document.source_file] += 1
         indexed.append(
             IndexedRecipeDocument(
                 document=document,
-                field_tokens=field_tokens,
+                normalized_fields=normalized_fields,
+                normalized_field_tokens=normalized_field_tokens,
+                normalized_field_phrases=normalized_field_phrases,
                 original_index=original_index,
             )
         )
@@ -231,10 +257,21 @@ def _score_indexed_document(
     broad_token_hits = 0
     specific_token_hits = 0
 
-    normalized_field_texts = {field: _normalize_text(_field_text(indexed.document, field)) for field in indexed.field_tokens}
-
-    for field, tokens in indexed.field_tokens.items():
+    for field, tokens in indexed.normalized_field_tokens.items():
         field_score = 0.0
+        normalized_field_text = indexed.normalized_fields[field]
+        field_phrases = indexed.normalized_field_phrases[field]
+        for phrase in analysis.phrases:
+            if not phrase or not _phrase_matches(phrase, normalized_field_text):
+                continue
+            if phrase in field_phrases:
+                field_score += 2.5
+            elif field in {"title", "ingredients"}:
+                field_score += 2.0
+            else:
+                field_score += 1.2
+            if field not in matched_fields:
+                matched_fields.append(field)
         for token in analysis.tokens:
             if not _token_matches(token, tokens):
                 continue
@@ -253,11 +290,11 @@ def _score_indexed_document(
 
     anchor_bonus = 0.0
     for anchor in analysis.anchors:
-        normalized_anchor = anchor.lower().strip()
+        normalized_anchor = normalize_text(anchor)
         if not normalized_anchor:
             continue
-        for field, field_text in normalized_field_texts.items():
-            if normalized_anchor not in field_text:
+        for field, field_text in indexed.normalized_fields.items():
+            if not _phrase_matches(normalized_anchor, field_text):
                 continue
             anchor_bonus += ANCHOR_FIELD_BONUS[field]
             if field == "title" and normalized_anchor == field_text:
@@ -306,19 +343,20 @@ def _field_text(document: IndexableRecipeDocument, field: str) -> str:
     return ""
 
 
-def _tokenize(value: str) -> list[str]:
-    return TOKEN_PATTERN.findall(value.lower())
+def _phrase_matches(phrase: str, text: str) -> bool:
+    if not phrase or not text:
+        return False
+    normalized_phrase = normalize_text(phrase)
+    normalized_text = normalize_text(text)
+    return f" {normalized_phrase} " in f" {normalized_text} "
 
 
-def _normalize_text(value: str) -> str:
-    return " ".join(value.lower().split())
-
-
-def _infer_dish_anchors(tokens: list[str]) -> list[str]:
+def _infer_dish_anchors(tokens: list[str], phrases: list[str]) -> list[str]:
     token_set = set(tokens)
+    phrase_set = set(phrases)
     anchors: list[str] = []
 
-    if "cheesecake" in token_set or ({"cream", "cheese", "graham"} <= token_set):
+    if "cheesecake" in token_set or "baked cheesecake" in phrase_set or ({"cream", "cheese", "graham"} <= token_set):
         anchors.extend(
             [
                 "cheesecake",
@@ -345,7 +383,7 @@ def _infer_dish_anchors(tokens: list[str]) -> list[str]:
             ]
         )
 
-    if "omelet" in token_set or "omelette" in token_set or ({"eggs", "butter", "fold"} <= token_set):
+    if "omelet" in token_set or "omelette" in token_set or {"eggs", "butter", "fold"} <= token_set or "omelet" in phrase_set:
         anchors.extend(
             [
                 "omelet",
@@ -359,7 +397,7 @@ def _infer_dish_anchors(tokens: list[str]) -> list[str]:
             ]
         )
 
-    if "casserole" in token_set or ({"chicken", "rice"} <= token_set):
+    if "casserole" in token_set or "chicken and rice" in phrase_set or ({"chicken", "rice"} <= token_set):
         anchors.extend(
             [
                 "chicken and rice casserole",
@@ -375,20 +413,21 @@ def _infer_dish_anchors(tokens: list[str]) -> list[str]:
     return anchors
 
 
-def _infer_strong_dish_anchors(tokens: list[str]) -> list[str]:
+def _infer_strong_dish_anchors(tokens: list[str], phrases: list[str]) -> list[str]:
     token_set = set(tokens)
+    phrase_set = set(phrases)
     anchors: list[str] = []
 
-    if "cheesecake" in token_set:
+    if "cheesecake" in token_set or "baked cheesecake" in phrase_set:
         anchors.extend(["cheesecake", "cream cheese", "graham cracker crust", "graham cracker"])
 
     if "carbonara" in token_set or {"spaghetti", "pancetta"} <= token_set:
         anchors.extend(["carbonara", "spaghetti", "parmesan", "pancetta", "black pepper", "pasta water", "eggs"])
 
-    if "omelet" in token_set or "omelette" in token_set:
+    if "omelet" in token_set or "omelette" in token_set or "omelet" in phrase_set:
         anchors.extend(["omelet", "omelette", "scramble", "fold"])
 
-    if "casserole" in token_set:
+    if "casserole" in token_set or "chicken and rice" in phrase_set:
         anchors.extend(["chicken and rice casserole", "casserole", "cream soup"])
 
     if {"chicken", "rice"} <= token_set:

@@ -205,5 +205,247 @@
     "min_relevant_in_top_k": 2,
     "top_k": 3,
     "notes": "Chicken and rice casserole should outrank chicken-only and rice-only records."
+  },
+  {
+    "id": "omelette_alias",
+    "name": "omelette_alias",
+    "query": "omelette for 4 with eggs cheddar onions butter folded in a skillet",
+    "required_anchors": [
+      "omelet",
+      "eggs",
+      "cheese",
+      "butter",
+      "fold"
+    ],
+    "preferred_title_terms": [
+      "omelet",
+      "omelette"
+    ],
+    "preferred_ingredient_terms": [
+      "eggs",
+      "cheese",
+      "butter",
+      "onion"
+    ],
+    "preferred_instruction_terms": [
+      "beat",
+      "cook",
+      "fold"
+    ],
+    "negative_title_terms": [
+      "sandwich",
+      "toast",
+      "skillet pie"
+    ],
+    "negative_generic_terms": [
+      "breakfast",
+      "egg",
+      "cheese"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Omelette should normalize to omelet and outrank breakfast sandwich or pie distractors."
+  },
+  {
+    "id": "no_bake_cheesecake_space",
+    "name": "no_bake_cheesecake_space",
+    "query": "no bake cheesecake for 4 with cream cheese vanilla sugar graham cracker crust chill until firm",
+    "required_anchors": [
+      "no bake",
+      "cheesecake",
+      "cream cheese",
+      "graham cracker crust",
+      "chill"
+    ],
+    "preferred_title_terms": [
+      "cheesecake",
+      "no-bake"
+    ],
+    "preferred_ingredient_terms": [
+      "cream cheese",
+      "graham cracker",
+      "vanilla"
+    ],
+    "preferred_instruction_terms": [
+      "press",
+      "mix",
+      "chill",
+      "slice"
+    ],
+    "negative_title_terms": [
+      "crumble",
+      "pear"
+    ],
+    "negative_generic_terms": [
+      "dessert",
+      "cream",
+      "sugar",
+      "bake"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Space-separated no bake text should normalize to the same cheesecake match as hyphenated form."
+  },
+  {
+    "id": "no_bake_cheesecake_hyphen",
+    "name": "no_bake_cheesecake_hyphen",
+    "query": "no-bake cheesecake for 4 with cream cheese vanilla sugar graham cracker crust chill until firm",
+    "required_anchors": [
+      "no bake",
+      "cheesecake",
+      "cream cheese",
+      "graham cracker crust",
+      "chill"
+    ],
+    "preferred_title_terms": [
+      "cheesecake",
+      "no-bake"
+    ],
+    "preferred_ingredient_terms": [
+      "cream cheese",
+      "graham cracker",
+      "vanilla"
+    ],
+    "preferred_instruction_terms": [
+      "press",
+      "mix",
+      "chill",
+      "slice"
+    ],
+    "negative_title_terms": [
+      "crumble",
+      "pear"
+    ],
+    "negative_generic_terms": [
+      "dessert",
+      "cream",
+      "sugar",
+      "bake"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Hyphenated no-bake text should normalize to the same cheesecake match as space-separated form."
+  },
+  {
+    "id": "graham_crackers_cheesecake",
+    "name": "graham_crackers_cheesecake",
+    "query": "graham crackers no bake cheesecake crust cream cheese vanilla chill",
+    "required_anchors": [
+      "no bake",
+      "graham cracker",
+      "graham cracker crust",
+      "cheesecake",
+      "cream cheese"
+    ],
+    "preferred_title_terms": [
+      "cheesecake",
+      "no-bake"
+    ],
+    "preferred_ingredient_terms": [
+      "graham cracker",
+      "cream cheese",
+      "vanilla"
+    ],
+    "preferred_instruction_terms": [
+      "press",
+      "crust",
+      "chill"
+    ],
+    "negative_title_terms": [
+      "toast",
+      "crumble"
+    ],
+    "negative_generic_terms": [
+      "graham",
+      "crackers",
+      "dessert"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Plural graham crackers should still match the graham cracker crust cheesecake family."
+  },
+  {
+    "id": "parmigiano_reggiano_carbonara",
+    "name": "parmigiano_reggiano_carbonara",
+    "query": "carbonara for 4 with spaghetti parmigiano-reggiano eggs pancetta black pepper pasta water off heat",
+    "required_anchors": [
+      "carbonara",
+      "spaghetti",
+      "parmesan",
+      "pancetta",
+      "black pepper"
+    ],
+    "preferred_title_terms": [
+      "carbonara"
+    ],
+    "preferred_ingredient_terms": [
+      "spaghetti",
+      "eggs",
+      "parmesan",
+      "pancetta"
+    ],
+    "preferred_instruction_terms": [
+      "whisk",
+      "off heat",
+      "pasta water",
+      "toss"
+    ],
+    "negative_title_terms": [
+      "creamy",
+      "aglio"
+    ],
+    "negative_generic_terms": [
+      "pasta",
+      "cream",
+      "garlic"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 1,
+    "top_k": 3,
+    "notes": "Parmigiano-reggiano should normalize to parmesan for carbonara matching."
+  },
+  {
+    "id": "cream_of_chicken_soup_casserole",
+    "name": "cream_of_chicken_soup_casserole",
+    "query": "chicken and rice casserole for 4 with cooked chicken rice cream of chicken soup cheddar bake until bubbly",
+    "required_anchors": [
+      "chicken and rice",
+      "cream of chicken soup",
+      "casserole",
+      "bake"
+    ],
+    "preferred_title_terms": [
+      "casserole",
+      "chicken and rice casserole"
+    ],
+    "preferred_ingredient_terms": [
+      "chicken",
+      "rice",
+      "cream of chicken soup",
+      "cheese"
+    ],
+    "preferred_instruction_terms": [
+      "preheat",
+      "combine",
+      "bake",
+      "hot"
+    ],
+    "negative_title_terms": [
+      "skillet",
+      "pilaf"
+    ],
+    "negative_generic_terms": [
+      "chicken",
+      "rice",
+      "dinner"
+    ],
+    "expected_relevance_min": "strong",
+    "min_relevant_in_top_k": 2,
+    "top_k": 3,
+    "notes": "Cream of chicken soup should normalize into the casserole family."
   }
 ]
