@@ -141,6 +141,7 @@ async function runDatasetSearch() {
       indexed: data.index?.document_count ?? 0,
       retrieved: data.count,
       warnings: (data.warnings || []).length,
+      ...cacheMetadata(data.cache),
     }),
     citations: (data) => (data.results || []).map((result) => ({
       title: result.title,
@@ -160,7 +161,7 @@ async function runDatasetRag() {
   await runWorkflow(workflow, requestJson("/dataset/ask", postOptions(payload), "dataset-rag"), {
     title: () => "Dataset-grounded answer",
     answer: (data) => data.answer,
-    meta: (data) => ({...providerMetadata(data), retrieved: data.retrieval?.retrieved_count ?? 0}),
+    meta: (data) => ({...providerMetadata(data), retrieved: data.retrieval?.retrieved_count ?? 0, ...cacheMetadata(data.retrieval?.index?.cache)}),
     citations: (data) => (data.citations || []).map((citation) => ({
       title: citation.title,
       detail: `Source ${citation.source_id}; ${citation.provenance?.license || "license unavailable"}`,
@@ -331,6 +332,7 @@ function importerEvidenceSection(data) {
   const retrieval = data?.retrieval || {};
   const supportLevel = retrieval.support_level || "none";
   const supportMessage = retrieval.support_message || supportMessageForLevel(supportLevel);
+  const cache = retrieval.cache || retrieval.index?.cache || {};
   const summary = document.createElement("p");
   summary.className = "hint";
   summary.textContent = `${citations.length} citation(s) returned${retrieval.retrieved_count !== undefined ? ` from ${retrieval.retrieved_count} retrieved example(s)` : ""}${retrieval.packed_count !== undefined ? `; ${retrieval.packed_count} packed for prompt context` : ""}.`;
@@ -396,6 +398,7 @@ function importerEvidenceSection(data) {
       support_message: retrieval.support_message || "none",
       should_claim_rag_grounded: retrieval.should_claim_rag_grounded ? "yes" : "no",
       should_show_weak_support_warning: retrieval.should_show_weak_support_warning ? "yes" : "no",
+      cache: cacheSummary(cache),
       warning: retrieval.warning || "none",
       documents: retrieval.index?.document_count ?? "none",
     }));
@@ -479,6 +482,36 @@ function supportMessageForLevel(level) {
     return "Examples were broad matches, so the draft relies mainly on your notes and disclosed estimates.";
   }
   return "No useful dataset examples were available; the draft was generated from your notes and defaults.";
+}
+
+function cacheMetadata(cache) {
+  if (!cache) {
+    return {};
+  }
+  return {
+    cache: cacheSummary(cache),
+  };
+}
+
+function cacheSummary(cache) {
+  if (!cache) {
+    return "none";
+  }
+  const parts = [];
+  if (cache.index_cache_hit !== undefined && cache.index_cache_hit !== null) {
+    parts.push(`index ${cache.index_cache_hit ? "hit" : "miss"}`);
+  }
+  if (cache.retrieval_cache_hit !== undefined && cache.retrieval_cache_hit !== null) {
+    parts.push(`retrieval ${cache.retrieval_cache_hit ? "hit" : "miss"}`);
+  }
+  if (cache.cache_entry_count !== undefined) {
+    const maxEntries = cache.cache_max_entries !== undefined && cache.cache_max_entries !== null ? cache.cache_max_entries : "none";
+    parts.push(`entries ${cache.cache_entry_count}/${maxEntries}`);
+  }
+  if (cache.cache_ttl_seconds !== undefined && cache.cache_ttl_seconds !== null) {
+    parts.push(`ttl ${cache.cache_ttl_seconds}s`);
+  }
+  return parts.length ? parts.join("; ") : "none";
 }
 
 function capitalize(value) {

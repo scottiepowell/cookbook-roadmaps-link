@@ -5,6 +5,7 @@ import json
 import os
 import sqlite3
 import sys
+import time
 import uuid
 from pathlib import Path
 from typing import Any
@@ -43,6 +44,7 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     sys.path.insert(0, str(repo_root))
     sys.path.insert(0, str(repo_root / "ai-api"))
+    debug_log = _init_debug_log(repo_root)
 
     evals: list[tuple[str, dict[str, Any]]] = []
     for case in _load_retrieval_relevance_cases():
@@ -57,15 +59,22 @@ def main() -> int:
 
     failures: list[str] = []
     for case_type, case in evals:
+        case_name = str(case.get("name") or case.get("id") or case_type)
+        started = time.monotonic()
+        _log_progress(debug_log, f"starting {case_type}: {case_name}")
         try:
             summary = _run_case(case_type, case)
+            elapsed = time.monotonic() - started
+            _log_progress(debug_log, f"finished {case_type}: {case_name} elapsed={elapsed:.2f}s")
             if summary:
                 print(f"PASS: {summary}")
             else:
-                print(f"PASS: {case['name']}")
+                print(f"PASS: {case_name}")
         except AssertionError as exc:
-            failures.append(f"{case['name']}: {exc}")
-            print(f"FAIL: {case['name']}: {exc}", file=sys.stderr)
+            elapsed = time.monotonic() - started
+            _log_progress(debug_log, f"failed {case_type}: {case_name} elapsed={elapsed:.2f}s error={exc}")
+            failures.append(f"{case_name}: {exc}")
+            print(f"FAIL: {case_name}: {exc}", file=sys.stderr)
 
     if failures:
         print("Offline evals failed:", file=sys.stderr)
@@ -73,8 +82,23 @@ def main() -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
 
+    _log_progress(debug_log, f"summary passed={len(evals)} failed=0")
     print(f"Offline evals passed: {len(evals)} cases.")
     return 0
+
+
+def _init_debug_log(repo_root: Path) -> Path:
+    path = repo_root / ".tmp-ai-demo" / "eval-debug" / "run-evals-debug.log"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("run_evals debug log\n", encoding="utf-8")
+    return path
+
+
+def _log_progress(path: Path, message: str) -> None:
+    line = f"{time.strftime('%Y-%m-%dT%H:%M:%S')} {message}"
+    print(f"EVAL: {message}", flush=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(line + "\n")
 
 
 def _load_json(name: str) -> list[dict[str, Any]]:

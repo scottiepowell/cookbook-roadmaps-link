@@ -72,6 +72,8 @@ Ranking is field weighted:
 
 Search results include recipe ID, source ID, title, score, matched fields, snippets, and source file/table metadata.
 
+The dataset index and retrieval path also use a small process-local in-memory cache so repeated requests with the same dataset limit, source file metadata, normalization version, and query can reuse the same work without writing any generated index to disk. Safe metadata reports only short fingerprints, hit/miss state, and bounded entry counts.
+
 The optional local helper script prints a compact summary only:
 
 ```powershell

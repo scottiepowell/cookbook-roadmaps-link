@@ -71,6 +71,7 @@ status=passed
 | Dataset normalization | Pass | deterministic helper tests plus normalization-sensitive retrieval cases |
 | Retrieval context packing | Pass | bounded prompt packer tests plus importer metadata/UI checks |
 | RAG support honesty policy | Pass | deterministic support classification tests plus importer metadata/UI checks |
+| Local retrieval cache | Pass | deterministic cache hit/miss tests plus safe fingerprint metadata |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 

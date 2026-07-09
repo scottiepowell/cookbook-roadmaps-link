@@ -43,6 +43,9 @@ def test_demo_static_assets_load():
     assert "RAG support:" in js_response.text
     assert "support_level" in js_response.text
     assert "support_message" in js_response.text
+    assert "cache" in js_response.text
+    assert "index_cache_hit" in js_response.text
+    assert "entries" in js_response.text
     assert "Partial example" in js_response.text
     assert "Broad example" in js_response.text
     assert "Citation(s) returned" not in js_response.text

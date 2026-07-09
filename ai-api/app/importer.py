@@ -191,6 +191,7 @@ def _retrieve_importer_examples(
         support_message=support.support_message,
         should_claim_rag_grounded=support.should_claim_rag_grounded,
         should_show_weak_support_warning=support.should_show_weak_support_warning,
+        cache=retrieval_response.cache,
         index=retrieval_response.index,
     )
     warnings = list(retrieval_response.warnings)

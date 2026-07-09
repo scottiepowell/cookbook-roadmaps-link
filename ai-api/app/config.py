@@ -19,6 +19,13 @@ class AISettings:
     openai_live_tests_enabled: bool
 
 
+@dataclass(frozen=True)
+class RetrievalCacheSettings:
+    enabled: bool
+    max_entries: int
+    ttl_seconds: int
+
+
 DEFAULT_AI_PROVIDER = "mock"
 DEFAULT_AI_MODEL = "mock-basic"
 DEFAULT_AI_MAX_OUTPUT_TOKENS = 700
@@ -27,6 +34,9 @@ DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
 DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-5.4-mini"
 DEFAULT_RECIPE_DATASET_DIR = "recipe-dataset"
 DEFAULT_RECIPE_DATASET_INDEX_LIMIT = 100
+DEFAULT_AI_RETRIEVAL_CACHE_ENABLED = True
+DEFAULT_AI_RETRIEVAL_CACHE_MAX_ENTRIES = 128
+DEFAULT_AI_RETRIEVAL_CACHE_TTL_SECONDS = 900
 
 PROVIDER_ENV_VARS = {
     "mock": None,
@@ -82,6 +92,14 @@ def get_ai_settings() -> AISettings:
             or DEFAULT_OPENAI_FALLBACK_MODEL
         ),
         openai_live_tests_enabled=_bool_env("OPENAI_ENABLE_LIVE_TESTS", default=False),
+    )
+
+
+def get_retrieval_cache_settings() -> RetrievalCacheSettings:
+    return RetrievalCacheSettings(
+        enabled=_bool_env("AI_RETRIEVAL_CACHE_ENABLED", default=DEFAULT_AI_RETRIEVAL_CACHE_ENABLED),
+        max_entries=max(1, _int_env("AI_RETRIEVAL_CACHE_MAX_ENTRIES", DEFAULT_AI_RETRIEVAL_CACHE_MAX_ENTRIES)),
+        ttl_seconds=max(0, _int_env("AI_RETRIEVAL_CACHE_TTL_SECONDS", DEFAULT_AI_RETRIEVAL_CACHE_TTL_SECONDS)),
     )
 
 

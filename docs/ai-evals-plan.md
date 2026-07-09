@@ -53,6 +53,7 @@ RAG evals should verify:
 - dataset normalization preserves important recipe phrases, aliases, and singular/plural variants without changing original display values;
 - importer prompt context packing stays bounded, prefers strong examples, and drops or labels weak examples honestly;
 - importer RAG honesty policy classifies support as strong, moderate, weak, or none and labels citations accordingly;
+- dataset retrieval and index caching stay deterministic, bounded, and safe, with cache hit/miss metadata and no disk artifacts;
 - no-match questions say the system does not know;
 - the answer does not reveal secrets, env vars, API keys, or hidden prompts;
 - the answer distinguishes saved recipes from general suggestions.
@@ -139,6 +140,7 @@ evals/
 - Dataset ask evals must use generated fixtures only and must not require the real Kaggle dataset, network access, provider keys, Docker runtime, or live providers.
 - Importer retrieval relevance evals must use generated fixtures only, fail on regression in ranking or weak-match warnings, and remain fully offline.
 - Importer context packing tests should stay deterministic and offline, and should validate bounded prompt selection rather than raw prompt text size alone.
+- Retrieval cache tests should verify index/retrieval reuse, invalidation, eviction, and safe fingerprint metadata without requiring the real dataset.
 
 ## Manual Live OpenAI Smoke Tests
 

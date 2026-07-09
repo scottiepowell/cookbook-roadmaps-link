@@ -353,3 +353,76 @@ class MealPlanResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
     input_quality: InputQualityResponse | None = None
+
+
+class DatasetCacheMetadata(BaseModel):
+    cache_enabled: bool = True
+    index_cache_hit: bool | None = None
+    retrieval_cache_hit: bool | None = None
+    index_cache_key: str | None = None
+    retrieval_cache_key: str | None = None
+    cache_entry_count: int = 0
+    cache_max_entries: int = 0
+    cache_ttl_seconds: int | None = None
+    cache_invalidated_reason: str | None = None
+
+
+class DatasetIndexSummaryResponse(BaseModel):
+    document_count: int
+    source_counts: dict[str, int] = Field(default_factory=dict)
+    fields_indexed: list[str] = Field(default_factory=list)
+    token_count: int
+    build_metadata: dict[str, str | int] = Field(default_factory=dict)
+    warnings: list[str] = Field(default_factory=list)
+    cache: DatasetCacheMetadata = Field(default_factory=DatasetCacheMetadata)
+
+
+class DatasetSearchResponse(BaseModel):
+    query: str
+    count: int
+    results: list[DatasetSearchResult] = Field(default_factory=list)
+    index: DatasetIndexSummaryResponse
+    warnings: list[str] = Field(default_factory=list)
+    input_quality: InputQualityResponse | None = None
+    cache: DatasetCacheMetadata = Field(default_factory=DatasetCacheMetadata)
+
+
+class RecipeImportRetrievalMetadata(BaseModel):
+    query: str
+    retrieved_count: int
+    limit: int
+    dataset_limit: int
+    matched_result_ids: list[str] = Field(default_factory=list)
+    anchors_used: list[str] = Field(default_factory=list)
+    matched_result_scores: list[int] = Field(default_factory=list)
+    relevance_category: str | None = None
+    warning: str | None = None
+    packed_count: int = 0
+    packed_ids: list[str] = Field(default_factory=list)
+    dropped_ids: list[str] = Field(default_factory=list)
+    max_examples: int = 0
+    max_context_chars: int = 0
+    packed_context_chars: int = 0
+    weak_examples_included: bool = False
+    context_budget_warning: str | None = None
+    support_level: str | None = None
+    support_reason: str | None = None
+    citation_support_count: int = 0
+    weak_citation_count: int = 0
+    strong_citation_count: int = 0
+    support_message: str | None = None
+    should_claim_rag_grounded: bool = False
+    should_show_weak_support_warning: bool = False
+    cache: DatasetCacheMetadata = Field(default_factory=DatasetCacheMetadata)
+    index: DatasetIndexSummaryResponse | None = None
+
+
+class RecipeImportResponse(BaseModel):
+    draft: RecipeImportDraft | None = None
+    provider: str
+    model: str
+    retrieval: RecipeImportRetrievalMetadata | None = None
+    citations: list[RecipeImportCitation] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    usage: dict[str, int] | None = None
+    input_quality: InputQualityResponse | None = None

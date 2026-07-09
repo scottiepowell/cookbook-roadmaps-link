@@ -215,6 +215,8 @@ The provider prompt uses a deterministic context pack with small character budge
 
 The importer UI also shows a `RAG support` label and short message. Strong support means the retrieved examples closely matched the dish intent. Moderate support means the examples were related but partial. Weak support means the examples were broad and should be treated as structure-only. No-support means the draft came from notes, defaults, and disclosed assumptions.
 
+The demo UI also shows cache status for dataset search and importer retrieval. A cache hit means the current process reused an existing in-memory index or retrieval result; the metadata only exposes short fingerprints and bounded entry counts.
+
 The dataset index now normalizes conservative aliases and phrase variants such as `omelette` -> `omelet`, `parmigiano-reggiano` -> `parmesan`, `no-bake` -> `no bake`, and `graham crackers` -> `graham cracker` while preserving the original recipe values for citations and display.
 
 The live importer `503` issue observed during manual recipe-entry testing was caused by strict structured-output schema metadata that OpenAI rejected. `ai-api/app/providers/openai_schema.py` now strips unsupported metadata such as `default`, `examples`, `title`, and `description` recursively before the request is sent, while application-side importer behavior still defaults servings to 4.

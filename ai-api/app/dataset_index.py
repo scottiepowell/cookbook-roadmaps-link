@@ -3,6 +3,10 @@ from dataclasses import dataclass, field
 
 from app.dataset_adapter import ExternalRecipeRecord, iter_recipe_dataset_records
 from app.dataset_normalization import extract_phrases, normalize_index_text, normalize_text, safe_tokenize
+from app.retrieval_cache import get_cached_dataset_index
+
+
+INDEX_SCORING_VERSION = "2026-07-09"
 
 
 FIELD_WEIGHTS = {
@@ -160,7 +164,12 @@ def analyze_recipe_query(query: str) -> RecipeQueryAnalysis:
 
 
 def build_index_from_dataset(dataset_dir: str | None = None, limit: int = 100) -> RecipeDatasetIndex:
-    return build_recipe_index(iter_recipe_dataset_records(dataset_dir=dataset_dir, limit=limit))
+    index, _, _ = get_cached_dataset_index(
+        dataset_dir=dataset_dir,
+        record_limit=limit,
+        build_fn=lambda: build_recipe_index(iter_recipe_dataset_records(dataset_dir=dataset_dir, limit=limit)),
+    )
+    return index
 
 
 def build_recipe_index(records: list[ExternalRecipeRecord]) -> RecipeDatasetIndex:

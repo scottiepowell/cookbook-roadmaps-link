@@ -32,6 +32,7 @@ class DatasetFileStatus:
     present: bool
     readable: bool
     size_bytes: int | None = None
+    modified_ns: int | None = None
     warning: str | None = None
 
 
@@ -179,7 +180,7 @@ def _file_status(root: Path, name: str) -> DatasetFileStatus:
             warning=f"{name} is not a regular file.",
         )
     try:
-        size = path.stat().st_size
+        stat = path.stat()
         with path.open("rb"):
             pass
     except OSError as exc:
@@ -190,7 +191,14 @@ def _file_status(root: Path, name: str) -> DatasetFileStatus:
             readable=False,
             warning=f"{name} is not readable: {exc}",
         )
-    return DatasetFileStatus(name=name, path=str(path), present=True, readable=True, size_bytes=size)
+    return DatasetFileStatus(
+        name=name,
+        path=str(path),
+        present=True,
+        readable=True,
+        size_bytes=stat.st_size,
+        modified_ns=stat.st_mtime_ns,
+    )
 
 
 def _status_for(files: list[DatasetFileStatus], name: str) -> DatasetFileStatus | None:

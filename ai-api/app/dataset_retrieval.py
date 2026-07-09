@@ -1,10 +1,17 @@
 from pathlib import Path
 
-from app.config import get_recipe_dataset_dir, get_recipe_dataset_index_limit
+from app.config import get_recipe_dataset_dir, get_recipe_dataset_index_limit, get_retrieval_cache_settings
 from app.dataset_adapter import inspect_recipe_dataset, iter_recipe_dataset_records
 from app.dataset_index import build_recipe_index, search_recipe_index
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_dataset_search_input
+from app.retrieval_cache import (
+    cache_metadata_for_index,
+    get_cached_dataset_index,
+    get_cached_retrieval_results,
+    merge_cache_metadata,
+)
 from app.schemas import (
+    DatasetCacheMetadata,
     DatasetIndexSummaryResponse,
     DatasetSearchProvenance,
     DatasetSearchResponse,
@@ -23,6 +30,7 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
             index=empty_dataset_index_summary(dataset_limit or get_recipe_dataset_index_limit(), input_quality.warnings),
             warnings=input_quality.warnings,
             input_quality=input_quality.to_dict(),
+            cache=empty_dataset_cache(),
         )
 
     dataset_dir = Path(get_recipe_dataset_dir())
@@ -38,16 +46,20 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
             token_count=0,
             build_metadata={"mode": "in_memory", "input_records": 0, "dataset_dir": "configured", "record_limit": record_limit},
             warnings=warnings,
+            cache=empty_dataset_cache(),
         )
-        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=warnings, input_quality=input_quality.to_dict())
+        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=warnings, input_quality=input_quality.to_dict(), cache=empty_dataset_cache())
 
     inspection = inspect_recipe_dataset(dataset_dir)
     warnings.extend(inspection.warnings)
     if _is_generated_demo_dataset(dataset_dir):
         warnings = _filter_generated_demo_warnings(warnings)
 
-    records = iter_recipe_dataset_records(dataset_dir, limit=record_limit)
-    index = build_recipe_index(records)
+    index, index_cache, index_cache_key = get_cached_dataset_index(
+        dataset_dir=dataset_dir,
+        record_limit=record_limit,
+        build_fn=lambda: build_recipe_index(iter_recipe_dataset_records(dataset_dir, limit=record_limit)),
+    )
     summary_warnings = [*warnings, *index.summary.warnings]
     index_summary = DatasetIndexSummaryResponse(
         document_count=index.summary.document_count,
@@ -60,11 +72,18 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
             "record_limit": record_limit,
         },
         warnings=summary_warnings,
+        cache=cache_metadata_for_index(index_cache),
     )
 
     if not query.strip():
-        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=summary_warnings, input_quality=input_quality.to_dict())
+        return DatasetSearchResponse(query=query, count=0, results=[], index=index_summary, warnings=summary_warnings, input_quality=input_quality.to_dict(), cache=index_cache)
 
+    cached_results, retrieval_cache, _retrieval_cache_key = get_cached_retrieval_results(
+        index_cache_key=index_cache_key,
+        query=query,
+        limit=limit,
+        build_fn=lambda: search_recipe_index(index, query=query, limit=limit),
+    )
     results = [
         DatasetSearchResult(
             id=result.id,
@@ -81,7 +100,7 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
                 source_id=result.source_id,
             ),
         )
-        for result in search_recipe_index(index, query=query, limit=limit)
+        for result in cached_results
     ]
 
     return DatasetSearchResponse(
@@ -91,6 +110,7 @@ def search_dataset_recipes(query: str, limit: int = 10, dataset_limit: int | Non
         index=index_summary,
         warnings=summary_warnings,
         input_quality=input_quality.to_dict(),
+        cache=merge_cache_metadata(index_cache, retrieval_cache),
     )
 
 
@@ -102,6 +122,16 @@ def empty_dataset_index_summary(record_limit: int, warnings: list[str] | None = 
         token_count=0,
         build_metadata={"mode": "input_quality", "input_records": 0, "dataset_dir": "not_inspected", "record_limit": record_limit},
         warnings=warnings or [],
+        cache=empty_dataset_cache(),
+    )
+
+
+def empty_dataset_cache() -> DatasetCacheMetadata:
+    settings = get_retrieval_cache_settings()
+    return DatasetCacheMetadata(
+        cache_enabled=settings.enabled,
+        cache_max_entries=settings.max_entries,
+        cache_ttl_seconds=settings.ttl_seconds,
     )
 
 

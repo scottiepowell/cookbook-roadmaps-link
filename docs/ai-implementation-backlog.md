@@ -1385,6 +1385,41 @@ Done criteria:
 - normal validation remains offline and mock-only;
 - no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
 
+## 0029B-10: Local In-Memory Retrieval Cache
+
+Status: planned.
+
+Goal: Add a process-local in-memory cache for deterministic dataset indexing and retrieval so repeated importer and dataset search calls can reuse work without writing generated indexes to disk.
+
+Files likely touched:
+
+- `ai-api/app/retrieval_cache.py`
+- `ai-api/app/config.py`
+- `ai-api/app/dataset_index.py`
+- `ai-api/app/dataset_retrieval.py`
+- `ai-api/app/schemas.py`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/test_retrieval_cache.py`
+- `ai-api/tests/test_demo_ui.py`
+- `ai-api/tests/test_importer.py`
+- `docs/local-recipe-dataset-adapter.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-evals-plan.md`
+- `docs/ai-feature-status.md`
+- `README.md`
+- `.env.example`
+- `outbox/0029B-10-local-in-memory-retrieval-cache-results.md`
+
+Done criteria:
+
+- repeated identical dataset/index requests reuse a bounded in-memory cache;
+- repeated identical retrieval calls can reuse cached results;
+- cache keys invalidate on dataset source metadata, record limits, normalization version, or query changes;
+- metadata exposes only safe short fingerprints, hit/miss state, and bounded counts;
+- no disk cache, generated index artifact, Redis, SQLite, or production persistent memory is introduced;
+- normal validation remains offline and mock-only;
+- no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

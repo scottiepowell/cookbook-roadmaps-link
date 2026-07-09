@@ -17,6 +17,8 @@ QUOTE_TRANSLATION = str.maketrans(
     }
 )
 
+NORMALIZATION_VERSION = "2026-07-09"
+
 IMPORTANT_PHRASES = (
     "graham cracker crust",
     "cream of chicken",

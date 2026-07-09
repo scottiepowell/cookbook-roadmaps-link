@@ -71,7 +71,7 @@ def ask_dataset_recipes(
                 limit=request.limit,
                 dataset_limit=dataset_limit,
                 matched_result_ids=[],
-                index=empty_dataset_index_summary(dataset_limit, input_quality.warnings),
+                index=empty_dataset_index_summary(dataset_limit, input_quality.warnings).model_dump(exclude={"cache"}),
             ),
             warnings=input_quality.warnings,
             usage=None,
@@ -94,7 +94,7 @@ def ask_dataset_recipes(
         limit=request.limit,
         dataset_limit=dataset_limit,
         matched_result_ids=[citation.id for citation in citations],
-        index=retrieval_response.index,
+        index=retrieval_response.index.model_dump(exclude={"cache"}),
     )
 
     if not citations:
