@@ -40,6 +40,8 @@ def test_demo_static_assets_load():
     assert "data.citations" in js_response.text
     assert "No importer citations were returned" in js_response.text
     assert "Retrieval metadata" in js_response.text
+    assert "anchors:" in js_response.text
+    assert "relevance:" in js_response.text
 
 
 def test_demo_readiness_endpoint_returns_safe_status():

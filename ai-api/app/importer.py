@@ -3,6 +3,7 @@ import re
 from pydantic import ValidationError
 
 from app.config import get_ai_settings
+from app.dataset_index import WEAK_MATCH_SCORE_THRESHOLD, analyze_recipe_query
 from app.dataset_retrieval import search_dataset_recipes
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_recipe_import_input
 from app.providers import LLMProvider, StructuredLLMRequest, get_provider
@@ -66,7 +67,7 @@ def import_recipe_text(
     try:
         provider_response = active_provider.generate_structured(
             StructuredLLMRequest(
-                prompt=_build_prompt(request, citations),
+                prompt=_build_prompt(request, citations, retrieval.warning if retrieval else None),
                 system=IMPORTER_SYSTEM_PROMPT,
                 schema_name="RecipeImportDraft",
                 schema=schema,
@@ -105,6 +106,7 @@ def _get_configured_provider() -> LLMProvider:
 
 
 def _retrieve_importer_examples(text: str) -> tuple[RecipeImportRetrievalMetadata | None, list[RecipeImportCitation], list[str]]:
+    analysis = analyze_recipe_query(text)
     retrieval_response = search_dataset_recipes(text, limit=IMPORTER_RAG_LIMIT)
     citations = [
         RecipeImportCitation(
@@ -118,23 +120,38 @@ def _retrieve_importer_examples(text: str) -> tuple[RecipeImportRetrievalMetadat
         for result in retrieval_response.results[:IMPORTER_RAG_LIMIT]
     ]
     dataset_limit = int(retrieval_response.index.build_metadata.get("record_limit", 0) or 0)
+    scores = [result.score for result in retrieval_response.results[:IMPORTER_RAG_LIMIT]]
+    relevance_category, warning = _importer_relevance_category(citations, scores, analysis)
     retrieval = RecipeImportRetrievalMetadata(
         query=text.strip(),
         retrieved_count=len(citations),
         limit=IMPORTER_RAG_LIMIT,
         dataset_limit=dataset_limit,
         matched_result_ids=[citation.id for citation in citations],
+        anchors_used=analysis.anchors,
+        matched_result_scores=scores,
+        relevance_category=relevance_category,
+        warning=warning,
         index=retrieval_response.index,
     )
     warnings = list(retrieval_response.warnings)
-    if not citations:
-        warnings.append("Importer dataset RAG examples were unavailable; created the draft from user notes only.")
+    if warning:
+        warnings.append(warning)
     return retrieval, citations, warnings
 
 
-def _build_prompt(request: RecipeImportRequest, citations: list[RecipeImportCitation] | None = None) -> str:
+def _build_prompt(
+    request: RecipeImportRequest,
+    citations: list[RecipeImportCitation] | None = None,
+    retrieval_warning: str | None = None,
+) -> str:
     source_line = f"Source: {request.source.strip()}\n" if request.source and request.source.strip() else ""
     example_context = _format_retrieved_examples(citations or [])
+    retrieval_note = (
+        "\nRetrieval note: Retrieved examples were weak matches; rely primarily on the user's notes and general recipe structure.\n"
+        if retrieval_warning
+        else ""
+    )
     return (
         f"{source_line}Recipe text:\n{request.text.strip()}\n\n"
         "Creation requirements:\n"
@@ -143,12 +160,14 @@ def _build_prompt(request: RecipeImportRequest, citations: list[RecipeImportCita
         "- Estimate missing quantities for the serving size and disclose this in notes.\n"
         "- Preserve user-provided core ingredients and dish intent.\n"
         "- Do not copy retrieved examples verbatim; use them only for structure, proportions, and step completeness.\n"
+        "- If retrieved examples are weak matches, rely primarily on the user's notes and general recipe structure.\n"
         "- Avoid unrelated major ingredients.\n"
         "- Prefer 4 to 8 action-oriented steps for multi-step dishes.\n"
         "- Omelet: beat/scramble eggs before cooking and folding.\n"
         "- Carbonara: avoid heavy cream unless supplied by the user.\n"
         "- Cheesecake: include crust, filling, bake, cool, and chill style steps.\n"
         "- Chicken casserole: include preheat, combine, bake, and doneness or safe chicken guidance.\n"
+        f"{retrieval_note}"
         f"{example_context}"
     )
 
@@ -169,6 +188,39 @@ def _format_retrieved_examples(citations: list[RecipeImportCitation]) -> str:
             )
         )
     return "\n\n" + "\n\n".join(blocks) + "\n"
+
+
+def _importer_relevance_category(
+    citations: list[RecipeImportCitation],
+    scores: list[int],
+    analysis,
+) -> tuple[str, str | None]:
+    if not citations:
+        return "unavailable", "Importer dataset RAG examples were unavailable; created the draft from user notes only."
+
+    strongest_score = scores[0] if scores else 0
+    high_value_anchors = analysis.strong_anchors or analysis.anchors[:4]
+    strong_anchor_match = any(
+        _citation_contains_anchor(citation, anchor)
+        for citation in citations
+        for anchor in high_value_anchors
+    )
+
+    if strong_anchor_match and strongest_score >= WEAK_MATCH_SCORE_THRESHOLD:
+        return "strong", None
+    if strongest_score >= WEAK_MATCH_SCORE_THRESHOLD * 1.5:
+        return "moderate", None
+    return "weak", "Retrieved examples were weak matches; recipe draft was primarily shaped by user-provided notes and general recipe structure."
+
+
+def _citation_contains_anchor(citation: RecipeImportCitation, anchor: str) -> bool:
+    anchor_text = anchor.lower().strip()
+    if not anchor_text:
+        return False
+    combined = " ".join(
+        value for value in (citation.title, citation.snippet, citation.source_id) if value
+    ).lower()
+    return anchor_text in combined
 
 
 def _improve_draft(draft: RecipeImportDraft, user_text: str) -> RecipeImportDraft:

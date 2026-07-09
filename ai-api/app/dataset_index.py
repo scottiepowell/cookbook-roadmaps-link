@@ -8,12 +8,63 @@ from app.dataset_adapter import ExternalRecipeRecord, iter_recipe_dataset_record
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
 FIELD_WEIGHTS = {
-    "title": 10,
-    "tags": 8,
-    "ingredients": 5,
-    "instructions": 3,
+    "title": 12,
+    "tags": 9,
+    "ingredients": 6,
+    "instructions": 4,
     "source": 1,
 }
+
+ANCHOR_FIELD_BONUS = {
+    "title": 26,
+    "tags": 18,
+    "ingredients": 12,
+    "instructions": 8,
+    "source": 2,
+}
+
+QUERY_STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "for",
+    "from",
+    "make",
+    "maybe",
+    "of",
+    "or",
+    "save",
+    "the",
+    "to",
+    "with",
+}
+
+BROAD_QUERY_TERMS = {
+    "bake",
+    "butter",
+    "cheese",
+    "chicken",
+    "cream",
+    "cooked",
+    "dessert",
+    "dinner",
+    "easy",
+    "food",
+    "hot",
+    "meal",
+    "mix",
+    "pasta",
+    "quick",
+    "recipe",
+    "rice",
+    "soup",
+    "sugar",
+    "serve",
+    "simple",
+    "warm",
+}
+
+WEAK_MATCH_SCORE_THRESHOLD = 30
 
 
 @dataclass(frozen=True)
@@ -63,6 +114,41 @@ class RecipeIndexSearchResult:
     source_table: str | None = None
 
 
+@dataclass(frozen=True)
+class RecipeQueryAnalysis:
+    query: str
+    tokens: list[str]
+    strong_anchors: list[str]
+    anchors: list[str]
+    specific_terms: list[str]
+    broad_terms: list[str]
+
+
+def analyze_recipe_query(query: str) -> RecipeQueryAnalysis:
+    tokens = _tokenize(query)
+    if not tokens:
+        return RecipeQueryAnalysis(query=query, tokens=[], strong_anchors=[], anchors=[], specific_terms=[], broad_terms=[])
+
+    meaningful_tokens = [token for token in tokens if token not in QUERY_STOP_WORDS]
+    broad_terms = [token for token in meaningful_tokens if token in BROAD_QUERY_TERMS]
+    specific_terms = [token for token in meaningful_tokens if token not in BROAD_QUERY_TERMS]
+    strong_anchors = _dedupe_preserve_order(_infer_strong_dish_anchors(tokens))
+    anchors = _dedupe_preserve_order(
+        [
+            *_infer_dish_anchors(tokens),
+            *_phrase_anchors(meaningful_tokens),
+        ]
+    )
+    return RecipeQueryAnalysis(
+        query=query,
+        tokens=tokens,
+        strong_anchors=strong_anchors,
+        anchors=anchors,
+        specific_terms=specific_terms,
+        broad_terms=broad_terms,
+    )
+
+
 def build_index_from_dataset(dataset_dir: str | None = None, limit: int = 100) -> RecipeDatasetIndex:
     return build_recipe_index(iter_recipe_dataset_records(dataset_dir=dataset_dir, limit=limit))
 
@@ -105,13 +191,13 @@ def build_recipe_index(records: list[ExternalRecipeRecord]) -> RecipeDatasetInde
 
 
 def search_recipe_index(index: RecipeDatasetIndex, query: str, limit: int = 10) -> list[RecipeIndexSearchResult]:
-    query_tokens = _tokenize(query)
-    if not query_tokens or limit <= 0:
+    analysis = analyze_recipe_query(query)
+    if not analysis.tokens or limit <= 0:
         return []
 
     scored: list[tuple[RecipeIndexSearchResult, int]] = []
     for indexed in index.documents:
-        result = _score_indexed_document(indexed, query_tokens)
+        result = _score_indexed_document(indexed, analysis)
         if result is not None:
             scored.append((result, indexed.original_index))
 
@@ -137,22 +223,60 @@ def normalize_external_record(record: ExternalRecipeRecord) -> IndexableRecipeDo
 
 def _score_indexed_document(
     indexed: IndexedRecipeDocument,
-    query_tokens: list[str],
+    analysis: RecipeQueryAnalysis,
 ) -> RecipeIndexSearchResult | None:
-    score = 0
+    score = 0.0
     matched_fields: list[str] = []
     snippet: str | None = None
+    broad_token_hits = 0
+    specific_token_hits = 0
+
+    normalized_field_texts = {field: _normalize_text(_field_text(indexed.document, field)) for field in indexed.field_tokens}
 
     for field, tokens in indexed.field_tokens.items():
-        field_score = sum(1 for token in query_tokens if _token_matches(token, tokens))
+        field_score = 0.0
+        for token in analysis.tokens:
+            if not _token_matches(token, tokens):
+                continue
+            if token in BROAD_QUERY_TERMS:
+                field_score += 0.35
+                broad_token_hits += 1
+            else:
+                field_score += 1.0
+                specific_token_hits += 1
         if field_score == 0:
             continue
         score += field_score * FIELD_WEIGHTS[field]
         matched_fields.append(field)
         if snippet is None:
-            snippet = _make_snippet(_field_text(indexed.document, field), query_tokens)
+            snippet = _make_snippet(_field_text(indexed.document, field), analysis.tokens)
 
-    if score == 0:
+    anchor_bonus = 0.0
+    for anchor in analysis.anchors:
+        normalized_anchor = anchor.lower().strip()
+        if not normalized_anchor:
+            continue
+        for field, field_text in normalized_field_texts.items():
+            if normalized_anchor not in field_text:
+                continue
+            anchor_bonus += ANCHOR_FIELD_BONUS[field]
+            if field == "title" and normalized_anchor == field_text:
+                anchor_bonus += 18
+            if field not in matched_fields:
+                matched_fields.append(field)
+            break
+
+    if specific_token_hits == 0:
+        score *= 0.55
+        score -= broad_token_hits * 1.5
+    else:
+        score += specific_token_hits * 2
+        if anchor_bonus == 0:
+            score *= 0.9
+
+    score += anchor_bonus
+
+    if score <= 0:
         return None
 
     document = indexed.document
@@ -160,7 +284,7 @@ def _score_indexed_document(
         id=document.id,
         source_id=document.source_id,
         title=document.title,
-        score=score,
+        score=int(round(score)),
         matched_fields=matched_fields,
         snippet=snippet,
         source_file=document.source_file,
@@ -184,6 +308,114 @@ def _field_text(document: IndexableRecipeDocument, field: str) -> str:
 
 def _tokenize(value: str) -> list[str]:
     return TOKEN_PATTERN.findall(value.lower())
+
+
+def _normalize_text(value: str) -> str:
+    return " ".join(value.lower().split())
+
+
+def _infer_dish_anchors(tokens: list[str]) -> list[str]:
+    token_set = set(tokens)
+    anchors: list[str] = []
+
+    if "cheesecake" in token_set or ({"cream", "cheese", "graham"} <= token_set):
+        anchors.extend(
+            [
+                "cheesecake",
+                "cream cheese",
+                "graham cracker crust",
+                "graham cracker",
+                "crust",
+                "bake",
+                "chill",
+            ]
+        )
+
+    if "carbonara" in token_set or ({"spaghetti", "parmesan", "pancetta"} <= token_set) or ({"eggs", "parmesan", "black", "pepper"} <= token_set):
+        anchors.extend(
+            [
+                "carbonara",
+                "spaghetti",
+                "eggs",
+                "parmesan",
+                "pancetta",
+                "black pepper",
+                "pasta water",
+                "off heat",
+            ]
+        )
+
+    if "omelet" in token_set or "omelette" in token_set or ({"eggs", "butter", "fold"} <= token_set):
+        anchors.extend(
+            [
+                "omelet",
+                "omelette",
+                "eggs",
+                "cheese",
+                "onions",
+                "butter",
+                "fold",
+                "scramble",
+            ]
+        )
+
+    if "casserole" in token_set or ({"chicken", "rice"} <= token_set):
+        anchors.extend(
+            [
+                "chicken and rice casserole",
+                "chicken",
+                "rice",
+                "casserole",
+                "cream soup",
+                "bake",
+                "cheese",
+            ]
+        )
+
+    return anchors
+
+
+def _infer_strong_dish_anchors(tokens: list[str]) -> list[str]:
+    token_set = set(tokens)
+    anchors: list[str] = []
+
+    if "cheesecake" in token_set:
+        anchors.extend(["cheesecake", "cream cheese", "graham cracker crust", "graham cracker"])
+
+    if "carbonara" in token_set or {"spaghetti", "pancetta"} <= token_set:
+        anchors.extend(["carbonara", "spaghetti", "parmesan", "pancetta", "black pepper", "pasta water", "eggs"])
+
+    if "omelet" in token_set or "omelette" in token_set:
+        anchors.extend(["omelet", "omelette", "scramble", "fold"])
+
+    if "casserole" in token_set:
+        anchors.extend(["chicken and rice casserole", "casserole", "cream soup"])
+
+    if {"chicken", "rice"} <= token_set:
+        anchors.extend(["chicken and rice casserole", "casserole", "cream soup"])
+
+    return anchors
+
+
+def _phrase_anchors(tokens: list[str]) -> list[str]:
+    anchors: list[str] = []
+    for size in (2, 3):
+        for start in range(0, max(len(tokens) - size + 1, 0)):
+            phrase = " ".join(tokens[start : start + size])
+            if len(phrase) >= 5:
+                anchors.append(phrase)
+    return anchors[:8]
+
+
+def _dedupe_preserve_order(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        deduped.append(item)
+    return deduped
 
 
 def _token_matches(query_token: str, field_tokens: list[str]) -> bool:

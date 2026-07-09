@@ -363,10 +363,14 @@ function importerEvidenceSection(data) {
     retrievalHeading.textContent = "Retrieval metadata";
     section.append(retrievalHeading, metadataGrid({
       query: retrieval.query || "none",
+      anchors: (retrieval.anchors_used || []).join(", ") || "none",
       retrieved: retrieval.retrieved_count ?? 0,
       limit: retrieval.limit ?? "none",
       dataset_limit: retrieval.dataset_limit ?? "none",
       matched_ids: (retrieval.matched_result_ids || []).join(", ") || "none",
+      scores: (retrieval.matched_result_scores || []).join(", ") || "none",
+      relevance: retrieval.relevance_category || "none",
+      warning: retrieval.warning || "none",
       documents: retrieval.index?.document_count ?? "none",
     }));
   }

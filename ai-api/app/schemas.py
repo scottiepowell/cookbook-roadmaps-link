@@ -178,6 +178,10 @@ class RecipeImportRetrievalMetadata(BaseModel):
     limit: int
     dataset_limit: int
     matched_result_ids: list[str] = Field(default_factory=list)
+    anchors_used: list[str] = Field(default_factory=list)
+    matched_result_scores: list[int] = Field(default_factory=list)
+    relevance_category: str | None = None
+    warning: str | None = None
     index: DatasetIndexSummaryResponse | None = None
 
 

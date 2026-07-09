@@ -1209,6 +1209,47 @@ Done criteria:
 - normal validation remains offline;
 - no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
 
+## 0029B-5: Importer RAG Retrieval Relevance Tuning
+
+Status: complete.
+
+Goal: Improve importer retrieval relevance so dish-specific recipes outrank broad category matches, and warn when retrieved examples are weak.
+
+Files likely touched:
+
+- `ai-api/app/dataset_index.py`
+- `ai-api/app/importer.py`
+- `ai-api/app/schemas.py`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/test_importer.py`
+- `ai-api/tests/test_importer_rag_relevance.py`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-5-importer-rag-retrieval-relevance-tuning-results.md`
+
+Validation:
+
+- offline importer search ranking checks;
+- importer retrieval metadata and weak-warning checks;
+- repository validation;
+- diff whitespace check;
+- Docker Compose config check;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- importer dataset retrieval uses anchor-aware relevance scoring and prefers exact dish names and core ingredients over broad dessert/pasta/chicken matches;
+- importer metadata includes query anchors, matched result IDs, result scores, dataset limit, document count, and a weak-match warning when appropriate;
+- cheesecake, carbonara, omelet, and chicken/rice casserole queries rank the intended recipe above distractor recipes in deterministic tests;
+- weak retrieval warnings appear only when matches are genuinely weak;
+- demo UI surfaces the retrieval metadata without exposing private local paths;
+- normal validation remains offline;
+- no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

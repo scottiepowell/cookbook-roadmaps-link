@@ -114,7 +114,7 @@ The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Dem
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
-The importer now behaves as an import/create workflow for rough recipe notes. When local dataset fixtures are configured, it retrieves a small bounded set of similar recipes before the provider call and passes them as structure guidance only. The user's ingredients and dish intent remain primary, retrieved recipes are not copied verbatim, citations/provenance are returned for transparency, and estimated quantities are disclosed in notes.
+The importer now behaves as an import/create workflow for rough recipe notes. When local dataset fixtures are configured, it retrieves a small bounded set of similar recipes before the provider call and passes them as structure guidance only. The retrieval is anchor-aware, so exact dish names and core ingredients outrank broad category matches, weak matches are called out in warnings, the user's ingredients and dish intent remain primary, retrieved recipes are not copied verbatim, citations/provenance are returned for transparency, and estimated quantities are disclosed in notes.
 
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts.
 
