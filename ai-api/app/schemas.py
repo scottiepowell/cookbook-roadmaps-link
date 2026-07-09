@@ -201,6 +201,14 @@ class RecipeImportRetrievalMetadata(BaseModel):
     packed_context_chars: int = 0
     weak_examples_included: bool = False
     context_budget_warning: str | None = None
+    support_level: str | None = None
+    support_reason: str | None = None
+    citation_support_count: int = 0
+    weak_citation_count: int = 0
+    strong_citation_count: int = 0
+    support_message: str | None = None
+    should_claim_rag_grounded: bool = False
+    should_show_weak_support_warning: bool = False
     index: DatasetIndexSummaryResponse | None = None
 
 

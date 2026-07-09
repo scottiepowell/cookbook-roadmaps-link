@@ -118,13 +118,15 @@ def test_importer_retrieval_reports_strong_matches_and_anchors(tmp_path, monkeyp
 
     assert response.retrieval is not None
     assert response.retrieval.relevance_category == "strong"
+    assert response.retrieval.support_level == "strong"
+    assert response.retrieval.should_claim_rag_grounded is True
     assert response.retrieval.warning is None
     assert response.retrieval.retrieved_count >= 1
     assert response.retrieval.matched_result_scores == sorted(response.retrieval.matched_result_scores, reverse=True)
     assert any("cheesecake" in anchor for anchor in response.retrieval.anchors_used)
     assert any("graham cracker crust" in anchor for anchor in response.retrieval.anchors_used)
     assert response.citations[0].source_id == "cheesecake-1"
-    assert "Retrieved dataset examples for structure only" in provider.last_request.prompt
+    assert "RAG support: Dataset support is strong" in provider.last_request.prompt
 
 
 def test_importer_reports_weak_retrieval_warning_for_distractors_only(tmp_path, monkeypatch):
@@ -163,6 +165,8 @@ def test_importer_reports_weak_retrieval_warning_for_distractors_only(tmp_path, 
 
     assert response.retrieval is not None
     assert response.retrieval.relevance_category == "weak"
+    assert response.retrieval.support_level == "weak"
+    assert response.retrieval.should_claim_rag_grounded is False
     assert response.retrieval.warning is not None
     assert "weak matches" in response.retrieval.warning
     assert response.warnings[-1] == response.retrieval.warning

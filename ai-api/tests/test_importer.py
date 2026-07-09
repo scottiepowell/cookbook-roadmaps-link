@@ -80,11 +80,16 @@ def test_importer_uses_dataset_rag_when_available(tmp_path, monkeypatch):
     assert response.retrieval.packed_context_chars <= response.retrieval.max_context_chars
     assert response.retrieval.packed_ids == [response.citations[0].id]
     assert response.retrieval.relevance_category == "strong"
+    assert response.retrieval.support_level == "strong"
+    assert response.retrieval.should_claim_rag_grounded is True
+    assert response.retrieval.support_message
     assert response.retrieval.warning is None
     assert response.citations[0].source_id == "omelet-1"
     assert any("omelet" in anchor for anchor in response.retrieval.anchors_used)
-    assert "Retrieved dataset examples for structure only" in provider.last_request.prompt
+    assert "RAG support: Dataset support is strong" in provider.last_request.prompt
     assert "Do not copy retrieved examples verbatim" in provider.last_request.prompt
+    assert "C:\\" not in response.model_dump_json()
+    assert "OPENAI_API_KEY" not in response.model_dump_json()
     assert response.draft is not None
     assert response.draft.servings == 4
     assert response.draft.ingredients[0].quantity == "4"
@@ -125,10 +130,13 @@ def test_importer_falls_back_when_dataset_unavailable(tmp_path, monkeypatch):
     assert response.retrieval is not None
     assert response.retrieval.retrieved_count == 0
     assert response.retrieval.packed_count == 0
+    assert response.retrieval.support_level == "none"
+    assert response.retrieval.should_claim_rag_grounded is False
     assert response.retrieval.relevance_category == "unavailable"
     assert response.retrieval.warning is not None
     assert response.citations == []
     assert any("dataset" in warning.lower() for warning in response.warnings)
+    assert "C:\\" not in response.model_dump_json()
     assert response.draft is not None
     assert response.draft.servings == 4
     ingredient_names = [ingredient.name.lower() for ingredient in response.draft.ingredients]

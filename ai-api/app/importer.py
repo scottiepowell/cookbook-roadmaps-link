@@ -12,6 +12,7 @@ from app.rag_context import (
     PackedImporterContext,
     pack_importer_rag_context,
 )
+from app.rag_support_policy import assess_importer_rag_support
 from app.providers import LLMProvider, StructuredLLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError
 from app.schemas import (
@@ -68,6 +69,16 @@ def import_recipe_text(
         )
 
     retrieval, citations, retrieval_warnings, context_pack = _retrieve_importer_examples(request.text)
+    support = assess_importer_rag_support(
+        relevance_category=retrieval.relevance_category if retrieval else None,
+        retrieved_count=retrieval.retrieved_count if retrieval else 0,
+        citation_count=len(citations),
+        packed_count=retrieval.packed_count if retrieval else 0,
+        weak_examples_included=retrieval.weak_examples_included if retrieval else False,
+        matched_result_scores=retrieval.matched_result_scores if retrieval else None,
+        warning=retrieval.warning if retrieval else None,
+        top_k_relevant_count=_top_k_relevant_count(retrieval.matched_result_scores if retrieval else []),
+    )
     active_provider = provider or _get_configured_provider()
     schema = RecipeImportDraft.model_json_schema()
     try:
@@ -77,6 +88,7 @@ def import_recipe_text(
                     request,
                     citations,
                     retrieval.warning if retrieval else None,
+                    support=support,
                     context_pack=context_pack,
                 ),
                 system=IMPORTER_SYSTEM_PROMPT,
@@ -143,6 +155,16 @@ def _retrieve_importer_examples(
         max_examples=DEFAULT_IMPORTER_CONTEXT_MAX_EXAMPLES,
         max_context_chars=DEFAULT_IMPORTER_CONTEXT_MAX_CHARS,
     )
+    support = assess_importer_rag_support(
+        relevance_category=relevance_category,
+        retrieved_count=len(citations),
+        citation_count=len(citations),
+        packed_count=context_pack.packed_count,
+        weak_examples_included=context_pack.weak_examples_included,
+        matched_result_scores=scores,
+        warning=warning,
+        top_k_relevant_count=_top_k_relevant_count(scores),
+    )
     retrieval = RecipeImportRetrievalMetadata(
         query=text.strip(),
         retrieved_count=len(citations),
@@ -161,6 +183,14 @@ def _retrieve_importer_examples(
         packed_context_chars=context_pack.packed_context_chars,
         weak_examples_included=context_pack.weak_examples_included,
         context_budget_warning=context_pack.context_budget_warning,
+        support_level=support.support_level,
+        support_reason=support.support_reason,
+        citation_support_count=support.citation_support_count,
+        weak_citation_count=support.weak_citation_count,
+        strong_citation_count=support.strong_citation_count,
+        support_message=support.support_message,
+        should_claim_rag_grounded=support.should_claim_rag_grounded,
+        should_show_weak_support_warning=support.should_show_weak_support_warning,
         index=retrieval_response.index,
     )
     warnings = list(retrieval_response.warnings)
@@ -176,15 +206,19 @@ def _build_prompt(
     citations: list[RecipeImportCitation] | None = None,
     retrieval_warning: str | None = None,
     *,
+    support=None,
     context_pack=None,
 ) -> str:
     source_line = f"Source: {request.source.strip()}\n" if request.source and request.source.strip() else ""
     example_context = context_pack.render_for_prompt() if context_pack is not None else _format_retrieved_examples(citations or [])
-    retrieval_note = (
-        "\nRetrieval note: Retrieved examples were weak matches; rely primarily on the user's notes and general recipe structure.\n"
-        if retrieval_warning
-        else ""
-    )
+    if support is not None:
+        retrieval_note = f"\nRAG support: {support.support_message}\n"
+    else:
+        retrieval_note = (
+            "\nRetrieval note: Retrieved examples were weak matches; rely primarily on the user's notes and general recipe structure.\n"
+            if retrieval_warning
+            else ""
+        )
     return (
         f"{source_line}Recipe text:\n{request.text.strip()}\n\n"
         "Creation requirements:\n"
@@ -244,6 +278,13 @@ def _importer_relevance_category(
     if strongest_score >= WEAK_MATCH_SCORE_THRESHOLD * 1.5:
         return "moderate", None
     return "weak", "Retrieved examples were weak matches; recipe draft was primarily shaped by user-provided notes and general recipe structure."
+
+
+def _top_k_relevant_count(scores: list[int]) -> int | None:
+    if not scores:
+        return None
+    return sum(1 for score in scores if score >= WEAK_MATCH_SCORE_THRESHOLD)
+
 
 
 def _citation_contains_anchor(citation: RecipeImportCitation, anchor: str) -> bool:

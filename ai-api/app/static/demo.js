@@ -329,26 +329,36 @@ function importerEvidenceSection(data) {
 
   const citations = Array.isArray(data?.citations) ? data.citations : [];
   const retrieval = data?.retrieval || {};
+  const supportLevel = retrieval.support_level || "none";
+  const supportMessage = retrieval.support_message || supportMessageForLevel(supportLevel);
   const summary = document.createElement("p");
   summary.className = "hint";
   summary.textContent = `${citations.length} citation(s) returned${retrieval.retrieved_count !== undefined ? ` from ${retrieval.retrieved_count} retrieved example(s)` : ""}${retrieval.packed_count !== undefined ? `; ${retrieval.packed_count} packed for prompt context` : ""}.`;
   section.append(summary);
 
+  const supportCard = document.createElement("p");
+  supportCard.className = "hint";
+  supportCard.textContent = `RAG support: ${capitalize(supportLevel)}. ${supportMessage}`;
+  section.append(supportCard);
+
   if (!citations.length) {
     const empty = document.createElement("p");
     empty.className = "hint";
-    empty.textContent = "No importer citations were returned for this response.";
+    empty.textContent = supportLevel === "none"
+      ? "No useful dataset examples were available for this response."
+      : "No importer citations were returned for this response.";
     section.append(empty);
   } else {
     const list = document.createElement("ul");
     list.className = "citation-list";
+    const citationLabel = supportLevel === "strong" ? "Citation" : supportLevel === "moderate" ? "Partial example" : "Broad example";
     for (const citation of citations) {
       const child = document.createElement("li");
       const provenance = citation.provenance || {};
       const provenanceLabel = [provenance.dataset, provenance.license].filter(Boolean).join(" / ") || "provenance unavailable";
       const matched = (citation.matched_fields || []).length ? `Matched: ${citation.matched_fields.join(", ")}` : "Matched: none";
       child.textContent = [
-        citation.title || "Untitled",
+        `${citationLabel}: ${citation.title || "Untitled"}`,
         `Source ID: ${citation.source_id || "unknown"}`,
         `Provenance: ${provenanceLabel}`,
         matched,
@@ -378,6 +388,14 @@ function importerEvidenceSection(data) {
       matched_ids: (retrieval.matched_result_ids || []).join(", ") || "none",
       scores: (retrieval.matched_result_scores || []).join(", ") || "none",
       relevance: retrieval.relevance_category || "none",
+      support_level: retrieval.support_level || "none",
+      support_reason: retrieval.support_reason || "none",
+      citation_support_count: retrieval.citation_support_count ?? 0,
+      weak_citation_count: retrieval.weak_citation_count ?? 0,
+      strong_citation_count: retrieval.strong_citation_count ?? 0,
+      support_message: retrieval.support_message || "none",
+      should_claim_rag_grounded: retrieval.should_claim_rag_grounded ? "yes" : "no",
+      should_show_weak_support_warning: retrieval.should_show_weak_support_warning ? "yes" : "no",
       warning: retrieval.warning || "none",
       documents: retrieval.index?.document_count ?? "none",
     }));
@@ -448,6 +466,24 @@ function providerMetadata(data) {
     model: data.model || "none",
     warnings: (data.warnings || []).length,
   };
+}
+
+function supportMessageForLevel(level) {
+  if (level === "strong") {
+    return "Dataset examples closely matched this dish and informed the draft.";
+  }
+  if (level === "moderate") {
+    return "Dataset examples were related, but the draft is still driven by your notes.";
+  }
+  if (level === "weak") {
+    return "Examples were broad matches, so the draft relies mainly on your notes and disclosed estimates.";
+  }
+  return "No useful dataset examples were available; the draft was generated from your notes and defaults.";
+}
+
+function capitalize(value) {
+  const text = String(value || "none");
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "None";
 }
 
 function importerAnswer(data) {

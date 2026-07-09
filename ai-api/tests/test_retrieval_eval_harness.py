@@ -40,6 +40,8 @@ def test_retrieval_eval_harness_scores_fixture_cases():
     assert all(result.dataset_limit == 5000 for result in results)
     assert all(result.warning_expected is False for result in results)
     assert all(result.warning_observed is False for result in results)
+    assert all(result.support_level == "strong" for result in results)
+    assert all(result.support_expected == "strong" for result in results)
     assert results[0].top1_title == "Classic Baked Cheesecake"
     assert results[1].top1_title == "No-Bake Cheesecake Bars"
     assert results[2].top1_title == "Spaghetti Carbonara"
@@ -97,6 +99,7 @@ def test_retrieval_eval_harness_reports_weak_warning_for_distractors_only(monkey
         "negative_title_terms": ["crumble", "pear"],
         "negative_generic_terms": ["dessert", "cream", "sugar"],
         "expected_relevance_min": "strong",
+        "expected_support_level": "weak",
         "min_relevant_in_top_k": 2,
         "top_k": 2,
         "expect_warning": True,
@@ -113,6 +116,7 @@ def test_retrieval_eval_harness_reports_weak_warning_for_distractors_only(monkey
     assert "warning expected=True observed=True" not in result.summary
     assert "warning" in result.summary
     assert result.relevance_category == "weak"
+    assert result.support_level == "weak"
 
 
 def test_relevance_category_classifier_is_deterministic():

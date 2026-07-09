@@ -11,10 +11,11 @@ from typing import Any
 
 from app.dataset_retrieval import search_dataset_recipes
 from app.demo_data import DEMO_DATASET_MARKER
+from app.rag_support_policy import assess_importer_rag_support
 
 
 RETRIEVAL_CASES_PATH = Path(__file__).with_name("retrieval_cases.yaml")
-CATEGORY_ORDER = {"weak": 0, "moderate": 1, "strong": 2}
+CATEGORY_ORDER = {"none": -1, "weak": 0, "moderate": 1, "strong": 2}
 MATERIAL_RELEVANCE_MIN = "moderate"
 
 
@@ -32,6 +33,8 @@ class RetrievalEvalResult:
     relevance_category: str
     warning_expected: bool
     warning_observed: bool
+    support_level: str
+    support_expected: str
     document_count: int
     dataset_limit: int
 
@@ -44,6 +47,7 @@ def load_retrieval_cases(path: Path | None = None) -> list[dict[str, Any]]:
         case.setdefault("top_k", 3)
         case.setdefault("dataset_limit", 5000)
         case.setdefault("expected_relevance_min", "strong")
+        case.setdefault("expected_support_level", case.get("expected_relevance_min", "strong"))
         case.setdefault("min_relevant_in_top_k", 2)
         case.setdefault("expect_warning", False)
     return cases
@@ -69,6 +73,7 @@ def evaluate_retrieval_case(case: dict[str, Any], dataset_dir: Path | None = Non
     top_k = int(case.get("top_k", 3))
     dataset_limit = int(case.get("dataset_limit", 5000))
     expected_category = str(case.get("expected_relevance_min", "strong"))
+    expected_support_level = str(case.get("expected_support_level", expected_category))
     min_relevant_in_top_k = int(case.get("min_relevant_in_top_k", 2))
     expected_warning = bool(case.get("expect_warning", False))
 
@@ -97,6 +102,16 @@ def evaluate_retrieval_case(case: dict[str, Any], dataset_dir: Path | None = Non
     )
     relevant_in_top_k = sum(1 for item in scored if CATEGORY_ORDER[item["category"]] >= CATEGORY_ORDER[MATERIAL_RELEVANCE_MIN])
     top1_category = top1_score["category"] if top1_score is not None else "weak"
+    support = assess_importer_rag_support(
+        relevance_category=top1_category if top_titles else "unavailable",
+        retrieved_count=len(results),
+        citation_count=len(results),
+        packed_count=min(len(results), top_k),
+        weak_examples_included=top1_category == "weak",
+        matched_result_scores=[result.score for result in results],
+        warning="Retrieved examples were weak matches; recipe draft was primarily shaped by user-provided notes and general recipe structure." if top1_category == "weak" else None,
+        top_k_relevant_count=relevant_in_top_k,
+    )
     warning_observed = (
         top1_category == "weak"
         or CATEGORY_ORDER[top1_category] < CATEGORY_ORDER[expected_category]
@@ -110,6 +125,7 @@ def evaluate_retrieval_case(case: dict[str, Any], dataset_dir: Path | None = Non
         relevant_in_top_k=relevant_in_top_k,
         anchor_coverage=anchor_coverage,
         negative_drift_count=negative_drift_count,
+        support_level=support.support_level,
         warning_observed=warning_observed,
     )
     summary = _format_summary(
@@ -120,6 +136,7 @@ def evaluate_retrieval_case(case: dict[str, Any], dataset_dir: Path | None = Non
         category=top1_category,
         anchor_coverage=anchor_coverage,
         negative_drift_count=negative_drift_count,
+        support_level=support.support_level,
         warning_observed=warning_observed,
     )
     if not passed:
@@ -138,6 +155,8 @@ def evaluate_retrieval_case(case: dict[str, Any], dataset_dir: Path | None = Non
         relevance_category=top1_category,
         warning_expected=expected_warning,
         warning_observed=warning_observed,
+        support_level=support.support_level,
+        support_expected=expected_support_level,
         document_count=response.index.document_count,
         dataset_limit=dataset_limit,
     )
@@ -159,11 +178,13 @@ def _evaluate_case(
     relevant_in_top_k: int,
     anchor_coverage: str,
     negative_drift_count: int,
+    support_level: str,
     warning_observed: bool,
 ) -> tuple[bool, str]:
     errors: list[str] = []
     expected_title_terms = [str(term).lower() for term in case.get("preferred_title_terms", [])]
     expected_category = str(case.get("expected_relevance_min", "strong"))
+    expected_support_level = str(case.get("expected_support_level", expected_category))
     min_relevant_in_top_k = int(case.get("min_relevant_in_top_k", 2))
     required_anchor_count = len(case.get("required_anchors", []))
     expect_warning = bool(case.get("expect_warning", False))
@@ -194,6 +215,9 @@ def _evaluate_case(
     if case.get("max_generic_drift") is not None and negative_drift_count > int(case["max_generic_drift"]):
         errors.append(f"generic_drift={negative_drift_count} > {case['max_generic_drift']}")
 
+    if CATEGORY_ORDER[support_level] < CATEGORY_ORDER[expected_support_level]:
+        errors.append(f"support={support_level} expected>={expected_support_level}")
+
     return not errors, "; ".join(errors)
 
 
@@ -206,12 +230,13 @@ def _format_summary(
     category: str,
     anchor_coverage: str,
     negative_drift_count: int,
+    support_level: str,
     warning_observed: bool,
 ) -> str:
     warning_state = "warning" if warning_observed else "no-warning"
     return (
         f"{case_id} top1={top1_title} top{top_k}_relevant={relevant_in_top_k}/{top_k} "
-        f"relevance={category} anchors={anchor_coverage} drift={negative_drift_count} {warning_state}"
+        f"relevance={category} support={support_level} anchors={anchor_coverage} drift={negative_drift_count} {warning_state}"
     )
 
 

@@ -52,6 +52,7 @@ RAG evals should verify:
 - top-1 retrieval relevance, top-k relevance counts, anchor coverage, generic drift, and weak-match warnings are deterministic and regression-tested offline;
 - dataset normalization preserves important recipe phrases, aliases, and singular/plural variants without changing original display values;
 - importer prompt context packing stays bounded, prefers strong examples, and drops or labels weak examples honestly;
+- importer RAG honesty policy classifies support as strong, moderate, weak, or none and labels citations accordingly;
 - no-match questions say the system does not know;
 - the answer does not reveal secrets, env vars, API keys, or hidden prompts;
 - the answer distinguishes saved recipes from general suggestions.
@@ -109,6 +110,7 @@ evals/
 | RAG Retrieval | Carbonara relevance | `carbonara pasta spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat` | Carbonara ranks above creamy pasta and aglio e olio distractors |
 | RAG Retrieval | Omelet relevance | `omelet with eggs cheese maybe onions cooked in butter fold it over` | Omelet ranks above sandwich and skillet pie distractors |
 | RAG Retrieval | Casserole relevance | `chicken and rice casserole chicken rice cream soup cheese bake until hot` | Chicken/rice casserole ranks above chicken-only and rice-only distractors |
+| RAG Retrieval | Support honesty | `classic baked cheesecake` or `make a dessert with sugar and cream` | Strong matches claim grounded support; broad or no-match cases stay partial, weak, or none |
 | RAG Retrieval | Normalized aliases | `omelette for 4 with eggs cheddar onions butter folded in a skillet` | Omelet matches despite spelling variant |
 | RAG Retrieval | Normalized phrases | `no-bake cheesecake for 4 with cream cheese vanilla sugar graham cracker crust chill until firm` | No-bake cheesecake matches consistently with phrase-preserving normalization |
 | RAG Retrieval | Carbonara alias | `carbonara for 4 with spaghetti parmigiano-reggiano eggs pancetta black pepper pasta water off heat no heavy cream` | Parmigiano-reggiano normalizes to parmesan for carbonara ranking |

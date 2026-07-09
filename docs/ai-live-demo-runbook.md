@@ -117,10 +117,10 @@ Use this matrix when recording manual live importer or retrieval checks. Keep th
 
 | Input text | Provider/model | Dataset limit | Document count | Relevance category | Warning | Top-1 title | Top-3 titles | Relevant count in top 3 | Notes |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | ---: | --- |
-| `cheesecake cream cheese sugar eggs vanilla graham cracker crust bake and chill` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Classic Baked Cheesecake` | `Classic Baked Cheesecake; No-Bake Cheesecake Bars; Apple Crumble with Vanilla Ice Cream` | `2/3` | Full `recipe-dataset` path used; citations rendered. |
-| `carbonara pasta spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Spaghetti Carbonara` | `Spaghetti Carbonara; Creamy Garlic Pasta; Aglio e Olio Pasta` | `2/3` | Carbonara-specific examples outrank broad pasta matches. |
-| `omelet with eggs cheese maybe onions cooked in butter fold it over` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Cheese Omelet` | `Cheese Omelet; Breakfast Sandwich; Skillet Pie` | `2/3` | Omelet ranking should not depend on generic breakfast terms. |
-| `chicken and rice casserole chicken rice cream soup cheese bake until hot` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Chicken and Rice Casserole` | `Chicken and Rice Casserole; Lemon Chicken Skillet; Rice Pilaf` | `2/3` | Casserole-specific result should outrank chicken-only and rice-only distractors. |
+| `cheesecake cream cheese sugar eggs vanilla graham cracker crust bake and chill` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Classic Baked Cheesecake` | `Classic Baked Cheesecake; No-Bake Cheesecake Bars; Apple Crumble with Vanilla Ice Cream` | `2/3` | `RAG support: Strong`; full `recipe-dataset` path used; citations rendered. |
+| `carbonara pasta spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Spaghetti Carbonara` | `Spaghetti Carbonara; Creamy Garlic Pasta; Aglio e Olio Pasta` | `2/3` | `RAG support: Strong`; carbonara-specific examples outrank broad pasta matches. |
+| `omelet with eggs cheese maybe onions cooked in butter fold it over` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Cheese Omelet` | `Cheese Omelet; Breakfast Sandwich; Skillet Pie` | `2/3` | `RAG support: Strong`; omelet ranking should not depend on generic breakfast terms. |
+| `chicken and rice casserole chicken rice cream soup cheese bake until hot` | `openai / gpt-5.4-nano` | `5000` | `13` | `strong` | `no` | `Chicken and Rice Casserole` | `Chicken and Rice Casserole; Lemon Chicken Skillet; Rice Pilaf` | `2/3` | `RAG support: Strong`; casserole-specific result should outrank chicken-only and rice-only distractors. |
 
 ## Optional Live OpenAI Smoke Path
 
@@ -212,6 +212,8 @@ Optional input-quality check: enter `!!!!!` in dataset search to show the "Input
 When `RECIPE_DATASET_DIR` is configured and available, the importer retrieves a small bounded set of similar dataset recipes before the provider call. The retrieval is anchor-aware: exact dish names, core ingredients, and dish-specific phrases outrank broad dessert, pasta, or chicken matches. These examples are used only for structure, proportion hints, and step completeness. The model must preserve the user's core ingredients and dish intent, avoid copying retrieved recipes verbatim, and return citations/provenance for the examples that informed the draft. If retrieval is weak, the API returns a warning and the UI should treat the examples as structure-only guidance.
 
 The provider prompt uses a deterministic context pack with small character budgets, so manual live validation should expect only 2 or 3 packed examples and a short snippet block instead of full raw recipe records.
+
+The importer UI also shows a `RAG support` label and short message. Strong support means the retrieved examples closely matched the dish intent. Moderate support means the examples were related but partial. Weak support means the examples were broad and should be treated as structure-only. No-support means the draft came from notes, defaults, and disclosed assumptions.
 
 The dataset index now normalizes conservative aliases and phrase variants such as `omelette` -> `omelet`, `parmigiano-reggiano` -> `parmesan`, `no-bake` -> `no bake`, and `graham crackers` -> `graham cracker` while preserving the original recipe values for citations and display.
 

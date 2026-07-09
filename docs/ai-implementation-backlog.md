@@ -1348,6 +1348,43 @@ Done criteria:
 - original recipe values remain intact for citations, snippets, and display;
 - normal validation remains offline and mock-only.
 
+## 0029B-9: RAG Honesty And Citation Support Policy
+
+Status: complete.
+
+Goal: Classify how strongly retrieved dataset examples support importer drafts and surface that support level honestly in the API and demo UI.
+
+Files likely touched:
+
+- `ai-api/app/rag_support_policy.py`
+- `ai-api/app/importer.py`
+- `ai-api/app/schemas.py`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/test_rag_support_policy.py`
+- `ai-api/tests/test_importer.py`
+- `ai-api/tests/test_importer_rag_relevance.py`
+- `ai-api/tests/test_demo_ui.py`
+- `evals/ai_cookbook/retrieval_eval.py`
+- `evals/ai_cookbook/retrieval_cases.yaml`
+- `ai-api/tests/test_retrieval_eval_harness.py`
+- `docs/ai-evals-plan.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-9-rag-honesty-and-citation-support-policy-results.md`
+
+Done criteria:
+
+- importer responses classify dataset support as strong, moderate, weak, or none using deterministic retrieval metadata;
+- the API surfaces safe support reason/message fields without exposing raw prompts, raw provider responses, private paths, or secrets;
+- the demo UI shows the support level and labels weak or partial citations honestly;
+- strong support can be described as grounded, while weak and none do not overstate support;
+- offline retrieval evals and importer tests cover strong, moderate, weak, and none support cases;
+- existing retrieval, context packing, normalization, and mock paths still pass;
+- normal validation remains offline and mock-only;
+- no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

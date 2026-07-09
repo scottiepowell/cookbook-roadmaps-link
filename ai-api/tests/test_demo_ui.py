@@ -39,6 +39,12 @@ def test_demo_static_assets_load():
     assert "servings" in js_response.text
     assert "data.citations" in js_response.text
     assert "No importer citations were returned for this response." in js_response.text
+    assert "No useful dataset examples were available for this response." in js_response.text
+    assert "RAG support:" in js_response.text
+    assert "support_level" in js_response.text
+    assert "support_message" in js_response.text
+    assert "Partial example" in js_response.text
+    assert "Broad example" in js_response.text
     assert "Citation(s) returned" not in js_response.text
     assert "Retrieval metadata" in js_response.text
     assert "retrieved_examples" in js_response.text
@@ -53,6 +59,8 @@ def test_demo_static_assets_load():
     assert "context_budget_warning" in js_response.text
     assert "anchors:" in js_response.text
     assert "relevance:" in js_response.text
+    assert "should_claim_rag_grounded" in js_response.text
+    assert "should_show_weak_support_warning" in js_response.text
     assert "matched_ids:" in js_response.text
     assert "scores:" in js_response.text
 
