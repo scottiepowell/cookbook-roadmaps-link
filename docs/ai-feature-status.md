@@ -7,7 +7,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Feature | Status | Endpoint or Script | Proof | Notes |
 | --- | --- | --- | --- | --- |
 | Health/config | Complete | `GET /health`, `GET /ai/config` | pytest, mock demo | Reports readiness and non-secret provider availability. |
-| Structured recipe importer | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted text. |
+| Structured recipe import/create | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted notes, defaults to 4 servings, estimates missing quantities with notes, and uses bounded local dataset examples for structure/provenance when available. |
 | Ask My Cookbook | Complete | `POST /ai/ask` | pytest, offline evals, live smoke | Retrieves saved recipes first and cites recipe IDs/titles. |
 | Local dataset search | Complete | `GET /dataset/search`, `POST /dataset/search` | pytest, mock demo | Uses bounded deterministic keyword retrieval over generated fixtures. |
 | Dataset Ask/RAG | Complete | `POST /dataset/ask` | pytest, offline evals, live smoke | Answers from retrieved dataset records with provenance citations. |

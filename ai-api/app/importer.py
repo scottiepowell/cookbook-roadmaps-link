@@ -1,18 +1,36 @@
+import re
+
 from pydantic import ValidationError
 
 from app.config import get_ai_settings
+from app.dataset_retrieval import search_dataset_recipes
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_recipe_import_input
 from app.providers import LLMProvider, StructuredLLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError
-from app.schemas import RecipeImportDraft, RecipeImportRequest, RecipeImportResponse
+from app.schemas import (
+    RecipeImportCitation,
+    RecipeImportDraft,
+    RecipeImportRequest,
+    RecipeImportResponse,
+    RecipeImportRetrievalMetadata,
+)
 
 
 IMPORTER_SYSTEM_PROMPT = (
-    "Extract a recipe draft from pasted user text. Return only fields that fit the provided schema. "
-    "Use a one-sentence description with one or two core ingredients when possible. "
-    "Keep missing quantities, timing, or unspecified details in notes. "
-    "Do not invent unrelated ingredients, do not invent database IDs, and do not write to any database."
+    "Import or create a practical structured recipe draft from rough user notes. Return only fields that fit the provided schema. "
+    "Default to 4 servings unless the user states a different serving size. "
+    "Provide plausible ingredient quantities for the serving size when the user omitted quantities, and disclose estimates in notes. "
+    "Use retrieved dataset examples only for structure, proportions, and step completeness. "
+    "Preserve the user's core ingredients and dish intent. Do not copy retrieved recipes verbatim. "
+    "Do not add unrelated major ingredients, do not invent database IDs, and do not write to any database. "
+    "Use 4 to 8 concise, action-oriented steps for normal multi-step recipes. "
+    "Omelets should beat or scramble eggs before cooking and folding. "
+    "Carbonara should not require heavy cream unless the user supplied it. "
+    "Cheesecake should cover crust, filling, bake, cool, and chill. "
+    "Chicken dishes should include safe doneness or temperature guidance when relevant."
 )
+
+IMPORTER_RAG_LIMIT = 3
 
 
 class RecipeImporterError(RuntimeError):
@@ -42,12 +60,13 @@ def import_recipe_text(
             input_quality=input_quality.to_dict(),
         )
 
+    retrieval, citations, retrieval_warnings = _retrieve_importer_examples(request.text)
     active_provider = provider or _get_configured_provider()
     schema = RecipeImportDraft.model_json_schema()
     try:
         provider_response = active_provider.generate_structured(
             StructuredLLMRequest(
-                prompt=_build_prompt(request),
+                prompt=_build_prompt(request, citations),
                 system=IMPORTER_SYSTEM_PROMPT,
                 schema_name="RecipeImportDraft",
                 schema=schema,
@@ -62,11 +81,17 @@ def import_recipe_text(
     except ValidationError as exc:
         raise RecipeImportValidationError("Provider returned an invalid recipe draft.") from exc
 
+    draft = _improve_draft(draft, request.text)
+    warnings = [*retrieval_warnings]
+    if input_quality.status == WEAK_BUT_USABLE:
+        warnings.extend(input_quality.warnings)
     return RecipeImportResponse(
         draft=draft,
         provider=provider_response.provider,
         model=provider_response.model,
-        warnings=input_quality.warnings if input_quality.status == WEAK_BUT_USABLE else [],
+        retrieval=retrieval,
+        citations=citations,
+        warnings=warnings,
         usage=provider_response.usage,
         input_quality=input_quality.to_dict(),
     )
@@ -79,6 +104,209 @@ def _get_configured_provider() -> LLMProvider:
         raise RecipeImportProviderError("Recipe importer provider is not configured.") from exc
 
 
-def _build_prompt(request: RecipeImportRequest) -> str:
+def _retrieve_importer_examples(text: str) -> tuple[RecipeImportRetrievalMetadata | None, list[RecipeImportCitation], list[str]]:
+    retrieval_response = search_dataset_recipes(text, limit=IMPORTER_RAG_LIMIT)
+    citations = [
+        RecipeImportCitation(
+            id=result.id,
+            source_id=result.source_id,
+            title=result.title,
+            snippet=result.snippet or result.title,
+            matched_fields=result.matched_fields,
+            provenance=result.provenance,
+        )
+        for result in retrieval_response.results[:IMPORTER_RAG_LIMIT]
+    ]
+    dataset_limit = int(retrieval_response.index.build_metadata.get("record_limit", 0) or 0)
+    retrieval = RecipeImportRetrievalMetadata(
+        query=text.strip(),
+        retrieved_count=len(citations),
+        limit=IMPORTER_RAG_LIMIT,
+        dataset_limit=dataset_limit,
+        matched_result_ids=[citation.id for citation in citations],
+        index=retrieval_response.index,
+    )
+    warnings = list(retrieval_response.warnings)
+    if not citations:
+        warnings.append("Importer dataset RAG examples were unavailable; created the draft from user notes only.")
+    return retrieval, citations, warnings
+
+
+def _build_prompt(request: RecipeImportRequest, citations: list[RecipeImportCitation] | None = None) -> str:
     source_line = f"Source: {request.source.strip()}\n" if request.source and request.source.strip() else ""
-    return f"{source_line}Recipe text:\n{request.text.strip()}"
+    example_context = _format_retrieved_examples(citations or [])
+    return (
+        f"{source_line}Recipe text:\n{request.text.strip()}\n\n"
+        "Creation requirements:\n"
+        "- Make a complete, practical recipe draft for the requested dish.\n"
+        "- Use 4 servings unless the user states a different serving size.\n"
+        "- Estimate missing quantities for the serving size and disclose this in notes.\n"
+        "- Preserve user-provided core ingredients and dish intent.\n"
+        "- Do not copy retrieved examples verbatim; use them only for structure, proportions, and step completeness.\n"
+        "- Avoid unrelated major ingredients.\n"
+        "- Prefer 4 to 8 action-oriented steps for multi-step dishes.\n"
+        "- Omelet: beat/scramble eggs before cooking and folding.\n"
+        "- Carbonara: avoid heavy cream unless supplied by the user.\n"
+        "- Cheesecake: include crust, filling, bake, cool, and chill style steps.\n"
+        "- Chicken casserole: include preheat, combine, bake, and doneness or safe chicken guidance.\n"
+        f"{example_context}"
+    )
+
+
+def _format_retrieved_examples(citations: list[RecipeImportCitation]) -> str:
+    if not citations:
+        return "\nRetrieved dataset examples: none available; rely on the user notes and general cooking structure.\n"
+    blocks = ["\nRetrieved dataset examples for structure only:"]
+    for index, citation in enumerate(citations[:IMPORTER_RAG_LIMIT], start=1):
+        blocks.append(
+            "\n".join(
+                [
+                    f"Example {index}: {citation.title}",
+                    f"Source id: {citation.source_id}",
+                    f"Matched fields: {', '.join(citation.matched_fields) or 'none'}",
+                    f"Snippet: {citation.snippet}",
+                ]
+            )
+        )
+    return "\n\n" + "\n\n".join(blocks) + "\n"
+
+
+def _improve_draft(draft: RecipeImportDraft, user_text: str) -> RecipeImportDraft:
+    text = user_text.lower()
+    servings = _servings_from_text(user_text) or 4
+    updates = {"servings": servings}
+    ingredients = [_ingredient_with_quantity(item, text, servings) for item in draft.ingredients]
+    updates["ingredients"] = ingredients
+    instructions = draft.instructions
+    if "omelet" in text or "omelette" in text:
+        instructions = _instruction_set(
+            [
+                "Beat the eggs with a pinch of salt and pepper until blended.",
+                "Melt butter in a nonstick skillet over medium heat.",
+                "Pour in the eggs and gently stir until soft curds form.",
+                "Add cheese and onions if using, then fold the omelet and serve warm.",
+            ]
+        )
+    elif "cheesecake" in text:
+        instructions = _instruction_set(
+            [
+                "Preheat the oven and press the graham cracker crust into the pan.",
+                "Beat cream cheese, sugar, vanilla, and eggs until smooth.",
+                "Pour the filling into the crust and bake until the center is just set.",
+                "Cool the cheesecake gradually, then chill until firm before slicing.",
+            ]
+        )
+    elif "chicken" in text and "rice" in text and "casserole" in text:
+        instructions = _instruction_set(
+            [
+                "Preheat the oven and grease a casserole dish.",
+                "Combine rice, soup, cheese, and seasoning in the dish.",
+                "Fold in chicken and enough liquid for the rice to cook evenly.",
+                "Cover and bake until rice is tender and chicken reaches 165 F if raw chicken is used.",
+                "Rest briefly before serving.",
+            ]
+        )
+    elif _is_weak_instruction_set(instructions):
+        instructions = _expand_generic_steps(instructions)
+    updates["instructions"] = instructions
+    notes = draft.notes or ""
+    if _user_omitted_quantities(user_text) and "estimated" not in notes.lower():
+        notes = (notes + " " if notes else "") + f"Ingredient quantities are estimated for {servings} servings because the source notes did not specify exact amounts."
+    updates["notes"] = notes or None
+    return draft.model_copy(update=updates)
+
+
+def _servings_from_text(text: str) -> int | None:
+    match = re.search(r"\b(?:serves|servings?|for)\s+(\d{1,2})\b", text, flags=re.IGNORECASE)
+    if not match:
+        return None
+    value = int(match.group(1))
+    if 1 <= value <= 24:
+        return value
+    return None
+
+
+def _ingredient_with_quantity(item, text: str, servings: int):
+    if item.quantity:
+        return item
+    estimate = _estimated_quantity(item.name, text, servings)
+    if estimate is None:
+        return item
+    quantity, unit = estimate
+    note = item.note or "estimated"
+    return item.model_copy(update={"quantity": quantity, "unit": unit, "note": note})
+
+
+def _estimated_quantity(name: str, text: str, servings: int) -> tuple[str, str] | None:
+    lower = name.lower()
+    scale = max(servings / 4, 0.25)
+    if "egg" in lower:
+        return (str(round(4 * scale)), "large")
+    if "cheese" in lower or "parmesan" in lower:
+        return (_scaled_fraction(1, scale), "cup")
+    if "onion" in lower:
+        return (_scaled_fraction(0.5, scale), "cup")
+    if "butter" in lower or "oil" in lower:
+        return (str(round(2 * scale)), "tablespoons")
+    if "pasta" in lower or "spaghetti" in lower:
+        return (str(round(12 * scale)), "ounces")
+    if "pancetta" in lower or "bacon" in lower:
+        return (str(round(4 * scale)), "ounces")
+    if "cream cheese" in lower:
+        return (str(round(16 * scale)), "ounces")
+    if "sugar" in lower:
+        return (_scaled_fraction(0.75, scale), "cup")
+    if "graham" in lower or "crust" in lower:
+        return (_scaled_fraction(1.5, scale), "cups")
+    if "chicken" in lower:
+        return (str(round(1.5 * scale, 1)), "pounds")
+    if "rice" in lower:
+        return (_scaled_fraction(1, scale), "cup")
+    if "soup" in lower:
+        return (str(round(1 * scale)), "can")
+    if any(term in lower for term in ("bean", "chickpea")):
+        return (str(round(2 * scale)), "cups")
+    if "lemon" in lower:
+        return (str(round(1 * scale)), "medium")
+    if "garlic" in lower:
+        return (str(round(2 * scale)), "cloves")
+    if any(term in lower for term in ("parsley", "herb", "basil")):
+        return (_scaled_fraction(0.25, scale), "cup")
+    if "toast" in lower or "bread" in lower:
+        return (str(round(4 * scale)), "slices")
+    return None
+
+
+def _scaled_fraction(value: float, scale: float) -> str:
+    scaled = value * scale
+    if scaled.is_integer():
+        return str(int(scaled))
+    return str(round(scaled, 2)).rstrip("0").rstrip(".")
+
+
+def _user_omitted_quantities(text: str) -> bool:
+    return not bool(re.search(r"\b\d+(?:/\d+)?\b|\b(cup|cups|tbsp|tablespoon|tablespoons|tsp|teaspoon|teaspoons|ounce|ounces|oz|pound|pounds|lb|lbs|gram|grams|g)\b", text, flags=re.IGNORECASE))
+
+
+def _is_weak_instruction_set(instructions: list) -> bool:
+    texts = [instruction.text for instruction in instructions]
+    return len(texts) < 3 or any(len(text.split()) < 4 for text in texts)
+
+
+def _expand_generic_steps(instructions: list) -> list:
+    texts = [instruction.text for instruction in instructions]
+    if len(texts) >= 3:
+        return instructions
+    return _instruction_set(
+        [
+            "Prepare the ingredients according to the recipe notes.",
+            "Cook the main ingredients using the stated method until properly done.",
+            "Season to taste and serve while fresh.",
+        ]
+    )
+
+
+def _instruction_set(texts: list[str]) -> list:
+    from app.schemas import RecipeInstructionDraft
+
+    return [RecipeInstructionDraft(step=index, text=text) for index, text in enumerate(texts, start=1)]

@@ -170,8 +170,8 @@ def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImpor
             request,
             provider=response.provider,
             model=response.model,
-            retrieved_count=0,
-            citation_count=0,
+            retrieved_count=response.retrieval.retrieved_count if response.retrieval else 0,
+            citation_count=len(response.citations),
             warning_count=len(response.warnings),
         )
         return response

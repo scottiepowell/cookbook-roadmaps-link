@@ -34,13 +34,15 @@
     "provider_data": {
       "title": "Lemon Beans",
       "description": "Bright pantry dinner",
+      "servings": 4,
       "ingredients": [
         {"name": "beans", "quantity": "2", "unit": "cups"},
         {"name": "lemon", "quantity": "1", "unit": null}
       ],
       "instructions": [
         {"step": 1, "text": "Warm the beans."},
-        {"step": 2, "text": "Add lemon and serve."}
+        {"step": 2, "text": "Stir in lemon and olive oil."},
+        {"step": 3, "text": "Serve warm."}
       ],
       "tags": ["dinner"],
       "source": "offline fixture",
@@ -48,7 +50,7 @@
     },
     "expected_title": "Lemon Beans",
     "expected_ingredients": ["beans", "lemon"],
-    "expected_steps": [1, 2]
+    "expected_steps": [1, 2, 3]
   },
   {
     "type": "meal_plan",

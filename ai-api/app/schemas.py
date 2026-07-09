@@ -155,6 +155,7 @@ class RecipeInstructionDraft(BaseModel):
 class RecipeImportDraft(BaseModel):
     title: str = Field(min_length=1)
     description: str | None = None
+    servings: int | None = Field(default=4, ge=1, le=24)
     ingredients: list[RecipeIngredientDraft] = Field(min_length=1)
     instructions: list[RecipeInstructionDraft] = Field(min_length=1)
     tags: list[str] = Field(default_factory=list)
@@ -162,10 +163,30 @@ class RecipeImportDraft(BaseModel):
     notes: str | None = None
 
 
+class RecipeImportCitation(BaseModel):
+    id: str
+    source_id: str
+    title: str
+    snippet: str
+    matched_fields: list[str] = Field(default_factory=list)
+    provenance: DatasetSearchProvenance
+
+
+class RecipeImportRetrievalMetadata(BaseModel):
+    query: str
+    retrieved_count: int
+    limit: int
+    dataset_limit: int
+    matched_result_ids: list[str] = Field(default_factory=list)
+    index: DatasetIndexSummaryResponse | None = None
+
+
 class RecipeImportResponse(BaseModel):
     draft: RecipeImportDraft | None = None
     provider: str
     model: str
+    retrieval: RecipeImportRetrievalMetadata | None = None
+    citations: list[RecipeImportCitation] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     usage: dict[str, int] | None = None
     input_quality: InputQualityResponse | None = None

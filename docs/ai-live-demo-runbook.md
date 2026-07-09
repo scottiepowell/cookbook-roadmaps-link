@@ -104,7 +104,7 @@ Docker Compose also exposes the sidecar locally at `127.0.0.1:8000` for operator
 
 1. Show the README AI showcase and explain the sidecar architecture.
 2. Open the UI and refresh readiness.
-3. Run the structured importer with the sample input.
+3. Run the structured import/create workflow with the sample input and note servings, estimated quantities, steps, and citations.
 4. Run saved-recipe Q&A and show recipe citations.
 5. Run dataset search and point out ranked matches and provenance.
 6. Run dataset Ask/RAG and show citations.
@@ -118,7 +118,7 @@ Optional input-quality check: enter `!!!!!` in dataset search to show the "Input
 
 1. Start with the portfolio showcase and completion review.
 2. Open the UI readiness panel and explain mock/offline mode.
-3. Run importer and inspect the raw JSON details.
+3. Run importer and inspect servings, estimated quantities, citations/provenance, and raw JSON details.
 4. Run saved-recipe Q&A and show the generated demo recipe citation.
 5. Run dataset search and dataset Ask/RAG.
 6. Run meal planning and show generated saved-recipe citations.
@@ -138,6 +138,14 @@ Optional input-quality check: enter `!!!!!` in dataset search to show the "Input
 | Workflow shows "Input not usable yet" | Replace empty, symbol-only, placeholder, or junk text with a concrete cooking request. |
 | Provider unavailable | Confirm provider mode and use mock mode for normal demos. |
 | Direct Windows pytest fails | Use the Git Bash validator path documented in repo validation; the known issue is a local temp-directory ACL problem. |
+
+## Import/Create Recipe Notes
+
+`POST /ai/import-recipe` now handles rough recipe creation notes as well as pasted recipe text. It defaults to 4 servings unless the user states another serving count. When quantities are missing, the draft should include reasonable estimates and disclose that they are estimated in `notes`.
+
+When `RECIPE_DATASET_DIR` is configured and available, the importer retrieves a small bounded set of similar dataset recipes before the provider call. These examples are used only for structure, proportion hints, and step completeness. The model must preserve the user's core ingredients and dish intent, avoid copying retrieved recipes verbatim, and return citations/provenance for the examples that informed the draft.
+
+Normal validation remains offline. Do not commit raw dataset files, generated `.tmp-ai-demo/` artifacts, raw provider responses, screenshots, private env files, or credentials.
 
 ## Log Viewing
 

@@ -13,6 +13,7 @@ def test_recipe_import_root_schema_is_strict_object():
     assert schema["required"] == [
         "title",
         "description",
+        "servings",
         "ingredients",
         "instructions",
         "tags",
@@ -90,6 +91,7 @@ def test_openai_provider_sends_normalized_schema_without_network_call():
     assert sent_schema["required"] == [
         "title",
         "description",
+        "servings",
         "ingredients",
         "instructions",
         "tags",
@@ -118,6 +120,7 @@ class RecordingResponses:
 class FakeOpenAIResponse:
     output_text = (
         '{"title":"Lemon Beans","description":null,'
+        '"servings":4,'
         '"ingredients":[{"name":"beans","quantity":null,"unit":null,"note":null}],'
         '"instructions":[{"step":1,"text":"Warm beans."}],'
         '"tags":[],"source":null,"notes":null}'

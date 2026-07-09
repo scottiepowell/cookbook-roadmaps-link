@@ -130,18 +130,29 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
     title = str(draft.get("title", "")).strip()
     description = str(draft.get("description") or "")
     notes = str(draft.get("notes") or "")
+    servings = draft.get("servings")
+    raw_ingredients = draft.get("ingredients") or []
     ingredients = _ingredient_names(draft.get("ingredients") or [])
     instructions = _instruction_texts(draft.get("instructions") or [])
+    citations = payload.get("citations") or []
+    retrieval = payload.get("retrieval") if isinstance(payload.get("retrieval"), dict) else {}
     field_texts = [title, description, *ingredients, *instructions]
     structured_evidence = _importer_ingredient_evidence(field_texts)
     description_evidence = _importer_ingredient_evidence([description])
     unrelated = _mentioned_terms(field_texts, UNRELATED_IMPORTER_FOODS)
     generic_values = _generic_field_values([title, *ingredients, *instructions])
+    quantity_count = _ingredient_quantity_count(raw_ingredients)
+    all_text = " ".join(field_texts + [notes]).lower()
     return [
         _check("response parses as expected schema", bool(draft)),
         _check("title is non-empty", bool(title)),
         _check("ingredient list is non-empty", bool(draft.get("ingredients"))),
         _check("instructions are non-empty", bool(draft.get("instructions"))),
+        _check("servings default to 4 when unspecified", servings == 4),
+        _check("ingredients include generated quantities", quantity_count >= 2, f"quantity_count={quantity_count}"),
+        _check("notes disclose estimated/default quantities", any(term in notes.lower() for term in ("estimated", "default", "4 servings", "quantities"))),
+        _check("importer dataset citations are returned when available", bool(citations)),
+        _check("importer retrieval metadata is returned", int(retrieval.get("retrieved_count") or 0) >= 1),
         _check("provider is OpenAI", payload.get("provider") == "openai"),
         _check("model matches configured OpenAI model", payload.get("model") == expected_model),
         _check("no warnings unless justified", len(payload.get("warnings") or []) == 0),
@@ -165,6 +176,23 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
             bool(instructions)
             and all(len(instruction.split()) <= 24 for instruction in instructions)
             and all(_starts_with_action_verb(instruction) for instruction in instructions),
+        ),
+        _check("instructions should have enough step depth", len(instructions) >= 3),
+        _check(
+            "omelet instructions should prepare eggs before cooking",
+            "omelet" not in all_text or _contains_any(all_text, ("beat", "scramble", "whisk")),
+        ),
+        _check(
+            "carbonara should not require heavy cream unless supplied",
+            "carbonara" not in all_text or "heavy cream" not in all_text,
+        ),
+        _check(
+            "cheesecake instructions should cover bake and chill",
+            "cheesecake" not in all_text or ("bake" in all_text and "chill" in all_text and len(instructions) > 1),
+        ),
+        _check(
+            "chicken casserole should include doneness or safety guidance",
+            not ("chicken" in all_text and "casserole" in all_text) or _contains_any(all_text, ("165", "done", "doneness", "safe", "temperature")),
         ),
         _check("structured fields should not be generic placeholders", not generic_values, f"generic={generic_values}"),
         _check("draft should not include unrelated foods", not unrelated, f"unrelated={sorted(unrelated)}"),
@@ -488,6 +516,10 @@ def _ingredient_names(ingredients: list[Any]) -> list[str]:
     return [name for name in names if name]
 
 
+def _ingredient_quantity_count(ingredients: list[Any]) -> int:
+    return sum(1 for ingredient in ingredients if isinstance(ingredient, dict) and str(ingredient.get("quantity") or "").strip())
+
+
 def _instruction_texts(instructions: list[Any]) -> list[str]:
     texts = []
     for instruction in instructions:
@@ -501,6 +533,10 @@ def _instruction_texts(instructions: list[Any]) -> list[str]:
 def _starts_with_action_verb(text: str) -> bool:
     first_word = text.strip().split(" ", 1)[0].lower().strip(".,:;!")
     return first_word in ACTION_VERBS
+
+
+def _contains_any(text: str, terms: tuple[str, ...]) -> bool:
+    return any(term in text for term in terms)
 
 
 def _word_count(text: str) -> int:

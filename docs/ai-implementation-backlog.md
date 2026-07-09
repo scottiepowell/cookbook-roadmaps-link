@@ -1075,6 +1075,52 @@ Done criteria:
 - normal validation remains offline;
 - no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
 
+## 0029B-2: RAG-Informed Recipe Creator Importer
+
+Status: complete.
+
+Goal: Improve the importer so `POST /ai/import-recipe` behaves like a RAG-informed recipe creator/importer for rough notes, not only a thin extractor.
+
+Files likely touched:
+
+- `ai-api/app/importer.py`
+- `ai-api/app/schemas.py`
+- `ai-api/app/main.py`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/`
+- `evals/ai_cookbook/`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-2-rag-informed-recipe-creator-importer-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite through the Git Bash validator if Windows direct pytest hits the known temp ACL issue;
+- repo validation;
+- diff whitespace check;
+- Docker Compose config check;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- importer retrieves bounded local dataset examples before provider calls when dataset is available;
+- importer falls back with warning when dataset retrieval is unavailable;
+- input-quality rejected and clarification paths still avoid retrieval/provider calls;
+- response includes retrieval metadata and dataset citations/provenance;
+- draft defaults to 4 servings when user does not specify servings;
+- missing quantities are estimated where reasonable and disclosed in notes;
+- prompt uses retrieved examples only for structure, proportions, and step completeness;
+- user-provided core ingredients and dish intent remain primary;
+- demo UI displays servings, estimated quantities, steps, and importer citations/provenance;
+- eval checks cover servings, quantities, citations, step depth, and recipe-specific issues for omelet, carbonara, cheesecake, and chicken casserole;
+- normal validation remains offline;
+- no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

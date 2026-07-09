@@ -96,12 +96,23 @@ def test_importer_expected_checks_pass_and_fail():
         "draft": {
             "title": "Lemon Herb White Beans",
             "description": "White beans with lemon, olive oil, garlic, and parsley.",
-            "ingredients": [{"name": "white beans"}, {"name": "lemon juice"}, {"name": "olive oil"}],
-            "instructions": [{"step": 1, "text": "Warm beans with olive oil."}, {"step": 2, "text": "Finish with lemon and parsley."}],
-            "notes": "Quantities are not specified in the source input.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "white beans", "quantity": "2", "unit": "cups"},
+                {"name": "lemon juice", "quantity": "1", "unit": "medium"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "Warm beans with olive oil."},
+                {"step": 2, "text": "Stir in lemon juice."},
+                {"step": 3, "text": "Finish with parsley."},
+            ],
+            "notes": "Quantities are estimated for 4 servings.",
         },
         "provider": "openai",
         "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
         "warnings": [],
     }
     assert all(check.passed for check in score_importer(passing, "gpt-5.4-nano"))
@@ -120,23 +131,26 @@ def test_importer_expected_checks_accept_structured_evidence_without_description
         "draft": {
             "title": "Lemon Herb White Beans",
             "description": None,
+            "servings": 4,
             "ingredients": [
-                {"name": "white beans (warm)"},
-                {"name": "olive oil"},
-                {"name": "garlic"},
-                {"name": "lemon juice"},
-                {"name": "parsley"},
-                {"name": "toast"},
+                {"name": "white beans (warm)", "quantity": "2", "unit": "cups"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "garlic", "quantity": "2", "unit": "cloves"},
+                {"name": "lemon juice", "quantity": "1", "unit": "medium"},
+                {"name": "parsley", "quantity": "0.25", "unit": "cup"},
+                {"name": "toast", "quantity": "4", "unit": "slices"},
             ],
             "instructions": [
                 {"step": 1, "text": "Warm the white beans."},
                 {"step": 2, "text": "Stir in olive oil, garlic, lemon juice, and parsley."},
                 {"step": 3, "text": "Serve the beans with toast."},
             ],
-            "notes": "Quantities and timing are not specified in the source input.",
+            "notes": "Quantities are estimated for 4 servings.",
         },
         "provider": "openai",
         "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
         "warnings": [],
     }
 
@@ -149,12 +163,24 @@ def test_importer_expected_checks_accept_alias_evidence():
         "draft": {
             "title": "Citrus Bean Toasts",
             "description": "A citrus bean topping served on bread.",
-            "ingredients": [{"name": "beans"}, {"name": "oil"}, {"name": "herbs"}, {"name": "bread"}],
-            "instructions": [{"step": 1, "text": "Warm beans with oil."}, {"step": 2, "text": "Serve on bread with herbs."}],
-            "notes": "Quantities are unspecified.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "beans", "quantity": "2", "unit": "cups"},
+                {"name": "oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "herbs", "quantity": "0.25", "unit": "cup"},
+                {"name": "bread", "quantity": "4", "unit": "slices"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "Warm beans with oil."},
+                {"step": 2, "text": "Stir herbs into beans."},
+                {"step": 3, "text": "Serve on bread."},
+            ],
+            "notes": "Quantities are estimated for 4 servings.",
         },
         "provider": "openai",
         "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
         "warnings": [],
     }
 
@@ -196,6 +222,60 @@ def test_importer_expected_checks_reject_generic_and_ungrounded_outputs():
         check.name == "draft should preserve at least two input ingredients across structured fields" and not check.passed
         for check in ungrounded_results
     )
+
+
+def test_importer_expected_checks_reject_weak_recipe_creator_outputs():
+    weak_cheesecake = {
+        "draft": {
+            "title": "Cheesecake",
+            "description": "Cheesecake with cream cheese and graham cracker crust.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "cream cheese", "quantity": "16", "unit": "ounces"},
+                {"name": "sugar", "quantity": "0.75", "unit": "cup"},
+                {"name": "eggs", "quantity": "4", "unit": "large"},
+            ],
+            "instructions": [{"step": 1, "text": "Bake and chill the cheesecake."}],
+            "notes": "Quantities are estimated for 4 servings.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "dataset-cheesecake", "title": "Classic Cheesecake"}],
+        "warnings": [],
+    }
+
+    cheesecake_results = score_importer(weak_cheesecake, "gpt-5.4-nano")
+    assert any(check.name == "instructions should have enough step depth" and not check.passed for check in cheesecake_results)
+    assert any(check.name == "cheesecake instructions should cover bake and chill" and not check.passed for check in cheesecake_results)
+
+    carbonara_with_cream = {
+        "draft": {
+            "title": "Carbonara Pasta",
+            "description": "Carbonara pasta with eggs and parmesan.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "spaghetti", "quantity": "12", "unit": "ounces"},
+                {"name": "eggs", "quantity": "4", "unit": "large"},
+                {"name": "parmesan", "quantity": "1", "unit": "cup"},
+                {"name": "heavy cream", "quantity": "0.5", "unit": "cup"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "Boil spaghetti until tender."},
+                {"step": 2, "text": "Whisk eggs and parmesan."},
+                {"step": 3, "text": "Toss pasta off heat."},
+            ],
+            "notes": "Quantities are estimated for 4 servings.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "dataset-carbonara", "title": "Carbonara"}],
+        "warnings": [],
+    }
+
+    carbonara_results = score_importer(carbonara_with_cream, "gpt-5.4-nano")
+    assert any(check.name == "carbonara should not require heavy cream unless supplied" and not check.passed for check in carbonara_results)
 
 
 def test_ask_and_dataset_expected_checks_detect_unsupported_titles():

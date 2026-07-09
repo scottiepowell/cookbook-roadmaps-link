@@ -96,13 +96,13 @@ async function runImporter() {
   };
   await runWorkflow(workflow, requestJson("/ai/import-recipe", postOptions(payload), "importer"), {
     title: (data) => data.draft?.title || "Structured recipe draft",
-    answer: (data) => [
-      `Title: ${data.draft?.title || "Untitled"}`,
-      `Ingredients: ${(data.draft?.ingredients || []).map((item) => item.name).join(", ") || "None"}`,
-      `Steps: ${(data.draft?.instructions || []).length}`,
-    ].join("\n"),
-    meta: providerMetadata,
-    citations: () => [],
+    answer: importerAnswer,
+    meta: (data) => ({...providerMetadata(data), servings: data.draft?.servings ?? "none", retrieved: data.retrieval?.retrieved_count ?? 0}),
+    citations: (data) => (data.citations || []).map((citation) => ({
+      title: citation.title,
+      detail: `Source ${citation.source_id}; ${citation.provenance?.license || "license unavailable"}`,
+      snippet: citation.snippet,
+    })),
   });
 }
 
@@ -379,6 +379,25 @@ function providerMetadata(data) {
     model: data.model || "none",
     warnings: (data.warnings || []).length,
   };
+}
+
+function importerAnswer(data) {
+  const draft = data.draft || {};
+  const ingredients = (draft.ingredients || []).map((item) => {
+    const amount = [item.quantity, item.unit].filter(Boolean).join(" ");
+    return `${amount ? `${amount} ` : ""}${item.name}${item.note ? ` (${item.note})` : ""}`;
+  });
+  const instructions = (draft.instructions || []).map((step) => `${step.step}. ${step.text}`);
+  return [
+    `Servings: ${draft.servings ?? "not specified"}`,
+    "",
+    "Ingredients:",
+    ingredients.length ? ingredients.join("\n") : "None",
+    "",
+    "Instructions:",
+    instructions.length ? instructions.join("\n") : "None",
+    draft.notes ? `\nNotes: ${draft.notes}` : "",
+  ].filter((line) => line !== "").join("\n");
 }
 
 function friendlyError(status, detail) {

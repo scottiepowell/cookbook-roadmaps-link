@@ -8,7 +8,7 @@ This repo now includes a portfolio-ready AI cookbook sidecar: Vanilla Cookbook r
 
 Completed AI workflows:
 
-- Structured recipe importer: `POST /ai/import-recipe` returns schema-validated recipe drafts.
+- Structured recipe import/create: `POST /ai/import-recipe` returns schema-validated recipe drafts from pasted notes, defaults to 4 servings, estimates missing quantities, and uses local dataset examples for structure/provenance when available.
 - Ask My Cookbook: `POST /ai/ask` answers over saved recipes with recipe citations.
 - Dataset search/RAG: `GET/POST /dataset/search` and `POST /dataset/ask` use bounded local dataset fixtures with provenance citations.
 - Meal planning: `POST /ai/meal-plan` builds plans from saved recipe candidates.
@@ -81,6 +81,8 @@ Without opt-in settings, it skips cleanly and performs no live calls.
 The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). The current acceptance baseline is the post-`0028B` 6/6 run recorded in [Live OpenAI Demo Regression Notes: 2026-07-08](docs/live-openai-demo-regression-notes-2026-07-08.md), after the post-`0028A` importer evaluator false failure was fixed. Future live eval runs should compare correctness, usefulness, importer ingredient preservation, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that acceptance history. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
+
+The importer now behaves as an import/create workflow for rough recipe notes. When local dataset fixtures are configured, it retrieves a small bounded set of similar recipes before the provider call and passes them as structure guidance only. The user's ingredients and dish intent remain primary, retrieved recipes are not copied verbatim, citations/provenance are returned for transparency, and estimated quantities are disclosed in notes.
 
 Production access architecture is proposed, not implemented. Before any public live provider-backed AI exposure, the AI demo needs an access layer with time-limited sessions, per-call metering, provider budget enforcement, a global live-provider disable switch, protected routes, and metadata-only logging by default. Payment integration is deferred, and the platform rule remains: shared infrastructure is allowed, but each demo owns its own data boundary.
 

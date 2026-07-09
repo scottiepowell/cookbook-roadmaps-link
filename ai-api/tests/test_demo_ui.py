@@ -34,6 +34,9 @@ def test_demo_static_assets_load():
     assert js_response.status_code == 200
     assert "javascript" in js_response.headers["content-type"]
     assert "fetch(" in js_response.text
+    assert "importerAnswer" in js_response.text
+    assert "servings" in js_response.text
+    assert "data.citations" in js_response.text
 
 
 def test_demo_readiness_endpoint_returns_safe_status():
