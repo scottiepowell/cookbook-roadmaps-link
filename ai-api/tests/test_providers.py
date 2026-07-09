@@ -2,7 +2,7 @@ import pytest
 
 from app.config import get_ai_settings
 from app.providers import LLMRequest, StructuredLLMRequest, get_provider
-from app.providers.errors import ProviderConfigError
+from app.providers.errors import ProviderConfigError, build_provider_call_error, describe_provider_exception, extract_provider_debug_details
 from app.providers.mock import MockProvider
 from app.providers.openai_provider import OpenAIProvider
 
@@ -108,3 +108,32 @@ def test_unsupported_provider_returns_controlled_error(monkeypatch):
 
     with pytest.raises(ProviderConfigError, match="Unsupported AI_PROVIDER"):
         get_provider()
+
+
+def test_provider_debug_sanitizer_redacts_secret_like_strings():
+    exc = RuntimeError(
+        '401 Authorization: Bearer sk-live-secret-value OPENAI_API_KEY=sk-live-other-value api_key="another-secret"'
+    )
+
+    details = describe_provider_exception(exc)
+
+    assert details.category == "auth"
+    assert details.exception_type == "RuntimeError"
+    assert "sk-live-secret-value" not in details.safe_summary
+    assert "sk-live-other-value" not in details.safe_summary
+    assert "another-secret" not in details.safe_summary
+    assert "[redacted]" in details.safe_summary
+
+
+def test_provider_call_error_preserves_debug_details_for_wrapped_exceptions():
+    root = RuntimeError("Invalid schema: default is not allowed for response_format json_schema.")
+    wrapped = build_provider_call_error("OpenAI structured generation failed.", root)
+    top = RuntimeError("recipe importer failed")
+    top.__cause__ = wrapped
+
+    details = extract_provider_debug_details(top)
+
+    assert details is not None
+    assert details.category == "schema_rejection"
+    assert details.exception_type == "RuntimeError"
+    assert "default is not allowed" in details.safe_summary

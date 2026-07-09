@@ -1,7 +1,9 @@
+import subprocess
 from pathlib import Path
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "start-ai-demo-local.ps1"
+REPO_ROOT = SCRIPT.parents[1]
 
 
 def read_script() -> str:
@@ -14,8 +16,12 @@ def test_start_ai_demo_local_supports_provider_override_parameters():
     assert '[ValidateSet("mock", "openai")]' in text
     assert "[string]$Provider" in text
     assert "[string]$OpenAIModel" in text
+    assert "[string]$RecipeDatasetDir" in text
+    assert "[Nullable[int]]$RecipeDatasetIndexLimit" in text
     assert "[Nullable[int]]$MaxOutputTokens" in text
     assert "[Nullable[int]]$LiveTestBudgetCents" in text
+    assert "[Nullable[double]]$AiTimeoutSeconds" in text
+    assert "[switch]$ProviderDebug" in text
     assert "[switch]$EnableLiveTests" in text
 
 
@@ -44,6 +50,17 @@ def test_start_ai_demo_local_does_not_force_mock_provider():
     assert "$env:AI_PROVIDER = $EffectiveProvider" in text
 
 
+def test_start_ai_demo_local_keeps_mock_launch_safe_by_default():
+    text = read_script()
+
+    assert '[string]$Provider = "mock"' in text
+    assert '"Provider=openai requires -EnableLiveTests' in text
+    assert '$env:OPENAI_ENABLE_LIVE_TESTS = "true"' in text
+    assert 'Get-ParameterOrEnv -Name "RecipeDatasetDir"' in text
+    assert 'DefaultValue $DefaultRecipeDatasetDir' in text
+    assert '$env:AI_PROVIDER_DEBUG = $EffectiveProviderDebug.ToString().ToLowerInvariant()' in text
+
+
 def test_start_ai_demo_local_prints_safe_summary_without_key_value():
     text = read_script()
 
@@ -52,6 +69,31 @@ def test_start_ai_demo_local_prints_safe_summary_without_key_value():
     assert 'Write-Host "Live tests enabled:' in text
     assert 'Write-Host "Budget cents:' in text
     assert 'Write-Host "Max output tokens:' in text
+    assert 'Write-Host "AI timeout seconds:' in text
+    assert 'Write-Host "Provider debug:' in text
     assert 'Write-Host "Cookbook DB path:' in text
     assert 'Write-Host "Dataset path:' in text
+    assert 'Write-Host "Dataset index limit:' in text
     assert 'Write-Host "OPENAI_API_KEY' not in text
+
+
+def test_start_ai_demo_local_has_valid_powershell_syntax():
+    command = (
+        "$tokens = $null; "
+        "$errors = $null; "
+        "[System.Management.Automation.Language.Parser]::ParseFile("
+        f"'{SCRIPT}', [ref]$tokens, [ref]$errors) | Out-Null; "
+        "if ($errors.Count -gt 0) { "
+        '$errors | ForEach-Object { Write-Error $_.Message }; '
+        "exit 1 }"
+    )
+
+    result = subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout

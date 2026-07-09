@@ -39,6 +39,9 @@ def test_workflow_logging_helper_emits_counts_without_payloads(caplog):
         retrieved_count=2,
         citation_count=2,
         warning_count=1,
+        provider_error_category="schema_rejection",
+        provider_error_type="BadRequestError",
+        safe_error_summary="Invalid schema: default=[redacted]",
     )
 
     events = [json.loads(record.message) for record in caplog.records if record.name == LOGGER_NAME]
@@ -50,6 +53,9 @@ def test_workflow_logging_helper_emits_counts_without_payloads(caplog):
     assert event["retrieved_count"] == 2
     assert event["citation_count"] == 2
     assert event["warning_count"] == 1
+    assert event["provider_error_category"] == "schema_rejection"
+    assert event["provider_error_type"] == "BadRequestError"
+    assert "default=[redacted]" in event["safe_error_summary"]
     assert "prompt" not in event
     assert "response_body" not in event
 

@@ -13,6 +13,7 @@ class AISettings:
     model: str
     max_output_tokens: int
     timeout_seconds: float
+    provider_debug: bool
     openai_model: str
     openai_fallback_model: str
     openai_live_tests_enabled: bool
@@ -74,6 +75,7 @@ def get_ai_settings() -> AISettings:
         model=os.getenv("AI_MODEL", DEFAULT_AI_MODEL).strip() or DEFAULT_AI_MODEL,
         max_output_tokens=_int_env("AI_MAX_OUTPUT_TOKENS", DEFAULT_AI_MAX_OUTPUT_TOKENS),
         timeout_seconds=_float_env("AI_TIMEOUT_SECONDS", DEFAULT_AI_TIMEOUT_SECONDS),
+        provider_debug=_bool_env("AI_PROVIDER_DEBUG", default=False),
         openai_model=os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL).strip() or DEFAULT_OPENAI_MODEL,
         openai_fallback_model=(
             os.getenv("OPENAI_FALLBACK_MODEL", DEFAULT_OPENAI_FALLBACK_MODEL).strip()

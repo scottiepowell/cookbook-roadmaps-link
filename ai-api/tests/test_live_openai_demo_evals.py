@@ -1,6 +1,8 @@
 import importlib.util
 import json
+import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -35,6 +37,21 @@ def load_live_eval_module():
     return module
 
 
+def run_live_eval_wrapper(*, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    repo_root = Path(__file__).resolve().parents[2]
+    merged_env = os.environ.copy()
+    if env is not None:
+        merged_env.update(env)
+    return subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(repo_root / "scripts" / "run-openai-demo-evals.ps1")],
+        cwd=repo_root,
+        env=merged_env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
 def test_live_eval_guard_skips_when_not_enabled():
     live_evals = load_live_eval_module()
     result = live_evals.evaluate_live_eval_guard({})
@@ -42,6 +59,25 @@ def test_live_eval_guard_skips_when_not_enabled():
     assert result.should_run is False
     assert result.exit_code == 0
     assert "OPENAI_ENABLE_LIVE_TESTS=true" in result.message
+
+
+def test_live_eval_wrapper_skips_without_opt_in():
+    env = os.environ.copy()
+    for name in (
+        "AI_PROVIDER",
+        "OPENAI_ENABLE_LIVE_TESTS",
+        "OPENAI_API_KEY",
+        "OPENAI_LIVE_TEST_BUDGET_CENTS",
+        "OPENAI_MODEL",
+        "AI_MAX_OUTPUT_TOKENS",
+    ):
+        env.pop(name, None)
+
+    result = run_live_eval_wrapper(env=env)
+
+    assert result.returncode == 0
+    assert "SKIP:" in result.stdout
+    assert "OPENAI_ENABLE_LIVE_TESTS=true is required." in result.stdout
 
 
 def test_live_eval_guard_requires_explicit_model_and_token_cap():

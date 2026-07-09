@@ -4,7 +4,7 @@ from typing import Any
 
 from app.config import DEFAULT_AI_MAX_OUTPUT_TOKENS, DEFAULT_OPENAI_FALLBACK_MODEL, DEFAULT_OPENAI_MODEL
 from app.providers.base import LLMProvider, LLMRequest, LLMResponse, StructuredLLMRequest, StructuredLLMResponse
-from app.providers.errors import ProviderCallError, ProviderConfigError
+from app.providers.errors import ProviderCallError, ProviderConfigError, build_provider_call_error
 from app.providers.openai_schema import normalize_strict_json_schema
 
 
@@ -39,7 +39,7 @@ class OpenAIProvider(LLMProvider):
                 temperature=request.temperature,
             )
         except Exception as exc:  # pragma: no cover - live provider path is manual-only.
-            raise ProviderCallError("OpenAI text generation failed.") from exc
+            raise build_provider_call_error("OpenAI text generation failed.", exc) from exc
 
         return LLMResponse(
             text=_response_text(response),
@@ -64,13 +64,18 @@ class OpenAIProvider(LLMProvider):
                 },
             )
         except Exception as exc:  # pragma: no cover - live provider path is manual-only.
-            raise ProviderCallError("OpenAI structured generation failed.") from exc
+            raise build_provider_call_error("OpenAI structured generation failed.", exc) from exc
 
         text = _response_text(response)
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:  # pragma: no cover - live provider path is manual-only.
-            raise ProviderCallError("OpenAI structured generation returned invalid JSON.") from exc
+            raise ProviderCallError(
+                "OpenAI structured generation returned invalid JSON.",
+                failure_category="invalid_json",
+                exception_type=exc.__class__.__name__,
+                safe_summary="Structured response could not be decoded as JSON.",
+            ) from exc
 
         return StructuredLLMResponse(
             data=data,

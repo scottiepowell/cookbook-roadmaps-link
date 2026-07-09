@@ -46,7 +46,24 @@ Live OpenAI browser demo mode with explicit limits:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 600 -LiveTestBudgetCents 50 -Port 8001
 ```
 
-`OPENAI_API_KEY` must already exist in the environment for `-Provider openai`. The start script does not prompt for it and does not print it. OpenAI mode defaults to `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, and `AI_MAX_OUTPUT_TOKENS=500` unless environment variables or explicit parameters override those values.
+Full local RAG browser demo mode with local provider diagnostics:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 `
+  -Provider openai `
+  -EnableLiveTests `
+  -OpenAIModel gpt-5.4-nano `
+  -MaxOutputTokens 900 `
+  -LiveTestBudgetCents 25 `
+  -AiTimeoutSeconds 60 `
+  -RecipeDatasetDir recipe-dataset `
+  -RecipeDatasetIndexLimit 5000 `
+  -ProviderDebug
+```
+
+`OPENAI_API_KEY` must already exist in the environment for `-Provider openai`. The start script does not prompt for it and does not print it. OpenAI mode defaults to `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, `AI_MAX_OUTPUT_TOKENS=500`, a generated `.tmp-ai-demo` fixture dataset, `AI_TIMEOUT_SECONDS=20`, and `AI_PROVIDER_DEBUG=false` unless environment variables or explicit parameters override those values.
+
+The startup summary now prints only safe values: provider, model, live-test enabled state, budget cents, max output tokens, AI timeout seconds, provider-debug enabled state, local URL, cookbook DB path, dataset path, and dataset index limit.
 
 The UI readiness panel shows whether:
 
@@ -56,6 +73,31 @@ The UI readiness panel shows whether:
 - local dataset demo data is available.
 
 In the local mock demo path, readiness should show saved recipes available and dataset available. If either is missing, stop and rerun `scripts\start-ai-demo-local.ps1`; missing data should appear as a friendly recoverable condition, not a browser failure.
+
+## Importer-Only Diagnostic
+
+When the browser path is ambiguous, test the importer directly without the UI:
+
+```powershell
+$body = @{
+  text = "omelet with eggs cheese maybe onions cooked in butter fold it over"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/ai/import-recipe -ContentType "application/json" -Body $body |
+  ConvertTo-Json -Depth 8
+```
+
+Expected live-path signals for the current manual acceptance target:
+
+- no `503`;
+- `provider=openai`;
+- `model=gpt-5.4-nano`;
+- `draft.servings=4` when the user did not specify servings;
+- estimated quantities where reasonable;
+- stronger multi-step instructions;
+- citations when dataset retrieval returns matches.
+
+If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields. Those diagnostics must not include API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings.
 
 ## Optional Live OpenAI Smoke Path
 
@@ -134,6 +176,7 @@ Optional input-quality check: enter `!!!!!` in dataset search to show the "Input
 | Readiness says saved recipes unavailable | Rerun `scripts\start-ai-demo-local.ps1` or `scripts\seed-ai-demo-data.ps1`, then confirm `COOKBOOK_DB_PATH` points at the generated SQLite fixture. |
 | Readiness says dataset unavailable | Rerun `scripts\start-ai-demo-local.ps1` or confirm `RECIPE_DATASET_DIR` points at the generated dataset fixture. |
 | Workflow returns a friendly error | Check readiness, then inspect sidecar logs for request ID, endpoint, status, and safe error type. |
+| Importer returns `503` after several seconds in live mode | Enable `-ProviderDebug`, rerun the importer-only diagnostic, and inspect `provider_error_category`, `provider_error_type`, and `safe_error_summary`. Common categories are `schema_rejection`, `timeout`, `bad_model`, `quota_or_rate_limit`, `auth`, and `network`. |
 | Workflow shows "Needs one more detail" | Add one ingredient, recipe name, cooking method, or meal scope; the app intentionally asks only one bounded clarification question. |
 | Workflow shows "Input not usable yet" | Replace empty, symbol-only, placeholder, or junk text with a concrete cooking request. |
 | Provider unavailable | Confirm provider mode and use mock mode for normal demos. |
@@ -144,6 +187,8 @@ Optional input-quality check: enter `!!!!!` in dataset search to show the "Input
 `POST /ai/import-recipe` now handles rough recipe creation notes as well as pasted recipe text. It defaults to 4 servings unless the user states another serving count. When quantities are missing, the draft should include reasonable estimates and disclose that they are estimated in `notes`.
 
 When `RECIPE_DATASET_DIR` is configured and available, the importer retrieves a small bounded set of similar dataset recipes before the provider call. These examples are used only for structure, proportion hints, and step completeness. The model must preserve the user's core ingredients and dish intent, avoid copying retrieved recipes verbatim, and return citations/provenance for the examples that informed the draft.
+
+The live importer `503` issue observed during manual recipe-entry testing was caused by strict structured-output schema metadata that OpenAI rejected. `ai-api/app/providers/openai_schema.py` now strips unsupported metadata such as `default`, `examples`, `title`, and `description` recursively before the request is sent, while application-side importer behavior still defaults servings to 4.
 
 Normal validation remains offline. Do not commit raw dataset files, generated `.tmp-ai-demo/` artifacts, raw provider responses, screenshots, private env files, or credentials.
 
@@ -171,6 +216,9 @@ Useful log fields:
 - `citation_count`
 - `warning_count`
 - `safe_error_type`
+- `provider_error_category`
+- `provider_error_type`
+- `safe_error_summary`
 
 ## Screenshot Guidance
 

@@ -1,4 +1,6 @@
 import importlib.util
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -11,6 +13,21 @@ def load_smoke_module():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def run_wrapper(script_name: str, *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    repo_root = Path(__file__).resolve().parents[2]
+    merged_env = os.environ.copy()
+    if env is not None:
+        merged_env.update(env)
+    return subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(repo_root / "scripts" / script_name)],
+        cwd=repo_root,
+        env=merged_env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
 def test_live_guard_skips_when_not_enabled():
@@ -116,3 +133,14 @@ def test_smoke_temp_dir_uses_best_effort_cleanup(monkeypatch):
         "prefix": "cookbook-openai-smoke-",
         "ignore_cleanup_errors": True,
     }
+
+
+def test_demo_ai_live_smoke_wrapper_skips_without_opt_in():
+    env = os.environ.copy()
+    for name in ("AI_PROVIDER", "OPENAI_ENABLE_LIVE_TESTS", "OPENAI_API_KEY", "OPENAI_LIVE_TEST_BUDGET_CENTS"):
+        env.pop(name, None)
+
+    result = run_wrapper("demo-ai-live-smoke.ps1", env=env)
+
+    assert result.returncode == 0
+    assert "Live smoke skipped: set OPENAI_ENABLE_LIVE_TESTS=true to opt in." in result.stdout

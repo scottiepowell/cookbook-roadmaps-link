@@ -1121,6 +1121,51 @@ Done criteria:
 - normal validation remains offline;
 - no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
 
+## 0029B-3: Live Importer 503 Diagnostics And Dataset Overrides
+
+Status: complete.
+
+Goal: Fix the live importer blocker where `POST /ai/import-recipe` returned `503 Service Unavailable` during manual OpenAI recipe-entry testing, and add local startup overrides for full-dataset RAG validation.
+
+Files likely touched:
+
+- `ai-api/app/providers/openai_schema.py`
+- `ai-api/app/providers/openai_provider.py`
+- `ai-api/app/providers/errors.py`
+- `ai-api/app/config.py`
+- `ai-api/app/main.py`
+- `ai-api/tests/`
+- `scripts/start-ai-demo-local.ps1`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-3-live-importer-503-diagnostics-and-dataset-overrides-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite;
+- repo validation;
+- diff whitespace check;
+- Docker Compose config check;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- strict OpenAI structured schemas recursively strip unsupported metadata such as `default`, `examples`, `title`, and `description` before provider calls;
+- object schemas still keep `additionalProperties=false` and strict required-property behavior;
+- importer application behavior still defaults servings to 4 without relying on provider-schema defaults;
+- opt-in `AI_PROVIDER_DEBUG=true` emits sanitized local provider diagnostics that help distinguish timeout, schema rejection, bad model, quota/rate limit, auth, and network failures;
+- diagnostics never log API keys, Authorization headers, raw prompts, raw provider responses, `.env` values, or secret-like strings;
+- `start-ai-demo-local.ps1` supports `-RecipeDatasetDir`, `-RecipeDatasetIndexLimit`, `-AiTimeoutSeconds`, and `-ProviderDebug`;
+- mock remains the safe default, generated `.tmp-ai-demo` fixtures remain the default dataset path, and live OpenAI still requires explicit opt-in;
+- importer-only diagnostics are documented without exposing secrets or raw provider responses;
+- normal validation remains offline;
+- no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

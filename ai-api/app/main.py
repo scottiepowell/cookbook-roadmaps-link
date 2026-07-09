@@ -11,6 +11,7 @@ from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.meal_plan_endpoint import MealPlanProviderError, MealPlanValidationError, create_meal_plan
 from app.observability import configure_logging, log_ai_workflow, request_logging_middleware
+from app.providers.errors import extract_provider_debug_details
 from app.recipe_reader import NoRecipeTableFoundError, RecipeReaderError, load_recipe_documents
 from app.rag import AskProviderError, ask_cookbook
 from app.schemas import (
@@ -157,7 +158,13 @@ def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskRespo
         )
         return response
     except DatasetAskProviderError as exc:
-        log_ai_workflow("dataset.ask", request, status="error", safe_error_type=exc.__class__.__name__)
+        log_ai_workflow(
+            "dataset.ask",
+            request,
+            status="error",
+            safe_error_type=exc.__class__.__name__,
+            **_provider_debug_log_fields(exc),
+        )
         raise HTTPException(status_code=503, detail="Dataset ask provider is not available.") from exc
 
 
@@ -176,7 +183,13 @@ def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImpor
         )
         return response
     except RecipeImportProviderError as exc:
-        log_ai_workflow("recipe.import", request, status="error", safe_error_type=exc.__class__.__name__)
+        log_ai_workflow(
+            "recipe.import",
+            request,
+            status="error",
+            safe_error_type=exc.__class__.__name__,
+            **_provider_debug_log_fields(exc),
+        )
         raise HTTPException(status_code=503, detail="Recipe importer provider is not available.") from exc
     except RecipeImportValidationError as exc:
         log_ai_workflow("recipe.import", request, status="error", safe_error_type=exc.__class__.__name__)
@@ -204,7 +217,13 @@ def ask_my_cookbook(payload: AskRequest, request: Request) -> AskResponse:
         log_ai_workflow("cookbook.ask", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=500, detail="Recipe database could not be read.") from exc
     except AskProviderError as exc:
-        log_ai_workflow("cookbook.ask", request, status="error", safe_error_type=exc.__class__.__name__)
+        log_ai_workflow(
+            "cookbook.ask",
+            request,
+            status="error",
+            safe_error_type=exc.__class__.__name__,
+            **_provider_debug_log_fields(exc),
+        )
         raise HTTPException(status_code=503, detail="Ask provider is not available.") from exc
 
 
@@ -229,7 +248,13 @@ def meal_plan(payload: MealPlanRequest, request: Request) -> MealPlanResponse:
         log_ai_workflow("meal.plan", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=500, detail="Recipe database could not be read.") from exc
     except MealPlanProviderError as exc:
-        log_ai_workflow("meal.plan", request, status="error", safe_error_type=exc.__class__.__name__)
+        log_ai_workflow(
+            "meal.plan",
+            request,
+            status="error",
+            safe_error_type=exc.__class__.__name__,
+            **_provider_debug_log_fields(exc),
+        )
         raise HTTPException(status_code=503, detail="Meal-plan provider is not available.") from exc
     except MealPlanValidationError as exc:
         log_ai_workflow("meal.plan", request, status="error", safe_error_type=exc.__class__.__name__)
@@ -256,3 +281,18 @@ def _safe_recipe_count() -> int | None:
         return len(load_recipe_documents())
     except (NoRecipeTableFoundError, RecipeReaderError, OSError, sqlite3.Error):
         return None
+
+
+def _provider_debug_log_fields(exc: BaseException) -> dict[str, str]:
+    if not get_ai_settings().provider_debug:
+        return {}
+
+    details = extract_provider_debug_details(exc)
+    if details is None:
+        return {}
+
+    return {
+        "provider_error_category": details.category,
+        "provider_error_type": details.exception_type,
+        "safe_error_summary": details.safe_summary,
+    }

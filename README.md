@@ -68,7 +68,35 @@ Optional bounded live overrides:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 600 -LiveTestBudgetCents 50 -Port 8001
 ```
 
-The start script defaults to mock mode, respects existing provider environment variables unless explicit parameters override them, and never prints API keys or environment file contents.
+Full local RAG manual importer launch:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 `
+  -Provider openai `
+  -EnableLiveTests `
+  -OpenAIModel gpt-5.4-nano `
+  -MaxOutputTokens 900 `
+  -LiveTestBudgetCents 25 `
+  -AiTimeoutSeconds 60 `
+  -RecipeDatasetDir recipe-dataset `
+  -RecipeDatasetIndexLimit 5000 `
+  -ProviderDebug
+```
+
+The start script defaults to mock mode, respects existing provider environment variables unless explicit parameters override them, and never prints API keys or environment file contents. `AI_PROVIDER_DEBUG=true` is opt-in and only adds sanitized local provider diagnostics such as error category, exception type, and a short redacted summary. It does not log API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings.
+
+Importer-only diagnostic without the browser:
+
+```powershell
+$body = @{
+  text = "omelet with eggs cheese maybe onions cooked in butter fold it over"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/ai/import-recipe -ContentType "application/json" -Body $body |
+  ConvertTo-Json -Depth 8
+```
+
+With `-ProviderDebug` enabled, local logs can distinguish timeout, schema rejection, bad model, quota/rate limit, auth, and network failures while keeping the public `503` response safe.
 
 Run the live OpenAI demo eval wrapper only with explicit live opt-in settings:
 
@@ -83,6 +111,8 @@ The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Dem
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
 The importer now behaves as an import/create workflow for rough recipe notes. When local dataset fixtures are configured, it retrieves a small bounded set of similar recipes before the provider call and passes them as structure guidance only. The user's ingredients and dish intent remain primary, retrieved recipes are not copied verbatim, citations/provenance are returned for transparency, and estimated quantities are disclosed in notes.
+
+The live importer `503` blocker from manual testing was traced to strict structured-output schema metadata that OpenAI rejected. The schema normalizer now strips unsupported metadata such as `default`, `examples`, `title`, and `description` before the provider call, while application behavior still defaults importer servings to 4.
 
 Production access architecture is proposed, not implemented. Before any public live provider-backed AI exposure, the AI demo needs an access layer with time-limited sessions, per-call metering, provider budget enforcement, a global live-provider disable switch, protected routes, and metadata-only logging by default. Payment integration is deferred, and the platform rule remains: shared infrastructure is allowed, but each demo owns its own data boundary.
 

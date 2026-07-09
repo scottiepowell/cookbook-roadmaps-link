@@ -20,6 +20,9 @@ def test_recipe_import_root_schema_is_strict_object():
         "source",
         "notes",
     ]
+    assert "default" not in schema["properties"]["servings"]
+    assert "title" not in schema["properties"]["servings"]
+    assert "description" not in schema
 
 
 def test_recipe_import_nested_schemas_are_strict_objects():
@@ -68,6 +71,47 @@ def test_normalizer_does_not_mutate_original_schema():
     assert original["$defs"]["RecipeIngredientDraft"]["required"] == ["name"]
 
 
+def test_normalizer_strips_schema_metadata_recursively_without_removing_properties():
+    original = {
+        "type": "object",
+        "title": "Root schema",
+        "description": "top-level description",
+        "examples": [{"title": "demo"}],
+        "properties": {
+            "title": {
+                "type": "string",
+                "title": "Recipe title",
+                "description": "recipe title field",
+                "default": "Fallback title",
+            },
+            "draft": {
+                "type": "object",
+                "description": "nested object",
+                "properties": {
+                    "servings": {
+                        "type": "integer",
+                        "default": 4,
+                        "examples": [4],
+                        "description": "default servings",
+                    }
+                },
+            },
+        },
+    }
+
+    normalized = normalize_strict_json_schema(original)
+
+    assert normalized["required"] == ["title", "draft"]
+    assert normalized["properties"]["title"]["type"] == "string"
+    assert "default" not in normalized["properties"]["title"]
+    assert "title" not in normalized["properties"]["title"]
+    assert "description" not in normalized["properties"]["draft"]
+    assert normalized["properties"]["draft"]["additionalProperties"] is False
+    assert normalized["properties"]["draft"]["required"] == ["servings"]
+    assert "default" not in normalized["properties"]["draft"]["properties"]["servings"]
+    assert "examples" not in normalized["properties"]["draft"]["properties"]["servings"]
+
+
 def test_openai_provider_sends_normalized_schema_without_network_call():
     original_schema = RecipeImportDraft.model_json_schema()
     client = RecordingOpenAIClient()
@@ -100,6 +144,7 @@ def test_openai_provider_sends_normalized_schema_without_network_call():
     ]
     assert sent_schema["$defs"]["RecipeIngredientDraft"]["additionalProperties"] is False
     assert sent_schema["$defs"]["RecipeIngredientDraft"]["required"] == ["name", "quantity", "unit", "note"]
+    assert "default" not in sent_schema["properties"]["servings"]
     assert "additionalProperties" not in original_schema
 
 

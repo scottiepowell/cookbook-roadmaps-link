@@ -7,7 +7,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Feature | Status | Endpoint or Script | Proof | Notes |
 | --- | --- | --- | --- | --- |
 | Health/config | Complete | `GET /health`, `GET /ai/config` | pytest, mock demo | Reports readiness and non-secret provider availability. |
-| Structured recipe import/create | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted notes, defaults to 4 servings, estimates missing quantities with notes, and uses bounded local dataset examples for structure/provenance when available. |
+| Structured recipe import/create | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted notes, defaults to 4 servings in application behavior, estimates missing quantities with notes, uses bounded local dataset examples for structure/provenance when available, and now strips unsupported strict-schema metadata before OpenAI structured calls. |
 | Ask My Cookbook | Complete | `POST /ai/ask` | pytest, offline evals, live smoke | Retrieves saved recipes first and cites recipe IDs/titles. |
 | Local dataset search | Complete | `GET /dataset/search`, `POST /dataset/search` | pytest, mock demo | Uses bounded deterministic keyword retrieval over generated fixtures. |
 | Dataset Ask/RAG | Complete | `POST /dataset/ask` | pytest, offline evals, live smoke | Answers from retrieved dataset records with provenance citations. |
@@ -16,12 +16,12 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
 | Manual OpenAI smoke | Complete, manual-only | `scripts/smoke-openai-live.py`, `scripts/demo-ai-live-smoke.ps1` | recorded manual run | Requires explicit opt-in, API key, token cap, and budget cap. |
 | Live OpenAI demo evals | Complete, manual-only | `scripts/run-openai-demo-evals.ps1` | offline harness tests; first GPT-nano baseline; post-0028B 6/6 acceptance run | Requires explicit opt-in and writes ignored metrics/results under `.tmp-ai-demo/live-evals/`. Includes usefulness checks, tuned importer ingredient-evidence checks, latency/token thresholds, and GPT-nano cost estimates with `cost_source`. |
-| Strict OpenAI structured schema | Complete | provider harness | offline fake-client tests | Normalizes Pydantic schemas for strict structured outputs. |
+| Strict OpenAI structured schema | Complete | provider harness | offline fake-client tests | Normalizes Pydantic schemas for strict structured outputs, strips unsupported metadata like `default`/`examples`/`title`/`description`, keeps `additionalProperties=false`, and keeps strict required-property behavior. |
 | Mock demo path | Complete | `scripts/demo-ai-mock.ps1` | local script validation | Runs offline evals and endpoint checks with generated fixtures. |
-| Local browser demo launch | Complete | `scripts/start-ai-demo-local.ps1` | pytest, mock demo | Seeds generated saved recipes and dataset fixtures, starts `/demo` on `127.0.0.1:8000`. Defaults to mock, supports intentional `-Provider openai -EnableLiveTests`, respects existing env vars unless explicit parameters override them, and prints only a safe startup summary. |
+| Local browser demo launch | Complete | `scripts/start-ai-demo-local.ps1` | pytest, mock demo | Seeds generated saved recipes and dataset fixtures, starts `/demo` on `127.0.0.1:8000`. Defaults to mock, supports intentional `-Provider openai -EnableLiveTests`, plus dataset/time-limit/provider-debug overrides for full local RAG testing, respects existing env vars unless explicit parameters override them, and prints only a safe startup summary. |
 | REST examples | Complete | `scripts/demo-ai-requests.http` | docs/examples | Manual request examples for portfolio walkthroughs. |
 | Sidecar demo UI | Complete | `GET /demo`, `GET /demo/ai`, `GET /demo/readiness` | TestClient UI/readiness tests | Guided browser page exercises existing endpoints without upstream UI rewrite. |
-| Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. |
+| Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. Optional `AI_PROVIDER_DEBUG=true` adds sanitized local provider error category/type/summary without logging secrets, raw prompts, or raw provider responses. |
 | Production access and metering architecture | Proposed | docs only | `docs/production-access-metering-architecture.md` | Designs gated access, time-limited sessions, metering, cost controls, threat model, and paid-access boundary. No runtime auth, billing, public live AI exposure, migrations, or route changes are implemented. |
 
 ## Recorded Live Smoke
@@ -65,6 +65,7 @@ status=passed
 | Input quality guardrails | Pass | `0028A` offline tests |
 | Importer eval robustness | Pass | `0028B` tests plus post-fix live pass |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
+| Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic |
 
 ## Demo Starting Points
 

@@ -60,6 +60,9 @@ def log_ai_workflow(
     citation_count: int | None = None,
     warning_count: int | None = None,
     safe_error_type: str | None = None,
+    provider_error_category: str | None = None,
+    provider_error_type: str | None = None,
+    safe_error_summary: str | None = None,
 ) -> None:
     log_event(
         "ai.workflow",
@@ -72,6 +75,9 @@ def log_ai_workflow(
         citation_count=citation_count,
         warning_count=warning_count,
         safe_error_type=safe_error_type,
+        provider_error_category=provider_error_category,
+        provider_error_type=provider_error_type,
+        safe_error_summary=safe_error_summary,
     )
 
 

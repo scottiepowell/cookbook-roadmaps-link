@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.config import get_ai_settings
 from app.main import app
 
 
@@ -51,3 +52,11 @@ def test_ai_config_defaults_to_unconfigured(monkeypatch):
             "ollama": {"configured": False},
         }
     }
+
+
+def test_ai_settings_reads_provider_debug_flag(monkeypatch):
+    monkeypatch.setenv("AI_PROVIDER_DEBUG", "true")
+
+    settings = get_ai_settings()
+
+    assert settings.provider_debug is True
