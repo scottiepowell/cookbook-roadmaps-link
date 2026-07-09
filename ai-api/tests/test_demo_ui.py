@@ -35,8 +35,11 @@ def test_demo_static_assets_load():
     assert "javascript" in js_response.headers["content-type"]
     assert "fetch(" in js_response.text
     assert "importerAnswer" in js_response.text
+    assert "importerEvidenceSection" in js_response.text
     assert "servings" in js_response.text
     assert "data.citations" in js_response.text
+    assert "No importer citations were returned" in js_response.text
+    assert "Retrieval metadata" in js_response.text
 
 
 def test_demo_readiness_endpoint_returns_safe_status():
@@ -74,6 +77,15 @@ def test_seeded_demo_data_supports_saved_recipe_workflows(tmp_path, monkeypatch)
     assert ask_data["citations"]
     assert any("Lemon" in citation["title"] for citation in ask_data["citations"])
     assert ask_data["provider"] == "mock"
+
+    importer_response = client.post(
+        "/ai/import-recipe",
+        json={"text": "omelet with eggs cheese maybe onions cooked in butter fold it over", "source": "demo"},
+    )
+    assert importer_response.status_code == 200
+    importer_data = importer_response.json()
+    assert importer_data["citations"]
+    assert importer_data["retrieval"]["retrieved_count"] >= 1
 
     meal_response = client.post(
         "/ai/meal-plan",

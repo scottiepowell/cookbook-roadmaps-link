@@ -65,7 +65,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 Optional bounded live overrides:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 600 -LiveTestBudgetCents 50 -Port 8001
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 900 -LiveTestBudgetCents 25 -Port 8001
 ```
 
 Full local RAG manual importer launch:
@@ -85,6 +85,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 
 The start script defaults to mock mode, respects existing provider environment variables unless explicit parameters override them, and never prints API keys or environment file contents. `AI_PROVIDER_DEBUG=true` is opt-in and only adds sanitized local provider diagnostics such as error category, exception type, and a short redacted summary. It does not log API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings.
 
+The generated `.tmp-ai-demo` fixture dataset still only contains three records, so citation/provenance quality there is useful for smoke tests but not for meaningful RAG evaluation. Use the full `recipe-dataset` path for manual importer validation.
+
 Importer-only diagnostic without the browser:
 
 ```powershell
@@ -95,6 +97,8 @@ $body = @{
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/ai/import-recipe -ContentType "application/json" -Body $body |
   ConvertTo-Json -Depth 8
 ```
+
+For a script-based importer smoke test with safe success/failure summaries, run `scripts\smoke-openai-importer-live.ps1`.
 
 With `-ProviderDebug` enabled, local logs can distinguish timeout, schema rejection, bad model, quota/rate limit, auth, and network failures while keeping the public `503` response safe.
 
@@ -111,6 +115,8 @@ The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Dem
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.
 
 The importer now behaves as an import/create workflow for rough recipe notes. When local dataset fixtures are configured, it retrieves a small bounded set of similar recipes before the provider call and passes them as structure guidance only. The user's ingredients and dish intent remain primary, retrieved recipes are not copied verbatim, citations/provenance are returned for transparency, and estimated quantities are disclosed in notes.
+
+The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts.
 
 The live importer `503` blocker from manual testing was traced to strict structured-output schema metadata that OpenAI rejected. The schema normalizer now strips unsupported metadata such as `default`, `examples`, `title`, and `description` before the provider call, while application behavior still defaults importer servings to 4.
 

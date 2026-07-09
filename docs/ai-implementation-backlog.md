@@ -1166,6 +1166,49 @@ Done criteria:
 - normal validation remains offline;
 - no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
 
+## 0029B-4: Live Importer Output Cap And RAG Validation
+
+Status: complete.
+
+Goal: Raise the live manual importer output cap to a level that can carry RAG-informed structured drafts, document the full-dataset validation command, and keep importer citations visible in the demo UI.
+
+Files likely touched:
+
+- `scripts/start-ai-demo-local.ps1`
+- `scripts/smoke-openai-importer-live.py`
+- `scripts/smoke-openai-importer-live.ps1`
+- `ai-api/app/providers/errors.py`
+- `ai-api/app/providers/openai_provider.py`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0029B-4-live-importer-output-cap-and-rag-validation-results.md`
+
+Validation:
+
+- offline eval command;
+- AI API pytest suite;
+- repo validation;
+- diff whitespace check;
+- Docker Compose config check;
+- mock demo script;
+- live smoke wrapper skip behavior;
+- live demo eval wrapper skip behavior.
+
+Done criteria:
+
+- `scripts/start-ai-demo-local.ps1` recommends or defaults to `AI_MAX_OUTPUT_TOKENS=900` for the OpenAI manual recipe-creator path;
+- provider diagnostics classify output-cap or incomplete structured responses separately from generic invalid JSON where practical;
+- importer-only live smoke scripts print provider/model/title/servings/ingredient counts/instruction counts/retrieval counts/citation counts/token usage on success and safe classifications on failure;
+- importer citations render in the demo UI with citation count, titles, snippets, source IDs, provenance, and retrieval metadata when present;
+- the default `.tmp-ai-demo` fixture dataset remains available for smoke tests, but docs point to the full `recipe-dataset` path for meaningful RAG validation;
+- manual findings about omelet, cheesecake, and the 508-output-token cheesecake run are preserved in the outbox report;
+- normal validation remains offline;
+- no generated artifacts, raw response JSON, `.tmp-ai-demo/`, secrets, env files, raw datasets, screenshots, logs, or credentials are committed.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

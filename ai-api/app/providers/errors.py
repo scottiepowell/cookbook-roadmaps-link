@@ -95,6 +95,20 @@ def _classify_provider_failure(chain: list[BaseException], safe_summary: str) ->
     class_names = " ".join(item.__class__.__name__.lower() for item in chain)
     summary = safe_summary.lower()
 
+    if any(
+        token in class_names or token in summary
+        for token in (
+            "length",
+            "incomplete",
+            "truncated",
+            "truncation",
+            "max_output_tokens",
+            "output tokens",
+            "finish reason",
+            "response incomplete",
+        )
+    ):
+        return "output_cap_or_incomplete_response"
     if any(token in class_names or token in summary for token in ("timeout", "timed out", "deadline exceeded")):
         return "timeout"
     if any(
@@ -129,9 +143,11 @@ def _classify_provider_failure(chain: list[BaseException], safe_summary: str) ->
         )
     ):
         return "schema_rejection"
+    if any(token in class_names or token in summary for token in ("jsondecodeerror", "invalid json", "decode json", "could not be decoded")):
+        return "invalid_json"
     if any(
         token in class_names or token in summary
-        for token in ("model", "notfound", "does not exist", "unsupported model", "unknown model", "404")
+        for token in ("model", "notfound", "does not exist", "unsupported model", "unknown model", "404", "unavailable")
     ):
         return "bad_model"
     if any(

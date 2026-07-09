@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from app.config import get_ai_settings
@@ -137,3 +139,11 @@ def test_provider_call_error_preserves_debug_details_for_wrapped_exceptions():
     assert details.category == "schema_rejection"
     assert details.exception_type == "RuntimeError"
     assert "default is not allowed" in details.safe_summary
+
+
+def test_provider_debug_classifier_identifies_output_cap_and_invalid_json():
+    capped = describe_provider_exception(RuntimeError("finish_reason=length max_output_tokens reached"))
+    invalid = describe_provider_exception(json.JSONDecodeError("Expecting property name enclosed in double quotes", "{", 1))
+
+    assert capped.category == "output_cap_or_incomplete_response"
+    assert invalid.category == "invalid_json"

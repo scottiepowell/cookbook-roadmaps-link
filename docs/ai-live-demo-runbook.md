@@ -43,7 +43,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 Live OpenAI browser demo mode with explicit limits:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 600 -LiveTestBudgetCents 50 -Port 8001
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 900 -LiveTestBudgetCents 25 -Port 8001
 ```
 
 Full local RAG browser demo mode with local provider diagnostics:
@@ -61,7 +61,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
   -ProviderDebug
 ```
 
-`OPENAI_API_KEY` must already exist in the environment for `-Provider openai`. The start script does not prompt for it and does not print it. OpenAI mode defaults to `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, `AI_MAX_OUTPUT_TOKENS=500`, a generated `.tmp-ai-demo` fixture dataset, `AI_TIMEOUT_SECONDS=20`, and `AI_PROVIDER_DEBUG=false` unless environment variables or explicit parameters override those values.
+`OPENAI_API_KEY` must already exist in the environment for `-Provider openai`. The start script does not prompt for it and does not print it. OpenAI mode defaults to `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, `AI_MAX_OUTPUT_TOKENS=900` for the manual recipe-creator path, a generated `.tmp-ai-demo` fixture dataset, `AI_TIMEOUT_SECONDS=20`, and `AI_PROVIDER_DEBUG=false` unless environment variables or explicit parameters override those values. The 500-token cap used by tiny smoke tests can truncate RAG-informed structured recipe drafts.
 
 The startup summary now prints only safe values: provider, model, live-test enabled state, budget cents, max output tokens, AI timeout seconds, provider-debug enabled state, local URL, cookbook DB path, dataset path, and dataset index limit.
 
@@ -74,7 +74,15 @@ The UI readiness panel shows whether:
 
 In the local mock demo path, readiness should show saved recipes available and dataset available. If either is missing, stop and rerun `scripts\start-ai-demo-local.ps1`; missing data should appear as a friendly recoverable condition, not a browser failure.
 
+The generated `.tmp-ai-demo` fixture dataset still contains only three records. That is enough for smoke testing, but importer citations there can be semantically weak. Use the full `recipe-dataset` path with `-RecipeDatasetIndexLimit 5000` for meaningful RAG validation.
+
 ## Importer-Only Diagnostic
+
+Prefer the dedicated live importer smoke script:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\smoke-openai-importer-live.ps1 -Text "omelet with eggs cheese maybe onions cooked in butter fold it over" -MaxOutputTokens 900 -AiTimeoutSeconds 60 -ProviderDebug
+```
 
 When the browser path is ambiguous, test the importer directly without the UI:
 
@@ -98,6 +106,8 @@ Expected live-path signals for the current manual acceptance target:
 - citations when dataset retrieval returns matches.
 
 If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields. Those diagnostics must not include API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings.
+
+The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was fine for smaller smoke tests, but not for RAG-informed structured drafts like cheesecake.
 
 ## Optional Live OpenAI Smoke Path
 

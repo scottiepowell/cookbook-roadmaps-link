@@ -97,12 +97,14 @@ async function runImporter() {
   await runWorkflow(workflow, requestJson("/ai/import-recipe", postOptions(payload), "importer"), {
     title: (data) => data.draft?.title || "Structured recipe draft",
     answer: importerAnswer,
-    meta: (data) => ({...providerMetadata(data), servings: data.draft?.servings ?? "none", retrieved: data.retrieval?.retrieved_count ?? 0}),
-    citations: (data) => (data.citations || []).map((citation) => ({
-      title: citation.title,
-      detail: `Source ${citation.source_id}; ${citation.provenance?.license || "license unavailable"}`,
-      snippet: citation.snippet,
-    })),
+    meta: (data) => ({
+      ...providerMetadata(data),
+      servings: data.draft?.servings ?? "none",
+      retrieved: data.retrieval?.retrieved_count ?? 0,
+      citations: (data.citations || []).length,
+      dataset_limit: data.retrieval?.dataset_limit ?? "none",
+    }),
+    evidence: importerEvidenceSection,
   });
 }
 
@@ -246,7 +248,7 @@ function renderSuccess(target, data, view) {
   }
   target.append(answerCard(view.title(data), view.answer(data)));
   target.append(metadataGrid(view.meta(data)));
-  target.append(citationSection(view.citations(data)));
+  target.append(view.evidence ? view.evidence(data) : citationSection(view.citations(data)));
   target.append(warningSection(data.warnings || []));
   target.append(jsonDetails(data));
 }
@@ -314,6 +316,61 @@ function citationSection(items) {
     list.append(child);
   }
   section.append(list);
+  return section;
+}
+
+function importerEvidenceSection(data) {
+  const section = document.createElement("div");
+  section.className = "subsection";
+  const heading = document.createElement("h3");
+  heading.textContent = "Citations and provenance";
+  section.append(heading);
+
+  const citations = Array.isArray(data?.citations) ? data.citations : [];
+  const retrieval = data?.retrieval || {};
+  const summary = document.createElement("p");
+  summary.className = "hint";
+  summary.textContent = `${citations.length} citation(s) returned${retrieval.retrieved_count !== undefined ? ` from ${retrieval.retrieved_count} retrieved example(s)` : ""}.`;
+  section.append(summary);
+
+  if (!citations.length) {
+    const empty = document.createElement("p");
+    empty.className = "hint";
+    empty.textContent = "No importer citations were returned for this response.";
+    section.append(empty);
+  } else {
+    const list = document.createElement("ul");
+    list.className = "citation-list";
+    for (const citation of citations) {
+      const child = document.createElement("li");
+      const provenance = citation.provenance || {};
+      const provenanceLabel = [provenance.dataset, provenance.license].filter(Boolean).join(" / ") || "provenance unavailable";
+      const matched = (citation.matched_fields || []).length ? `Matched: ${citation.matched_fields.join(", ")}` : "Matched: none";
+      child.textContent = [
+        citation.title || "Untitled",
+        `Source ID: ${citation.source_id || "unknown"}`,
+        `Provenance: ${provenanceLabel}`,
+        matched,
+        citation.snippet ? `Snippet: ${citation.snippet}` : "Snippet unavailable",
+      ].join(" - ");
+      list.append(child);
+    }
+    section.append(list);
+  }
+
+  if (retrieval && Object.keys(retrieval).length) {
+    const retrievalHeading = document.createElement("h4");
+    retrievalHeading.textContent = "Retrieval metadata";
+    section.append(retrievalHeading, metadataGrid({
+      query: retrieval.query || "none",
+      retrieved: retrieval.retrieved_count ?? 0,
+      limit: retrieval.limit ?? "none",
+      dataset_limit: retrieval.dataset_limit ?? "none",
+      matched_ids: (retrieval.matched_result_ids || []).join(", ") || "none",
+      documents: retrieval.index?.document_count ?? "none",
+    }));
+  }
+
   return section;
 }
 

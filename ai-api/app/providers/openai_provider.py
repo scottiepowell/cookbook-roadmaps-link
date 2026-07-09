@@ -70,11 +70,12 @@ class OpenAIProvider(LLMProvider):
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:  # pragma: no cover - live provider path is manual-only.
+            summary = _structured_json_error_summary(text, exc)
             raise ProviderCallError(
                 "OpenAI structured generation returned invalid JSON.",
-                failure_category="invalid_json",
+                failure_category=summary["category"],
                 exception_type=exc.__class__.__name__,
-                safe_summary="Structured response could not be decoded as JSON.",
+                safe_summary=summary["safe_summary"],
             ) from exc
 
         return StructuredLLMResponse(
@@ -124,3 +125,25 @@ def _response_usage(response: Any) -> dict[str, int] | None:
         if isinstance(value, int):
             values[target_name] = value
     return values or None
+
+
+def _structured_json_error_summary(text: str, exc: json.JSONDecodeError) -> dict[str, str]:
+    snippet = text.strip()
+    truncated_by_shape = not (snippet.endswith("}") or snippet.endswith("]"))
+    looks_truncated = (
+        truncated_by_shape
+        or "unterminated" in exc.msg.lower()
+        or "expecting value" in exc.msg.lower()
+        or "eof" in exc.msg.lower()
+        or "max_output_tokens" in exc.msg.lower()
+        or "length" in exc.msg.lower()
+    )
+    if looks_truncated:
+        return {
+            "category": "output_cap_or_incomplete_response",
+            "safe_summary": "Structured response ended before JSON completed; the output cap may be too low or the response may be incomplete.",
+        }
+    return {
+        "category": "invalid_json",
+        "safe_summary": "Structured response could not be decoded as JSON.",
+    }

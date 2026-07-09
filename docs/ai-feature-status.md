@@ -7,7 +7,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Feature | Status | Endpoint or Script | Proof | Notes |
 | --- | --- | --- | --- | --- |
 | Health/config | Complete | `GET /health`, `GET /ai/config` | pytest, mock demo | Reports readiness and non-secret provider availability. |
-| Structured recipe import/create | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted notes, defaults to 4 servings in application behavior, estimates missing quantities with notes, uses bounded local dataset examples for structure/provenance when available, and now strips unsupported strict-schema metadata before OpenAI structured calls. |
+| Structured recipe import/create | Complete | `POST /ai/import-recipe` | pytest, offline evals, live smoke | Produces schema-validated recipe drafts from pasted notes, defaults to 4 servings in application behavior, estimates missing quantities with notes, uses bounded local dataset examples for structure/provenance when available, and now strips unsupported strict-schema metadata before OpenAI structured calls. Manual live importer validation now recommends `AI_MAX_OUTPUT_TOKENS=900`. |
 | Ask My Cookbook | Complete | `POST /ai/ask` | pytest, offline evals, live smoke | Retrieves saved recipes first and cites recipe IDs/titles. |
 | Local dataset search | Complete | `GET /dataset/search`, `POST /dataset/search` | pytest, mock demo | Uses bounded deterministic keyword retrieval over generated fixtures. |
 | Dataset Ask/RAG | Complete | `POST /dataset/ask` | pytest, offline evals, live smoke | Answers from retrieved dataset records with provenance citations. |
@@ -15,10 +15,11 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Bounded input quality | Complete | importer, Ask, dataset search/RAG, meal planning | pytest, offline evals | Rejects unusable input before provider calls, asks at most one clarification question for recoverable vague input, and lets weak usable input proceed with warnings. |
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
 | Manual OpenAI smoke | Complete, manual-only | `scripts/smoke-openai-live.py`, `scripts/demo-ai-live-smoke.ps1` | recorded manual run | Requires explicit opt-in, API key, token cap, and budget cap. |
+| Importer live diagnostic | Complete, manual-only | `scripts/smoke-openai-importer-live.py`, `scripts/smoke-openai-importer-live.ps1` | offline smoke tests | Runs importer-only live checks without the browser, prints safe counts and classifications, and supports token/timeout/provider-debug overrides. |
 | Live OpenAI demo evals | Complete, manual-only | `scripts/run-openai-demo-evals.ps1` | offline harness tests; first GPT-nano baseline; post-0028B 6/6 acceptance run | Requires explicit opt-in and writes ignored metrics/results under `.tmp-ai-demo/live-evals/`. Includes usefulness checks, tuned importer ingredient-evidence checks, latency/token thresholds, and GPT-nano cost estimates with `cost_source`. |
 | Strict OpenAI structured schema | Complete | provider harness | offline fake-client tests | Normalizes Pydantic schemas for strict structured outputs, strips unsupported metadata like `default`/`examples`/`title`/`description`, keeps `additionalProperties=false`, and keeps strict required-property behavior. |
 | Mock demo path | Complete | `scripts/demo-ai-mock.ps1` | local script validation | Runs offline evals and endpoint checks with generated fixtures. |
-| Local browser demo launch | Complete | `scripts/start-ai-demo-local.ps1` | pytest, mock demo | Seeds generated saved recipes and dataset fixtures, starts `/demo` on `127.0.0.1:8000`. Defaults to mock, supports intentional `-Provider openai -EnableLiveTests`, plus dataset/time-limit/provider-debug overrides for full local RAG testing, respects existing env vars unless explicit parameters override them, and prints only a safe startup summary. |
+| Local browser demo launch | Complete | `scripts/start-ai-demo-local.ps1` | pytest, mock demo | Seeds generated saved recipes and dataset fixtures, starts `/demo` on `127.0.0.1:8000`. Defaults to mock, supports intentional `-Provider openai -EnableLiveTests`, plus dataset/time-limit/provider-debug overrides for full local RAG testing, respects existing env vars unless explicit parameters override them, and prints only a safe startup summary. OpenAI manual launch defaults to `AI_MAX_OUTPUT_TOKENS=900`. |
 | REST examples | Complete | `scripts/demo-ai-requests.http` | docs/examples | Manual request examples for portfolio walkthroughs. |
 | Sidecar demo UI | Complete | `GET /demo`, `GET /demo/ai`, `GET /demo/readiness` | TestClient UI/readiness tests | Guided browser page exercises existing endpoints without upstream UI rewrite. |
 | Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. Optional `AI_PROVIDER_DEBUG=true` adds sanitized local provider error category/type/summary without logging secrets, raw prompts, or raw provider responses. |
@@ -65,7 +66,7 @@ status=passed
 | Input quality guardrails | Pass | `0028A` offline tests |
 | Importer eval robustness | Pass | `0028B` tests plus post-fix live pass |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
-| Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic |
+| Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 
 ## Demo Starting Points
 

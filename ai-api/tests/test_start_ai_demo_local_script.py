@@ -31,7 +31,8 @@ def test_start_ai_demo_local_uses_live_manual_demo_defaults():
     assert '"gpt-5.4-nano"' in text
     assert "AI_MAX_OUTPUT_TOKENS" in text
     assert "OPENAI_LIVE_TEST_BUDGET_CENTS" in text
-    assert "DefaultValue 500" in text
+    assert "$DefaultMaxOutputTokens = 500" in text
+    assert "$DefaultMaxOutputTokens = 900" in text
     assert "DefaultValue 25" in text
 
 
@@ -75,6 +76,17 @@ def test_start_ai_demo_local_prints_safe_summary_without_key_value():
     assert 'Write-Host "Dataset path:' in text
     assert 'Write-Host "Dataset index limit:' in text
     assert 'Write-Host "OPENAI_API_KEY' not in text
+
+
+def test_ai_live_demo_runbook_documents_full_dataset_rag_launch():
+    text = (Path(__file__).resolve().parents[2] / "docs" / "ai-live-demo-runbook.md").read_text(encoding="utf-8")
+
+    assert "-MaxOutputTokens 900" in text
+    assert "-RecipeDatasetDir recipe-dataset" in text
+    assert "-RecipeDatasetIndexLimit 5000" in text
+    assert "-ProviderDebug" in text
+    assert "generated `.tmp-ai-demo` fixture dataset" in text
+    assert "only three records" in text
 
 
 def test_start_ai_demo_local_has_valid_powershell_syntax():
