@@ -27,6 +27,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Sidecar demo UI | Complete | `GET /demo`, `GET /demo/ai`, `GET /demo/readiness` | TestClient UI/readiness tests | Guided browser page exercises existing endpoints without upstream UI rewrite. |
 | Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. Optional `AI_PROVIDER_DEBUG=true` adds sanitized local provider error category/type/summary without logging secrets, raw prompts, or raw provider responses. |
 | Production access and metering architecture | Proposed | docs only | `docs/production-access-metering-architecture.md` | Designs gated access, time-limited sessions, metering, cost controls, threat model, and paid-access boundary. No runtime auth, billing, public live AI exposure, migrations, or route changes are implemented. |
+| Session and metering schema scaffold | Complete, schema-only | `ai-api/app/ai_access_models.py`, [AI Session Metering Schema](ai-session-metering-schema.md) | `test_ai_access_models.py` | Defines safe offline models for demo sessions, access grants, provider meter events, quality events, admin audit events, and budget snapshots. No runtime auth, storage, budget enforcement, invite flow, billing, or public access is implemented. |
 
 ## Recorded Live Smoke
 
@@ -98,6 +99,7 @@ status=passed
 - [Production Access Metering Architecture](production-access-metering-architecture.md)
 - [AI Production Readiness Roadmap](ai-production-readiness-roadmap.md)
 - [AI Session Metering Data Model](ai-session-metering-data-model.md)
+- [AI Session Metering Schema](ai-session-metering-schema.md)
 - [AI Access Control Threat Model](ai-access-control-threat-model.md)
 - [Recipe Session Requirements Architecture](recipe-session-requirements-architecture.md)
 - [Recipe Session Alpha Acceptance Runbook](recipe-session-alpha-acceptance-runbook.md)

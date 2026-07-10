@@ -1634,9 +1634,31 @@ Done criteria:
 
 ## 0029C: Session And Metering Schema Draft
 
-Status: planned.
+Status: complete.
 
 Goal: Draft schemas and tests for sessions, access grants, meter events, and admin audit events without enabling public live AI.
+
+Files likely touched:
+
+- `ai-api/app/ai_access_models.py`
+- `ai-api/tests/test_ai_access_models.py`
+- `docs/ai-session-metering-schema.md`
+- `docs/ai-implementation-backlog.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-evals-plan.md`
+- `docs/ai-live-demo-runbook.md`
+- `README.md`
+- `outbox/0029C-session-and-metering-schema-draft-results.md`
+
+Done criteria:
+
+- schema models exist for AI demo sessions, access grants, provider meter events, quality/eval events, admin audit events, and budget snapshots;
+- models are deterministic, offline-testable, and independent from production databases;
+- safe serialization helpers expose IDs, statuses, timestamps, workflows, counts, provider/model names, cost estimates, and fingerprints while rejecting prompt, provider-response, secret, local path, raw token, and storage URL leakage;
+- budget snapshots calculate remaining provider calls, remaining estimated cost, exhaustion state, and status reason;
+- tests cover defaults, sample model creation, mock/offline meter events, token/cost meter events, audit and quality event safe views, budget calculations, and forbidden-string rejection;
+- documentation explains how the schema layer supports future operator gate, invite flow, provider budget enforcement, and admin report tasks;
+- no production storage, database migrations, auth, paid access, public route exposure, persistent memory, Redis, Postgres, payment integration, admin dashboard, runtime budget enforcement, or live OpenAI calls are added.
 
 ## 0029D: Local Operator Access Gate
 

@@ -35,6 +35,7 @@ Demo and evidence links:
 - [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
 - [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
 - [Production access metering architecture](docs/production-access-metering-architecture.md)
+- [AI session metering schema](docs/ai-session-metering-schema.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
 - [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
 - [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md)
@@ -131,7 +132,7 @@ The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 
 
 The live importer `503` blocker from manual testing was traced to strict structured-output schema metadata that OpenAI rejected. The schema normalizer now strips unsupported metadata such as `default`, `examples`, `title`, and `description` before the provider call, while application behavior still defaults importer servings to 4.
 
-Production access architecture is proposed, not implemented. Before any public live provider-backed AI exposure, the AI demo needs an access layer with time-limited sessions, per-call metering, provider budget enforcement, a global live-provider disable switch, protected routes, and metadata-only logging by default. Payment integration is deferred, and the platform rule remains: shared infrastructure is allowed, but each demo owns its own data boundary.
+Production access architecture is proposed, not implemented. Before any public live provider-backed AI exposure, the AI demo needs an access layer with time-limited sessions, per-call metering, provider budget enforcement, a global live-provider disable switch, protected routes, and metadata-only logging by default. The first schema-only scaffold for that future layer is in `ai-api/app/ai_access_models.py` and [AI session metering schema](docs/ai-session-metering-schema.md), covering demo sessions, access grants, meter events, quality events, audit events, and budget snapshots without runtime auth, storage, billing, invite flow, or budget enforcement. Payment integration is deferred, and the platform rule remains: shared infrastructure is allowed, but each demo owns its own data boundary.
 
 ## Architecture
 
@@ -171,6 +172,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Live OpenAI GPT-nano baseline](docs/live-openai-demo-baseline-2026-07-07.md)
 - [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
 - [Production access metering architecture](docs/production-access-metering-architecture.md)
+- [AI session metering schema](docs/ai-session-metering-schema.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
 - [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
 - [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md)

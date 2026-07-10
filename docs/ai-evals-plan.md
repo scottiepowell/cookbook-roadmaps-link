@@ -77,6 +77,17 @@ RAG evals should verify:
 - safety-relevant ambiguity, such as raw versus cooked chicken in casserole, either asks one bounded question or generates with a clear disclosed assumption;
 - session metadata does not expose raw prompts, raw provider responses, API keys, environment values, local absolute paths, or secret-like strings.
 
+## Access And Metering Schema Checks
+
+0029C adds deterministic unit tests for future access and metering schema models. These checks remain offline and do not add runtime auth, storage, invite flow, budget enforcement, or public access.
+
+The tests verify:
+
+- AI demo session, access grant, provider meter event, quality event, admin audit event, and budget snapshot models can be created from safe sample data;
+- provider meter events support mock/offline calls with no cost and provider calls with token/cost metadata;
+- budget snapshots calculate remaining provider calls, remaining estimated cost, exhaustion state, and status reason;
+- safe operator views exclude raw prompts, raw provider responses, API keys, environment values, raw invite tokens, local paths, and private storage URLs.
+
 The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
 
 The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.
