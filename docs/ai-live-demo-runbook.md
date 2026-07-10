@@ -221,6 +221,8 @@ The automated E2E integration test `ai-api/tests/test_rag_e2e_integration.py` co
 
 The dataset index now normalizes conservative aliases and phrase variants such as `omelette` -> `omelet`, `parmigiano-reggiano` -> `parmesan`, `no-bake` -> `no bake`, and `graham crackers` -> `graham cracker` while preserving the original recipe values for citations and display.
 
+The next planned product layer is documented in [Recipe Session Requirements Architecture](recipe-session-requirements-architecture.md). It proposes a session-scoped requirements state, one-question clarification policy, delta classifier, and RAG refresh rules for follow-up messages. That layer is architecture-only today; the current demo still exercises the single-request importer workflow.
+
 The live importer `503` issue observed during manual recipe-entry testing was caused by strict structured-output schema metadata that OpenAI rejected. `ai-api/app/providers/openai_schema.py` now strips unsupported metadata such as `default`, `examples`, `title`, and `description` recursively before the request is sent, while application-side importer behavior still defaults servings to 4.
 
 Normal validation remains offline. Do not commit raw dataset files, generated `.tmp-ai-demo/` artifacts, raw provider responses, screenshots, private env files, or credentials.
@@ -273,3 +275,5 @@ This demo does not add production storage, deployment changes, Cloudflare change
 ## Future Production Hardening
 
 Future paid or time-limited application work should be split into separate tasks. Likely areas include authenticated access, time-limited sessions, monetization gates, usage metering, user/session isolation, durable storage, multi-use-case routing, deployment exposure controls, provider cost controls, and an admin/operator dashboard.
+
+Future recipe-creation interaction work should also remain separately scoped. The 0030A architecture covers alpha requirements extraction, clarification, session memory, and RAG refresh decisions, but does not implement production storage, persistent user memory, auth, paid access, public route exposure, embeddings, vector databases, or a full chat UI.

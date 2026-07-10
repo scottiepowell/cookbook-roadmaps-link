@@ -1445,6 +1445,32 @@ Done criteria:
 - normal validation remains offline and mock-only;
 - no raw dataset files, disk cache, generated persistent index, live artifacts, screenshots, browser automation artifacts, `.env` files, logs, credentials, or secrets are committed.
 
+## 0030A: RAG Requirements Interaction And Session Memory Architecture
+
+Status: complete.
+
+Goal: Design the alpha requirements and session-scoped interaction layer that sits between input quality checks and the completed 0029B RAG importer pipeline.
+
+Files likely touched:
+
+- `docs/recipe-session-requirements-architecture.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-evals-plan.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0030A-rag-requirements-interaction-and-session-memory-architecture-results.md`
+
+Done criteria:
+
+- architecture defines requirements extraction, confidence assessment, one-question clarification, delta classification, and RAG refresh decisions;
+- lightweight session state distinguishes user-provided, inferred, defaulted, RAG-supported, and clarified-by-user requirements;
+- RAG refresh policy explains when retrieval should rerun after material changes and when chatter or formatting-only requests should reuse context;
+- proposed alpha API states include `draft_generated`, `clarification_needed`, `rag_refreshed`, `draft_revised`, `no_material_change`, `ready_to_finalize`, and `rejected`;
+- UI proposal covers interpreted requirements, assumptions, current citations, RAG support, refresh reasons, and revised drafts;
+- test strategy covers requirements extraction, clarification, delta classification, RAG refresh, cache/session interaction, safety boundaries, and API states;
+- no production storage, auth, paid access, persistent memory, public route exposure, vector database, embeddings, runtime endpoints, or full chat UI are implemented.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

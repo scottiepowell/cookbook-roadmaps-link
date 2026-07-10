@@ -62,6 +62,21 @@ RAG evals should verify:
 - no-match and missing-dataset dataset ask cases do not call providers;
 - dataset ask output does not include non-retrieved source IDs where detectable.
 
+## Requirements Interaction Checks
+
+Future 0030 recipe-session evals should verify:
+
+- requirement extraction captures dish intent, serving count, required ingredients, exclusions, methods, equipment, time, dietary constraints, assumptions, and requirement sources;
+- vague requests such as `make dessert` ask exactly one bounded clarification question before retrieval or provider calls;
+- specific requests such as cheesecake notes proceed directly to RAG and draft generation;
+- clarification answers update session state and run RAG only when the answer changes retrieval intent;
+- material follow-up changes such as `actually make it no-bake`, `use ricotta instead`, `make it gluten-free`, or `I only have an air fryer` refresh RAG and include a safe refresh reason;
+- irrelevant chatter, formatting-only changes, and `looks good` do not refresh RAG;
+- regenerate-without-new-requirements requests reuse the current retrieval context;
+- finalize requests do not write to production storage in alpha;
+- safety-relevant ambiguity, such as raw versus cooked chicken in casserole, either asks one bounded question or generates with a clear disclosed assumption;
+- session metadata does not expose raw prompts, raw provider responses, API keys, environment values, local absolute paths, or secret-like strings.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:
@@ -120,6 +135,11 @@ evals/
 | RAG Retrieval | Casserole soup phrase | `chicken and rice casserole for 4 with cooked chicken rice cream of chicken soup cheddar bake until bubbly` | Cream of chicken soup supports chicken/rice casserole ranking |
 | RAG Packing | Bound prompt context | importer retrieval results from generated distractor fixtures | Packed context stays under budget, excludes weak examples when strong matches exist, and includes safe provenance IDs |
 | RAG E2E | Importer route integration | cheesecake, carbonara, omelette, casserole, and broad dessert notes | Real `/ai/import-recipe` route returns schema-valid mock drafts with RAG metadata, citations/provenance, support labels, and cache status |
+| Requirements Session | Vague dessert | `make dessert` | Returns `clarification_needed`, asks one bounded question, and does not run RAG |
+| Requirements Session | Specific cheesecake | `cheesecake cream cheese sugar eggs vanilla graham cracker crust bake and chill` | Returns `draft_generated`, runs RAG, and records interpreted requirements |
+| Requirements Session | Method change | `actually no bake` after baked cheesecake | Classifies `relevant_requirement_update`, refreshes RAG, and explains the method change |
+| Requirements Session | Chatter | `thanks` | Returns `no_material_change` and does not refresh RAG |
+| Requirements Session | Finalize | `save this` | Returns `ready_to_finalize` without production write-back |
 | Dataset RAG | Grounded ask | `What recipe uses lemon?` | Cites retrieved Kaggle fixture source ID/title/license |
 | Dataset RAG | No match | `Which indexed recipe uses saffron?` | Returns no-match response and does not call provider |
 | Importer | Clean recipe | pasted recipe text | Valid importer schema with title, ingredients, and steps |

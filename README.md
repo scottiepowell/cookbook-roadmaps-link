@@ -36,6 +36,7 @@ Demo and evidence links:
 - [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
 - [Production access metering architecture](docs/production-access-metering-architecture.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
+- [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -121,6 +122,8 @@ The local dataset search/retrieval path also uses a small process-local in-memor
 
 The RAG importer path now has an offline E2E regression test that exercises the real `/ai/import-recipe` route with generated dataset fixtures and the mock provider, covering retrieval, normalization, context packing, support labels, citations, schema validation, and cache metadata together.
 
+The next recipe-creation product layer is documented, not implemented, in [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md). It designs a session-scoped requirements state, one-question clarification policy, follow-up delta classifier, and RAG refresh rules so future revisions like `actually make it no-bake` can update requirements, refresh retrieval, and explain why citations changed. It does not add production storage, persistent user memory, auth, paid access, public route exposure, embeddings, vector databases, or a full chat UI.
+
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts.
 
 The live importer `503` blocker from manual testing was traced to strict structured-output schema metadata that OpenAI rejected. The schema normalizer now strips unsupported metadata such as `default`, `examples`, `title`, and `description` before the provider call, while application behavior still defaults importer servings to 4.
@@ -166,6 +169,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
 - [Production access metering architecture](docs/production-access-metering-architecture.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
+- [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
 - [AI session metering data model](docs/ai-session-metering-data-model.md)
 - [AI access control threat model](docs/ai-access-control-threat-model.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)

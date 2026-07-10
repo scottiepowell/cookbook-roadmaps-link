@@ -73,6 +73,7 @@ status=passed
 | RAG support honesty policy | Pass | deterministic support classification tests plus importer metadata/UI checks |
 | Local retrieval cache | Pass | deterministic cache hit/miss tests plus safe fingerprint metadata |
 | RAG importer E2E integration | Pass | real `/ai/import-recipe` route test with generated dataset fixtures and mock provider |
+| Requirements/session interaction architecture | Proposed | `docs/recipe-session-requirements-architecture.md`; designs requirement extraction, clarification, session state, delta detection, and RAG refresh policy without runtime endpoints or persistent memory |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 
@@ -92,4 +93,5 @@ status=passed
 - [AI Production Readiness Roadmap](ai-production-readiness-roadmap.md)
 - [AI Session Metering Data Model](ai-session-metering-data-model.md)
 - [AI Access Control Threat Model](ai-access-control-threat-model.md)
+- [Recipe Session Requirements Architecture](recipe-session-requirements-architecture.md)
 - [AI Screenshot Capture Guide](ai-screenshot-capture-guide.md)
