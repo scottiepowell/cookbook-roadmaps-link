@@ -50,6 +50,20 @@ class ProviderBudgetSettings:
     validation_errors: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class InviteSessionSettings:
+    enabled: bool
+    session_ttl_seconds: int
+    grant_ttl_seconds: int
+    max_sessions_per_grant: int
+    default_max_provider_calls: int
+    default_max_estimated_cost_usd: Decimal
+    allowed_workflows: tuple[str, ...]
+    local_operator_create_enabled: bool
+    configured: bool
+    validation_errors: tuple[str, ...]
+
+
 DEFAULT_AI_PROVIDER = "mock"
 DEFAULT_AI_MODEL = "mock-basic"
 DEFAULT_AI_MAX_OUTPUT_TOKENS = 700
@@ -73,6 +87,14 @@ DEFAULT_AI_PROVIDER_MAX_TOTAL_TOKENS_PER_CALL = 14000
 DEFAULT_AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_SESSION = Decimal("1.00")
 DEFAULT_AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_CALL = Decimal("0.25")
 DEFAULT_AI_PROVIDER_BUDGET_MODE = "enforce"
+DEFAULT_AI_INVITE_SESSIONS_ENABLED = False
+DEFAULT_AI_INVITE_SESSION_TTL_SECONDS = 1800
+DEFAULT_AI_INVITE_GRANT_TTL_SECONDS = 3600
+DEFAULT_AI_INVITE_MAX_SESSIONS_PER_GRANT = 1
+DEFAULT_AI_INVITE_DEFAULT_MAX_PROVIDER_CALLS = 5
+DEFAULT_AI_INVITE_DEFAULT_MAX_ESTIMATED_COST_USD = Decimal("0.50")
+DEFAULT_AI_INVITE_ALLOWED_WORKFLOWS = ("importer", "dataset_ask", "recipe_session", "meal_plan")
+DEFAULT_AI_INVITE_LOCAL_OPERATOR_CREATE_ENABLED = True
 
 PROVIDER_ENV_VARS = {
     "mock": None,
@@ -221,6 +243,59 @@ def get_provider_budget_settings() -> ProviderBudgetSettings:
         max_estimated_cost_usd_per_session=max_session_cost,
         max_estimated_cost_usd_per_call=max_call_cost,
         budget_mode=budget_mode,
+        configured=not errors,
+        validation_errors=tuple(errors),
+    )
+
+
+def get_invite_session_settings() -> InviteSessionSettings:
+    errors: list[str] = []
+    session_ttl_seconds = _strict_int_env(
+        "AI_INVITE_SESSION_TTL_SECONDS",
+        DEFAULT_AI_INVITE_SESSION_TTL_SECONDS,
+        minimum=1,
+        errors=errors,
+    )
+    grant_ttl_seconds = _strict_int_env(
+        "AI_INVITE_GRANT_TTL_SECONDS",
+        DEFAULT_AI_INVITE_GRANT_TTL_SECONDS,
+        minimum=1,
+        errors=errors,
+    )
+    max_sessions_per_grant = _strict_int_env(
+        "AI_INVITE_MAX_SESSIONS_PER_GRANT",
+        DEFAULT_AI_INVITE_MAX_SESSIONS_PER_GRANT,
+        minimum=1,
+        errors=errors,
+    )
+    default_max_provider_calls = _strict_int_env(
+        "AI_INVITE_DEFAULT_MAX_PROVIDER_CALLS",
+        DEFAULT_AI_INVITE_DEFAULT_MAX_PROVIDER_CALLS,
+        minimum=0,
+        errors=errors,
+    )
+    default_max_estimated_cost_usd = _strict_decimal_env(
+        "AI_INVITE_DEFAULT_MAX_ESTIMATED_COST_USD",
+        DEFAULT_AI_INVITE_DEFAULT_MAX_ESTIMATED_COST_USD,
+        minimum=Decimal("0.00"),
+        errors=errors,
+    )
+    allowed_workflows = _parse_csv_env(
+        "AI_INVITE_ALLOWED_WORKFLOWS",
+        DEFAULT_AI_INVITE_ALLOWED_WORKFLOWS,
+    )
+    return InviteSessionSettings(
+        enabled=_bool_env("AI_INVITE_SESSIONS_ENABLED", default=DEFAULT_AI_INVITE_SESSIONS_ENABLED),
+        session_ttl_seconds=session_ttl_seconds,
+        grant_ttl_seconds=grant_ttl_seconds,
+        max_sessions_per_grant=max_sessions_per_grant,
+        default_max_provider_calls=default_max_provider_calls,
+        default_max_estimated_cost_usd=default_max_estimated_cost_usd,
+        allowed_workflows=tuple(allowed_workflows),
+        local_operator_create_enabled=_bool_env(
+            "AI_INVITE_LOCAL_OPERATOR_CREATE_ENABLED",
+            default=DEFAULT_AI_INVITE_LOCAL_OPERATOR_CREATE_ENABLED,
+        ),
         configured=not errors,
         validation_errors=tuple(errors),
     )

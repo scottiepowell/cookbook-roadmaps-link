@@ -44,6 +44,8 @@ The decision object is safe to serialize and does not include raw tokens, API ke
 
 `0029E` applies the centralized provider budget guard after this gate. That guard can still block a request that was allowed by the operator gate if the provider is globally disabled, the call count is exhausted, or the requested token/cost budget is too large.
 
+`0029F` adds invite-only demo sessions as a separate local/private boundary. When invite sessions are enabled, protected workflows can also accept a short-lived `X-AI-Demo-Session-Token` header for a redeemed invite session. Invite sessions are still not production auth, and they continue to sit behind the same local/private demo boundary.
+
 ## Verification Rules
 
 `check_operator_gate(workflow, request_headers, settings, client_host=...)` performs the gate decision.
@@ -57,6 +59,7 @@ Behavior:
 - gate enabled with a missing token: block request;
 - gate enabled with a fingerprint mismatch: block request;
 - gate enabled with a matching `X-AI-Operator-Token` or `Authorization: Bearer ...`: allow request.
+- invite sessions enabled with a valid `X-AI-Demo-Session-Token`: allow request if the workflow is listed on the invite grant/session.
 
 Fingerprint comparison uses constant-time comparison where practical.
 
@@ -73,6 +76,7 @@ Blocked requests return safe HTTP errors:
 - The gate is local/private only.
 - It is not production auth, login, OAuth/OIDC, or paid access.
 - It does not add user accounts, invite emails, payment integration, or public exposure.
+- Invite-only demo sessions are local/private too; they do not create a production session store or public invite flow.
 - It does not persist access state to a database.
 - It does not block mock/offline validation when the gate is disabled.
 

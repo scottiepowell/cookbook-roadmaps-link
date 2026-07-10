@@ -1690,9 +1690,17 @@ Completed behavior:
 
 ## 0029F: Invite-Only Demo Session Flow
 
-Status: planned.
+Status: complete.
 
 Goal: Add short-lived invite sessions with expiry, revocation, and per-session provider budgets.
+
+Completed behavior:
+
+- local/private invite sessions are disabled by default and can be enabled only for controlled demo use;
+- invite grants can be created locally, expose the raw invite token once, and store only safe fingerprints afterward;
+- invite tokens can be redeemed into short-lived demo sessions with session tokens, allowed-workflow limits, and per-session budget limits;
+- protected workflows accept invite session tokens when invite sessions are enabled, while revoked/expired/disallowed sessions block safely;
+- safe status, grant, session, and audit views are available without leaking raw invite/session tokens or local paths.
 
 ## 0029G: Admin Usage Report Prototype
 

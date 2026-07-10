@@ -59,6 +59,7 @@ class AiQualityStatus(StrEnum):
 
 class AiAdminAuditAction(StrEnum):
     GRANT_CREATED = "grant_created"
+    GRANT_REDEEMED = "grant_redeemed"
     GRANT_REVOKED = "grant_revoked"
     SESSION_REVOKED = "session_revoked"
     PROVIDER_DISABLED = "provider_disabled"
@@ -146,13 +147,24 @@ class AiDemoSession(SafeAccessModel):
     revoked_reason: str | None = None
     operator_label: str | None = None
     access_grant_id: str | None = None
+    session_token_fingerprint: str | None = None
+    allowed_workflows: list[AiAccessWorkflow] = Field(default_factory=list)
+    max_provider_calls: int | None = Field(default=None, ge=0)
+    max_estimated_cost_usd: Decimal | None = Field(default=None, ge=0)
     request_count: int = Field(default=0, ge=0)
     provider_call_count: int = Field(default=0, ge=0)
     estimated_cost_usd: Decimal = Field(default=Decimal("0.00"), ge=0)
     last_activity_at: datetime | None = None
     metadata_fingerprint: str | None = None
 
-    @field_validator("session_id", "operator_label", "access_grant_id", "revoked_reason", "metadata_fingerprint")
+    @field_validator(
+        "session_id",
+        "operator_label",
+        "access_grant_id",
+        "session_token_fingerprint",
+        "revoked_reason",
+        "metadata_fingerprint",
+    )
     @classmethod
     def _safe_strings(cls, value: str | None) -> str | None:
         _raise_if_forbidden(value)
@@ -177,8 +189,9 @@ class AiAccessGrant(SafeAccessModel):
     allowed_workflows: list[AiAccessWorkflow] = Field(default_factory=list)
     notes: str | None = None
     metadata_fingerprint: str | None = None
+    invite_token_fingerprint: str | None = None
 
-    @field_validator("grant_id", "revoked_reason", "notes", "metadata_fingerprint")
+    @field_validator("grant_id", "revoked_reason", "notes", "metadata_fingerprint", "invite_token_fingerprint")
     @classmethod
     def _safe_strings(cls, value: str | None) -> str | None:
         _raise_if_forbidden(value)

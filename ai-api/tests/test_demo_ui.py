@@ -14,6 +14,7 @@ def test_demo_ui_route_returns_html():
     assert "Recipe Session Alpha" in response.text
     assert "process-only requirements flow" in response.text
     assert "Sessions expire" in response.text
+    assert "Invite sessions, when enabled, use the X-AI-Demo-Session-Token header." in response.text
     assert "Start session" in response.text
     assert "Send follow-up" in response.text
     assert "Finalize for demo" in response.text
@@ -63,6 +64,7 @@ def test_demo_static_assets_load():
     assert "No importer citations were returned for this response." in js_response.text
     assert "No useful dataset examples were available for this response." in js_response.text
     assert "RAG support:" in js_response.text
+    assert "Invite sessions" in js_response.text
     assert "support_level" in js_response.text
     assert "support_message" in js_response.text
     assert "cache" in js_response.text

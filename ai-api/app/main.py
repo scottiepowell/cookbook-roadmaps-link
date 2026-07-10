@@ -6,8 +6,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.ai_access_models import AiAccessWorkflow
-from app.ai_operator_gate import check_operator_gate, operator_gate_http_exception
-from app.config import get_ai_settings, get_operator_gate_settings, get_provider_config, get_recipe_dataset_dir
+from app.ai_invite_sessions import invite_router, require_demo_workflow_access
+from app.ai_operator_gate import check_operator_gate
+from app.config import get_ai_settings, get_invite_session_settings, get_operator_gate_settings, get_provider_config, get_recipe_dataset_dir
 from app.dataset_rag import DatasetAskProviderError, ask_dataset_recipes
 from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
@@ -40,6 +41,7 @@ app = FastAPI(title="Cookbook AI API", version="0.1.0")
 configure_logging()
 app.middleware("http")(request_logging_middleware)
 app.include_router(recipe_session_router)
+app.include_router(invite_router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -54,6 +56,7 @@ def ai_demo() -> FileResponse:
 @app.get("/demo/readiness", include_in_schema=False)
 def demo_readiness() -> dict[str, object]:
     settings = get_ai_settings()
+    invite_settings = get_invite_session_settings()
     recipe_count = _safe_recipe_count()
     dataset_available = Path(get_recipe_dataset_dir()).exists()
 
@@ -80,6 +83,18 @@ def demo_readiness() -> dict[str, object]:
                 if dataset_available
                 else "Local dataset data is not available; saved-recipe and importer workflows can still be demoed."
             ),
+        },
+        "invite_sessions": {
+            "available": invite_settings.enabled and invite_settings.configured,
+            "message": (
+                "Invite-only demo sessions are enabled for local/private use."
+                if invite_settings.enabled and invite_settings.configured
+                else "Invite-only demo sessions are disabled by default."
+                if not invite_settings.enabled
+                else "Invite-only demo sessions are enabled, but the configuration needs attention."
+            ),
+            "allowed_workflows": list(invite_settings.allowed_workflows),
+            "local_operator_create_enabled": invite_settings.local_operator_create_enabled,
         },
     }
 
@@ -149,9 +164,9 @@ def search_dataset_post(payload: DatasetSearchRequest, request: Request) -> Data
 
 @app.post("/dataset/ask", response_model=DatasetAskResponse)
 def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskResponse:
-    _require_operator_gate(request, AiAccessWorkflow.DATASET_ASK)
+    access_session = _require_demo_workflow_access(request, AiAccessWorkflow.DATASET_ASK)
     try:
-        response = ask_dataset_recipes(payload)
+        response = ask_dataset_recipes(payload, session_state=access_session)
         log_ai_workflow(
             "dataset.ask",
             request,
@@ -175,9 +190,9 @@ def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskRespo
 
 @app.post("/ai/import-recipe", response_model=RecipeImportResponse)
 def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImportResponse:
-    _require_operator_gate(request, AiAccessWorkflow.IMPORTER)
+    access_session = _require_demo_workflow_access(request, AiAccessWorkflow.IMPORTER)
     try:
-        response = import_recipe_text(payload)
+        response = import_recipe_text(payload, session_state=access_session)
         log_ai_workflow(
             "recipe.import",
             request,
@@ -235,9 +250,9 @@ def ask_my_cookbook(payload: AskRequest, request: Request) -> AskResponse:
 
 @app.post("/ai/meal-plan", response_model=MealPlanResponse)
 def meal_plan(payload: MealPlanRequest, request: Request) -> MealPlanResponse:
-    _require_operator_gate(request, AiAccessWorkflow.MEAL_PLAN)
+    access_session = _require_demo_workflow_access(request, AiAccessWorkflow.MEAL_PLAN)
     try:
-        response = create_meal_plan(payload)
+        response = create_meal_plan(payload, session_state=access_session)
         log_ai_workflow(
             "meal.plan",
             request,
@@ -305,7 +320,21 @@ def _provider_debug_log_fields(exc: BaseException) -> dict[str, str]:
     }
 
 
-def _require_operator_gate(request: Request, workflow: AiAccessWorkflow) -> None:
+def _require_demo_workflow_access(request: Request, workflow: AiAccessWorkflow):
+    access_session = require_demo_workflow_access(
+        workflow,
+        request.headers,
+        client_host=request.client.host if request.client else None,
+    )
+    if access_session is not None:
+        log_ai_workflow(
+            "operator.gate",
+            request,
+            provider="invite",
+            status="allowed",
+            warning_count=0,
+        )
+        return access_session
     decision = check_operator_gate(
         workflow,
         request.headers,
@@ -315,8 +344,8 @@ def _require_operator_gate(request: Request, workflow: AiAccessWorkflow) -> None
     log_ai_workflow(
         "operator.gate",
         request,
+        provider="operator",
         status=decision.status.value,
         warning_count=0,
     )
-    if not decision.allowed:
-        raise operator_gate_http_exception(decision)
+    return access_session

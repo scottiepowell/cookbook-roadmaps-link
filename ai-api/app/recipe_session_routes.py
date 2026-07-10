@@ -5,8 +5,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException, Request
 
 from app.ai_access_models import AiAccessWorkflow
-from app.ai_operator_gate import check_operator_gate, operator_gate_http_exception
-from app.config import get_operator_gate_settings
+from app.ai_invite_sessions import require_demo_workflow_access
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.observability import log_ai_workflow
 from app.recipe_requirements import (
@@ -45,7 +44,7 @@ router = APIRouter(prefix="/ai/recipe-session", tags=["recipe-session-alpha"])
 
 @router.post("/start", response_model=RecipeSessionApiResponse)
 def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -> RecipeSessionApiResponse:
-    _require_operator_gate(request, AiAccessWorkflow.RECIPE_SESSION)
+    access_session = _require_demo_workflow_access(request, AiAccessWorkflow.RECIPE_SESSION)
     requirements = extract_recipe_requirements(payload.text)
     decision = decide_clarification(requirements)
 
@@ -78,6 +77,7 @@ def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -
         _generation_text(requirements),
         response_state=RecipeSessionResponseState.DRAFT_GENERATED,
         source=payload.source,
+        budget_session_state=access_session,
     )
     log_ai_workflow(
         "recipe.session.start",
@@ -97,7 +97,7 @@ def message_recipe_session(
     payload: RecipeSessionMessageRequest,
     request: Request,
 ) -> RecipeSessionApiResponse:
-    _require_operator_gate(request, AiAccessWorkflow.RECIPE_SESSION)
+    access_session = _require_demo_workflow_access(request, AiAccessWorkflow.RECIPE_SESSION)
     session = _load_session_or_404(interaction_id)
     previous_requirements = session.requirements
     classification = classify_follow_up(payload.text, current_state=previous_requirements)
@@ -120,6 +120,7 @@ def message_recipe_session(
             session,
             _generation_text(previous_requirements),
             response_state=RecipeSessionResponseState.DRAFT_REVISED,
+            budget_session_state=access_session,
         )
         log_ai_workflow(
             "recipe.session.message",
@@ -169,6 +170,7 @@ def message_recipe_session(
         session,
         _generation_text(updated_requirements),
         response_state=response_state,
+        budget_session_state=access_session,
     )
     log_ai_workflow(
         "recipe.session.message",
@@ -191,7 +193,7 @@ def message_recipe_session(
 @router.get("/{interaction_id}", response_model=RecipeSessionApiResponse)
 def get_recipe_session(interaction_id: str, request: Request) -> RecipeSessionApiResponse:
     # GET is part of the local recipe-session workflow and should respect the same gate.
-    _require_operator_gate(request, AiAccessWorkflow.RECIPE_SESSION)
+    _require_demo_workflow_access(request, AiAccessWorkflow.RECIPE_SESSION)
     session = _load_session_or_404(interaction_id)
     return _session_response(session)
 
@@ -202,7 +204,7 @@ def finalize_recipe_session(
     payload: RecipeSessionFinalizeRequest,
     request: Request,
 ) -> RecipeSessionApiResponse:
-    _require_operator_gate(request, AiAccessWorkflow.RECIPE_SESSION)
+    _require_demo_workflow_access(request, AiAccessWorkflow.RECIPE_SESSION)
     del payload
     session = _load_session_or_404(interaction_id)
     warnings = list(session.warnings)
@@ -235,9 +237,10 @@ def _generate_and_store_draft(
     *,
     response_state: RecipeSessionResponseState,
     source: str | None = None,
+    budget_session_state: object | None = None,
 ) -> RecipeSessionState:
     try:
-        response = import_recipe_text(RecipeImportRequest(text=text, source=source), session_state=session)
+        response = import_recipe_text(RecipeImportRequest(text=text, source=source), session_state=budget_session_state or session)
     except RecipeImportProviderError as exc:
         raise HTTPException(status_code=503, detail="Recipe-session provider is not available.") from exc
     except RecipeImportValidationError as exc:
@@ -491,18 +494,9 @@ def _not_found() -> HTTPException:
     return HTTPException(status_code=404, detail={"response_state": RecipeSessionResponseState.NOT_FOUND.value, "message": "Recipe session was not found or has expired."})
 
 
-def _require_operator_gate(request: Request, workflow: AiAccessWorkflow) -> None:
-    decision = check_operator_gate(
+def _require_demo_workflow_access(request: Request, workflow: AiAccessWorkflow):
+    return require_demo_workflow_access(
         workflow,
         request.headers,
-        get_operator_gate_settings(),
         client_host=request.client.host if request.client else None,
     )
-    log_ai_workflow(
-        "operator.gate",
-        request,
-        status=decision.status.value,
-        warning_count=0,
-    )
-    if not decision.allowed:
-        raise operator_gate_http_exception(decision)

@@ -9,14 +9,24 @@ if (-not (Test-Path $Python)) {
     $Python = "python"
 }
 
+$RunInviteSmoke = $env:AI_INVITE_SMOKE_ENABLED -eq "true"
+
 $env:AI_PROVIDER = "mock"
 $env:AI_OPERATOR_GATE_ENABLED = "false"
+$env:AI_INVITE_SESSIONS_ENABLED = "false"
 $env:AI_PROVIDER_CALLS_ENABLED = "true"
 $env:AI_PROVIDER_GLOBAL_DISABLE = "false"
 Remove-Item Env:AI_OPERATOR_GATE_TOKEN_FINGERPRINT -ErrorAction SilentlyContinue
 Remove-Item Env:AI_OPERATOR_GATE_TOKEN -ErrorAction SilentlyContinue
 Remove-Item Env:AI_OPERATOR_GATE_ALLOWED_WORKFLOWS -ErrorAction SilentlyContinue
 Remove-Item Env:AI_OPERATOR_GATE_LOCAL_BYPASS -ErrorAction SilentlyContinue
+Remove-Item Env:AI_INVITE_SESSION_TTL_SECONDS -ErrorAction SilentlyContinue
+Remove-Item Env:AI_INVITE_GRANT_TTL_SECONDS -ErrorAction SilentlyContinue
+Remove-Item Env:AI_INVITE_MAX_SESSIONS_PER_GRANT -ErrorAction SilentlyContinue
+Remove-Item Env:AI_INVITE_DEFAULT_MAX_PROVIDER_CALLS -ErrorAction SilentlyContinue
+Remove-Item Env:AI_INVITE_DEFAULT_MAX_ESTIMATED_COST_USD -ErrorAction SilentlyContinue
+Remove-Item Env:AI_INVITE_ALLOWED_WORKFLOWS -ErrorAction SilentlyContinue
+Remove-Item Env:AI_INVITE_LOCAL_OPERATOR_CREATE_ENABLED -ErrorAction SilentlyContinue
 Remove-Item Env:AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION -ErrorAction SilentlyContinue
 Remove-Item Env:AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL -ErrorAction SilentlyContinue
 Remove-Item Env:AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL -ErrorAction SilentlyContinue
@@ -62,12 +72,20 @@ try:
     os.environ["RECIPE_DATASET_DIR"] = str(paths["dataset_dir"])
     os.environ["AI_PROVIDER"] = "mock"
     os.environ["AI_OPERATOR_GATE_ENABLED"] = "false"
+    os.environ["AI_INVITE_SESSIONS_ENABLED"] = "false"
     os.environ["AI_PROVIDER_CALLS_ENABLED"] = "true"
     os.environ["AI_PROVIDER_GLOBAL_DISABLE"] = "false"
     os.environ.pop("AI_OPERATOR_GATE_TOKEN_FINGERPRINT", None)
     os.environ.pop("AI_OPERATOR_GATE_TOKEN", None)
     os.environ.pop("AI_OPERATOR_GATE_ALLOWED_WORKFLOWS", None)
     os.environ.pop("AI_OPERATOR_GATE_LOCAL_BYPASS", None)
+    os.environ.pop("AI_INVITE_SESSION_TTL_SECONDS", None)
+    os.environ.pop("AI_INVITE_GRANT_TTL_SECONDS", None)
+    os.environ.pop("AI_INVITE_MAX_SESSIONS_PER_GRANT", None)
+    os.environ.pop("AI_INVITE_DEFAULT_MAX_PROVIDER_CALLS", None)
+    os.environ.pop("AI_INVITE_DEFAULT_MAX_ESTIMATED_COST_USD", None)
+    os.environ.pop("AI_INVITE_ALLOWED_WORKFLOWS", None)
+    os.environ.pop("AI_INVITE_LOCAL_OPERATOR_CREATE_ENABLED", None)
     os.environ.pop("AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION", None)
     os.environ.pop("AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL", None)
     os.environ.pop("AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL", None)
@@ -155,6 +173,45 @@ try:
         for forbidden in ("OPENAI_API_KEY", "sk-", "Authorization:", "Traceback", ".tmp-ai-demo"):
             if forbidden in response.text:
                 raise SystemExit(f"{name} leaked forbidden text: {forbidden}")
+
+    if os.getenv("AI_INVITE_SMOKE_ENABLED", "false").lower() == "true":
+        invite_grant = client.post(
+            "/ai/invite/grants",
+            json={
+                "allowed_workflows": ["importer"],
+                "max_sessions": 1,
+                "max_provider_calls": 1,
+                "max_estimated_cost_usd": "0.10",
+                "notes": "Mock invite smoke",
+                "operator_label": "mock-smoke",
+            },
+        )
+        if invite_grant.status_code != 200:
+            raise SystemExit(f"invite grant smoke failed with HTTP {invite_grant.status_code}: {invite_grant.text}")
+        invite_data = invite_grant.json()
+        invite_token = invite_data["invite_token"]
+        invite_session = client.post("/ai/invite/redeem", json={"invite_token": invite_token})
+        if invite_session.status_code != 200:
+            raise SystemExit(f"invite redeem smoke failed with HTTP {invite_session.status_code}: {invite_session.text}")
+        session_token = invite_session.json()["session_token"]
+        invite_import = client.post(
+            "/ai/import-recipe",
+            headers={"X-AI-Demo-Session-Token": session_token},
+            json={"text": "omelet with eggs cheddar onions butter folded in a skillet"},
+        )
+        if invite_import.status_code != 200:
+            raise SystemExit(f"invite import smoke failed with HTTP {invite_import.status_code}: {invite_import.text}")
+        revoked = client.post(f"/ai/invite/sessions/{invite_session.json()['session']['session_id']}/revoke")
+        if revoked.status_code != 200:
+            raise SystemExit(f"invite revoke smoke failed with HTTP {revoked.status_code}: {revoked.text}")
+        blocked = client.post(
+            "/ai/import-recipe",
+            headers={"X-AI-Demo-Session-Token": session_token},
+            json={"text": "omelet with eggs cheddar onions butter folded in a skillet"},
+        )
+        if blocked.status_code == 200:
+            raise SystemExit("invite revoke smoke expected protected workflow to be blocked")
+        print("PASS: invite_smoke")
 finally:
     default_recipe_session_store.clear()
     shutil.rmtree(root, ignore_errors=True)

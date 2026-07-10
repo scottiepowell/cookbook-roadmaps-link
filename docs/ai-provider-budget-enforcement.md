@@ -16,6 +16,8 @@ The goal is simple: allow offline/mock flows by default, but stop live provider 
 
 `0029E` turns those shapes into a deterministic process-local guard and tracker. It does not add persistent storage, billing, or an admin dashboard.
 
+`0029F` reuses the same guard for invite-only demo sessions. When an invite session is present, the guard can use the short-lived demo-session id and per-grant limits before allowing a provider-backed call.
+
 ## Relationship To The Operator Gate
 
 `0029D` adds the local/private operator gate. That gate decides whether the workflow may enter the protected demo surface at all.
@@ -25,6 +27,8 @@ The goal is simple: allow offline/mock flows by default, but stop live provider 
 - allowed by the operator gate, then blocked by budget;
 - allowed by both, then sent to the provider;
 - or skipped entirely for mock/offline workflows.
+
+If invite-only demo sessions are enabled, the caller can also carry `X-AI-Demo-Session-Token`. In that case the budget guard should treat the invite session as the budget context when practical and still fail closed for disabled, invalid, exhausted, or misconfigured live settings.
 
 ## Configuration
 
@@ -92,6 +96,7 @@ The live smoke and live eval wrappers should respect the centralized budget sett
 - skip cleanly when provider calls are disabled;
 - fail safely when the budget configuration is invalid;
 - use short-lived, local-only session keys for tracking.
+- when invite-only demo sessions are enabled, use the invite session id for tracking and honor the grant/session call and cost limits where practical.
 
 The manual live importer path now recommends `AI_MAX_OUTPUT_TOKENS=900` because RAG-informed structured drafts need more output budget than tiny smoke tests.
 

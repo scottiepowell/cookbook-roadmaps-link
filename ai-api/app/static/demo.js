@@ -96,6 +96,12 @@ async function refreshReadiness() {
       ),
       readinessCard("Saved recipes", data.saved_recipes?.available, `${data.saved_recipes?.count || 0} recipe(s)`, data.saved_recipes?.message),
       readinessCard("Dataset", data.dataset?.available, data.dataset?.available ? "Available" : "Unavailable", data.dataset?.message),
+      readinessCard(
+        "Invite sessions",
+        data.invite_sessions?.available,
+        data.invite_sessions?.available ? "Enabled" : "Disabled",
+        data.invite_sessions?.message || "Invite-only demo sessions are disabled by default.",
+      ),
     );
     document.getElementById("readiness-updated").textContent = "Checked just now";
   } catch (error) {

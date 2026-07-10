@@ -1,6 +1,9 @@
+from decimal import Decimal
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
+
+from app.ai_access_models import AiAccessGrant, AiAdminAuditEvent, AiBudgetSnapshot, AiDemoSession
 
 
 class HealthResponse(BaseModel):
@@ -301,6 +304,57 @@ class RecipeSessionApiResponse(BaseModel):
     support_level: str | None = None
     revision_count: int = 0
     expires_at: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class AiInviteGrantCreateRequest(BaseModel):
+    token: str | None = None
+    allowed_workflows: list[str] = Field(default_factory=list)
+    ttl_seconds: int | None = Field(default=None, ge=1, le=86400)
+    max_sessions: int | None = Field(default=None, ge=1, le=10)
+    max_provider_calls: int | None = Field(default=None, ge=0)
+    max_estimated_cost_usd: Decimal | None = Field(default=None, ge=0)
+    notes: str | None = None
+    operator_label: str | None = None
+
+
+class AiInviteGrantResponse(BaseModel):
+    grant: AiAccessGrant
+    invite_token: str | None = None
+    session_count: int = 0
+    active_session_count: int = 0
+    warnings: list[str] = Field(default_factory=list)
+    audit_event: AiAdminAuditEvent | None = None
+
+
+class AiInviteRedeemRequest(BaseModel):
+    invite_token: str
+    operator_label: str | None = None
+
+
+class AiInviteSessionResponse(BaseModel):
+    grant: AiAccessGrant
+    session: AiDemoSession
+    session_token: str | None = None
+    budget_snapshot: AiBudgetSnapshot | None = None
+    warnings: list[str] = Field(default_factory=list)
+    audit_event: AiAdminAuditEvent | None = None
+
+
+class AiInviteStatusResponse(BaseModel):
+    enabled: bool
+    configured: bool
+    status: str
+    message: str
+    allowed_workflows: list[str] = Field(default_factory=list)
+    local_operator_create_enabled: bool = True
+    grant_ttl_seconds: int = 0
+    session_ttl_seconds: int = 0
+    max_sessions_per_grant: int = 0
+    default_max_provider_calls: int = 0
+    default_max_estimated_cost_usd: Decimal = Decimal("0.00")
+    active_grants: int = 0
+    active_sessions: int = 0
     warnings: list[str] = Field(default_factory=list)
 
 

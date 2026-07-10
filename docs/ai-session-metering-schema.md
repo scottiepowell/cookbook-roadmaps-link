@@ -33,6 +33,10 @@ Fields include:
 - `revoked_reason`
 - `operator_label`
 - `access_grant_id`
+- `session_token_fingerprint`
+- `allowed_workflows`
+- `max_provider_calls`
+- `max_estimated_cost_usd`
 - `request_count`
 - `provider_call_count`
 - `estimated_cost_usd`
@@ -57,6 +61,7 @@ Fields include:
 - `allowed_workflows`
 - `notes`
 - `metadata_fingerprint`
+- `invite_token_fingerprint`
 
 The model does not store plain invite codes or raw tokens. Future tasks that need token-like identifiers should store only fingerprints or hashes.
 
@@ -240,7 +245,7 @@ Later tasks can use these models for:
 
 - `0029D` local operator access gate;
 - `0029E` provider-call budget enforcement;
-- `0029F` invite-only demo session flow;
+- `0029F` invite-only demo session flow (implemented as a local/private alpha on top of these models);
 - `0029G` admin usage report prototype;
 - `0029H` public route exposure review;
 - `0029I` paid access integration ADR.

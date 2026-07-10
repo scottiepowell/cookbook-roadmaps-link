@@ -121,6 +121,16 @@ def check_provider_budget(
     provider_name = (provider or "").strip().lower() or "unknown"
     model_name = model.strip() if isinstance(model, str) and model.strip() else None
     session_key = _session_key(session_state, provider_name, workflow)
+    effective_max_provider_calls = _session_limit_int(
+        session_state,
+        "max_provider_calls",
+        default=active_settings.max_calls_per_demo_session,
+    )
+    effective_max_estimated_cost_usd = _session_limit_decimal(
+        session_state,
+        "max_estimated_cost_usd",
+        default=active_settings.max_estimated_cost_usd_per_session,
+    )
     estimated_input_tokens = max(0, int(estimated_input_tokens or 0))
     requested_output_tokens = max(0, int(requested_output_tokens or 0))
     call_estimated_cost = _estimate_cost_usd(estimated_input_tokens, requested_output_tokens)
@@ -129,8 +139,8 @@ def check_provider_budget(
         snapshot = active_tracker.snapshot(
             session_key,
             grant_id=_grant_id(session_state),
-            max_provider_calls=active_settings.max_calls_per_demo_session,
-            max_estimated_cost_usd=active_settings.max_estimated_cost_usd_per_session,
+            max_provider_calls=effective_max_provider_calls,
+            max_estimated_cost_usd=effective_max_estimated_cost_usd,
         )
         event = _build_meter_event(
             workflow=workflow,
@@ -153,9 +163,9 @@ def check_provider_budget(
             reason="Mock or local provider call treated as zero-cost.",
             safe_message="Mock provider call treated as zero-cost and allowed.",
             provider_call_count=snapshot.provider_call_count,
-            max_provider_calls=active_settings.max_calls_per_demo_session,
+            max_provider_calls=effective_max_provider_calls,
             estimated_cost_usd=snapshot.estimated_cost_usd,
-            max_estimated_cost_usd=active_settings.max_estimated_cost_usd_per_session,
+            max_estimated_cost_usd=effective_max_estimated_cost_usd,
             estimated_input_tokens=estimated_input_tokens,
             estimated_output_tokens=requested_output_tokens,
             max_input_tokens=active_settings.max_input_tokens_per_call,
@@ -169,8 +179,8 @@ def check_provider_budget(
         snapshot = active_tracker.snapshot(
             session_key,
             grant_id=_grant_id(session_state),
-            max_provider_calls=active_settings.max_calls_per_demo_session,
-            max_estimated_cost_usd=active_settings.max_estimated_cost_usd_per_session,
+            max_provider_calls=effective_max_provider_calls,
+            max_estimated_cost_usd=effective_max_estimated_cost_usd,
         )
         event = _build_meter_event(
             workflow=workflow,
@@ -205,8 +215,8 @@ def check_provider_budget(
         snapshot = active_tracker.snapshot(
             session_key,
             grant_id=_grant_id(session_state),
-            max_provider_calls=active_settings.max_calls_per_demo_session,
-            max_estimated_cost_usd=active_settings.max_estimated_cost_usd_per_session,
+            max_provider_calls=effective_max_provider_calls,
+            max_estimated_cost_usd=effective_max_estimated_cost_usd,
         )
         event = _build_meter_event(
             workflow=workflow,
@@ -292,13 +302,13 @@ def check_provider_budget(
     current_snapshot = active_tracker.snapshot(
         session_key,
         grant_id=_grant_id(session_state),
-        max_provider_calls=active_settings.max_calls_per_demo_session,
-        max_estimated_cost_usd=active_settings.max_estimated_cost_usd_per_session,
+        max_provider_calls=effective_max_provider_calls,
+        max_estimated_cost_usd=effective_max_estimated_cost_usd,
     )
     next_call_count = current_snapshot.provider_call_count + 1
     next_estimated_cost = current_snapshot.estimated_cost_usd + call_estimated_cost
 
-    if next_call_count > active_settings.max_calls_per_demo_session:
+    if next_call_count > effective_max_provider_calls:
         return _blocked_decision(
             workflow=workflow,
             provider=provider_name,
@@ -334,7 +344,7 @@ def check_provider_budget(
             current_snapshot=current_snapshot,
         )
 
-    if next_estimated_cost > active_settings.max_estimated_cost_usd_per_session:
+    if next_estimated_cost > effective_max_estimated_cost_usd:
         return _blocked_decision(
             workflow=workflow,
             provider=provider_name,
@@ -356,9 +366,9 @@ def check_provider_budget(
         session_id=session_key,
         grant_id=_grant_id(session_state),
         provider_call_count=next_call_count,
-        max_provider_calls=active_settings.max_calls_per_demo_session,
+        max_provider_calls=effective_max_provider_calls,
         estimated_cost_usd=next_estimated_cost,
-        max_estimated_cost_usd=active_settings.max_estimated_cost_usd_per_session,
+        max_estimated_cost_usd=effective_max_estimated_cost_usd,
     )
     event = _build_meter_event(
         workflow=workflow,
@@ -472,9 +482,9 @@ def _decision(
         reason=reason,
         safe_message=safe_message,
         provider_call_count=snapshot.provider_call_count,
-        max_provider_calls=settings.max_calls_per_demo_session,
+        max_provider_calls=snapshot.max_provider_calls,
         estimated_cost_usd=estimated_cost_usd,
-        max_estimated_cost_usd=settings.max_estimated_cost_usd_per_session,
+        max_estimated_cost_usd=snapshot.max_estimated_cost_usd,
         estimated_input_tokens=estimated_input_tokens,
         estimated_output_tokens=requested_output_tokens,
         max_input_tokens=settings.max_input_tokens_per_call,
@@ -565,10 +575,32 @@ def _session_key(session_state: Any | None, provider: str, workflow: AiAccessWor
 def _grant_id(session_state: Any | None) -> str | None:
     if session_state is None:
         return None
-    value = getattr(session_state, "grant_id", None)
-    if isinstance(value, str) and value.strip():
-        return value.strip()
+    for attribute in ("grant_id", "access_grant_id"):
+        value = getattr(session_state, attribute, None)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
     return None
+
+
+def _session_limit_int(session_state: Any | None, attribute: str, *, default: int) -> int:
+    if session_state is not None:
+        value = getattr(session_state, attribute, None)
+        if isinstance(value, int):
+            return max(0, value)
+    return default
+
+
+def _session_limit_decimal(session_state: Any | None, attribute: str, *, default: Decimal) -> Decimal:
+    if session_state is not None:
+        value = getattr(session_state, attribute, None)
+        if isinstance(value, Decimal):
+            return max(Decimal("0.00"), value)
+        if isinstance(value, (int, float, str)) and str(value).strip():
+            try:
+                return max(Decimal("0.00"), Decimal(str(value)))
+            except Exception:
+                pass
+    return default
 
 
 def _fingerprint(text: str) -> str:

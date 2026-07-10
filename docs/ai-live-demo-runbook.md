@@ -80,6 +80,8 @@ The importer prompt now packs a bounded snippet set instead of sending raw retri
 
 The demo UI also includes a local `Recipe Session Alpha` panel. Use it to start a session from rough recipe notes, inspect interpreted requirements, answer one clarification, send a follow-up, see whether RAG refreshed, get the current session state, and finalize for demo. The session store is process-local and expires; `Finalize for demo` does not write to production cookbook storage. For the full local acceptance checklist, see [Recipe Session Alpha Acceptance Runbook](recipe-session-alpha-acceptance-runbook.md).
 
+Invite-only demo sessions are documented in [AI Invite-Only Demo Session Flow](ai-invite-only-demo-session-flow.md). They are disabled by default, use `X-AI-Demo-Session-Token` for short-lived demo access when enabled, and keep only safe fingerprints after creation. The optional invite smoke path in `scripts/demo-ai-mock.ps1` stays off unless `AI_INVITE_SMOKE_ENABLED=true` is set in the local shell.
+
 ## Importer-Only Diagnostic
 
 Prefer the dedicated live importer smoke script:
