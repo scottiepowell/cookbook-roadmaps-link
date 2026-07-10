@@ -42,6 +42,8 @@ The helper returns a safe `AiOperatorGateDecision` with:
 
 The decision object is safe to serialize and does not include raw tokens, API keys, request bodies, local paths, or other secret-like values.
 
+`0029E` applies the centralized provider budget guard after this gate. That guard can still block a request that was allowed by the operator gate if the provider is globally disabled, the call count is exhausted, or the requested token/cost budget is too large.
+
 ## Verification Rules
 
 `check_operator_gate(workflow, request_headers, settings, client_host=...)` performs the gate decision.

@@ -1,4 +1,6 @@
-from app.config import get_ai_settings, get_recipe_dataset_index_limit
+from app.ai_access_models import AiAccessWorkflow
+from app.ai_budget_guard import check_provider_budget
+from app.config import get_ai_settings, get_provider_budget_settings, get_recipe_dataset_index_limit
 from app.dataset_retrieval import empty_dataset_index_summary, search_dataset_recipes
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_dataset_question_input
 from app.providers import LLMProvider, LLMRequest, get_provider
@@ -56,7 +58,9 @@ class DatasetAskProviderError(DatasetAskError):
 def ask_dataset_recipes(
     request: DatasetAskRequest,
     provider: LLMProvider | None = None,
+    session_state: object | None = None,
 ) -> DatasetAskResponse:
+    settings = get_ai_settings()
     dataset_limit = request.dataset_limit or get_recipe_dataset_index_limit()
     input_quality = classify_dataset_question_input(request.question)
     if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
@@ -111,13 +115,41 @@ def ask_dataset_recipes(
             input_quality=input_quality.to_dict(),
         )
 
+    provider_name = provider.name if provider is not None else settings.provider
+    provider_model = getattr(provider, "model", None)
+    if provider_model is None:
+        provider_model = settings.openai_model if provider_name == "openai" else settings.model
+    budget_decision = check_provider_budget(
+        AiAccessWorkflow.DATASET_ASK,
+        provider_name,
+        provider_model,
+        _estimate_input_tokens(request.question, retrieval_response.results),
+        settings.max_output_tokens,
+        session_state,
+        get_provider_budget_settings(),
+    )
+    if not budget_decision.allowed:
+        warnings = [*retrieval_response.warnings]
+        if input_quality.status == WEAK_BUT_USABLE:
+            warnings.extend(input_quality.warnings)
+        warnings.append(budget_decision.safe_message)
+        return DatasetAskResponse(
+            answer=budget_decision.safe_message,
+            citations=citations,
+            provider="none",
+            model="none",
+            retrieval=retrieval,
+            warnings=warnings,
+            usage=None,
+            input_quality=input_quality.to_dict(),
+        )
     active_provider = provider or _get_configured_provider()
     try:
         provider_response = active_provider.generate_text(
             LLMRequest(
                 prompt=_build_prompt(request.question, retrieval_response.results),
                 system=DATASET_ASK_SYSTEM_PROMPT,
-                max_output_tokens=get_ai_settings().max_output_tokens,
+                max_output_tokens=settings.max_output_tokens,
                 temperature=0,
             )
         )
@@ -182,3 +214,8 @@ def _retrieval_query(question: str) -> str:
         for token in question.replace("?", " ").split()
     ]
     return " ".join(token for token in tokens if token and token not in QUESTION_STOP_WORDS)
+
+
+def _estimate_input_tokens(question: str, results: list[DatasetSearchResult]) -> int:
+    prompt = _build_prompt(question, results)
+    return max(1, len(prompt.split()))

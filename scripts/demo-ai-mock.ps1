@@ -11,10 +11,20 @@ if (-not (Test-Path $Python)) {
 
 $env:AI_PROVIDER = "mock"
 $env:AI_OPERATOR_GATE_ENABLED = "false"
+$env:AI_PROVIDER_CALLS_ENABLED = "true"
+$env:AI_PROVIDER_GLOBAL_DISABLE = "false"
 Remove-Item Env:AI_OPERATOR_GATE_TOKEN_FINGERPRINT -ErrorAction SilentlyContinue
 Remove-Item Env:AI_OPERATOR_GATE_TOKEN -ErrorAction SilentlyContinue
 Remove-Item Env:AI_OPERATOR_GATE_ALLOWED_WORKFLOWS -ErrorAction SilentlyContinue
 Remove-Item Env:AI_OPERATOR_GATE_LOCAL_BYPASS -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_MAX_TOTAL_TOKENS_PER_CALL -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_SESSION -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_CALL -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_BUDGET_MODE -ErrorAction SilentlyContinue
+Remove-Item Env:AI_PROVIDER_BUDGET_SESSION_ID -ErrorAction SilentlyContinue
 
 Write-Host "AI demo mock path: offline evals"
 & $Python "evals\ai_cookbook\run_evals.py"
@@ -52,10 +62,20 @@ try:
     os.environ["RECIPE_DATASET_DIR"] = str(paths["dataset_dir"])
     os.environ["AI_PROVIDER"] = "mock"
     os.environ["AI_OPERATOR_GATE_ENABLED"] = "false"
+    os.environ["AI_PROVIDER_CALLS_ENABLED"] = "true"
+    os.environ["AI_PROVIDER_GLOBAL_DISABLE"] = "false"
     os.environ.pop("AI_OPERATOR_GATE_TOKEN_FINGERPRINT", None)
     os.environ.pop("AI_OPERATOR_GATE_TOKEN", None)
     os.environ.pop("AI_OPERATOR_GATE_ALLOWED_WORKFLOWS", None)
     os.environ.pop("AI_OPERATOR_GATE_LOCAL_BYPASS", None)
+    os.environ.pop("AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION", None)
+    os.environ.pop("AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL", None)
+    os.environ.pop("AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL", None)
+    os.environ.pop("AI_PROVIDER_MAX_TOTAL_TOKENS_PER_CALL", None)
+    os.environ.pop("AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_SESSION", None)
+    os.environ.pop("AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_CALL", None)
+    os.environ.pop("AI_PROVIDER_BUDGET_MODE", None)
+    os.environ.pop("AI_PROVIDER_BUDGET_SESSION_ID", None)
     default_recipe_session_store.clear()
 
     client = TestClient(app)

@@ -8,6 +8,8 @@ The current AI sidecar already supports a strong local demo surface: RAG-informe
 
 This is schema-only work. It does not add production storage, auth, billing, public live AI exposure, database migrations, invite emails, budget enforcement runtime, or an admin dashboard.
 
+`0029E` builds the runtime provider budget guard on top of these models. That task keeps the guard deterministic and process-local while using the schema shapes below for safe snapshots, meter events, and operator views.
+
 ## Model Module
 
 The draft models live in:
@@ -172,6 +174,33 @@ Remaining calls and remaining cost are calculated by the model. Exhaustion reaso
 - `provider_call_and_cost_limits_exhausted`
 
 Budget snapshots are models only. They do not block provider calls at runtime in this task.
+
+## Provider Budget Decision
+
+`AiProviderBudgetDecision` is the safe decision object used by the provider budget guard introduced in `0029E`.
+
+Fields include:
+
+- `allowed`
+- `status`: `allowed`, `blocked`, `disabled`, `exhausted`, `misconfigured`, or `skipped`
+- `workflow`
+- `provider`
+- `model`
+- `reason`
+- `safe_message`
+- `provider_call_count`
+- `max_provider_calls`
+- `estimated_cost_usd`
+- `max_estimated_cost_usd`
+- `estimated_input_tokens`
+- `estimated_output_tokens`
+- `max_input_tokens`
+- `max_output_tokens`
+- `budget_snapshot`
+- `meter_event`
+- `safe_metadata`
+
+The runtime helper is still local-only and process-local; the schema doc remains non-persistent and non-production.
 
 ## Safe Serialization
 

@@ -14,6 +14,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Dataset Ask/RAG | Complete | `POST /dataset/ask` | pytest, offline evals, live smoke | Answers from retrieved dataset records with provenance citations. |
 | Saved-recipe meal planning | Complete | `POST /ai/meal-plan` | pytest, offline evals, live smoke | Plans from selected saved recipe candidates; no DB write-back. |
 | Local operator gate | Complete, local/private | `ai-api/app/ai_operator_gate.py`, protected AI routes | pytest, offline route tests | Opt-in gate compares safe token fingerprints, supports an explicit local bypass, protects importer/dataset ask/recipe-session/meal-plan workflows when enabled, and returns safe allow/block/misconfigured decisions without raw token leakage. |
+| Provider-call budget guard | Complete, local/private | `ai-api/app/ai_budget_guard.py`, protected provider-backed routes | pytest, offline route tests | Centralizes per-call and per-session provider budget checks, blocks live provider calls when disabled or exhausted, records safe meter snapshots/events, and leaves mock/offline workflows zero-cost by default. |
 | Bounded input quality | Complete | importer, Ask, dataset search/RAG, meal planning | pytest, offline evals | Rejects unusable input before provider calls, asks at most one clarification question for recoverable vague input, and lets weak usable input proceed with warnings. |
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
 | Retrieval relevance eval harness | Complete | `evals/ai_cookbook/run_evals.py` | offline eval tests | Deterministically scores importer retrieval relevance against generated distractor fixtures, including top-1 dish match, top-k material relevance, anchor coverage, and weak-match warnings. |
@@ -85,6 +86,7 @@ status=passed
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 | Local operator gate | Pass | helper and route tests | Gate is disabled by default, uses safe fingerprints and a local bypass, and keeps offline/mock validation unchanged unless explicitly enabled. |
+| Provider-call budget guard | Pass | helper and route tests | Budget settings are opt-in, fail closed for invalid live config, treat mock calls as zero-cost, and block live provider calls before invocation when the demo is globally disabled or caps are exceeded. |
 
 ## Demo Starting Points
 

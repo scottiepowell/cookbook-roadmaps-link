@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from decimal import Decimal
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,21 @@ class OperatorGateSettings:
     local_bypass: bool
 
 
+@dataclass(frozen=True)
+class ProviderBudgetSettings:
+    calls_enabled: bool
+    global_disable: bool
+    max_calls_per_demo_session: int
+    max_input_tokens_per_call: int
+    max_output_tokens_per_call: int
+    max_total_tokens_per_call: int
+    max_estimated_cost_usd_per_session: Decimal
+    max_estimated_cost_usd_per_call: Decimal
+    budget_mode: str
+    configured: bool
+    validation_errors: tuple[str, ...]
+
+
 DEFAULT_AI_PROVIDER = "mock"
 DEFAULT_AI_MODEL = "mock-basic"
 DEFAULT_AI_MAX_OUTPUT_TOKENS = 700
@@ -48,6 +64,15 @@ DEFAULT_AI_RETRIEVAL_CACHE_TTL_SECONDS = 900
 DEFAULT_AI_OPERATOR_GATE_ENABLED = False
 DEFAULT_AI_OPERATOR_GATE_ALLOWED_WORKFLOWS = ("importer", "dataset_ask", "recipe_session", "meal_plan")
 DEFAULT_AI_OPERATOR_GATE_LOCAL_BYPASS = True
+DEFAULT_AI_PROVIDER_CALLS_ENABLED = True
+DEFAULT_AI_PROVIDER_GLOBAL_DISABLE = False
+DEFAULT_AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION = 10
+DEFAULT_AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL = 12000
+DEFAULT_AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL = 1200
+DEFAULT_AI_PROVIDER_MAX_TOTAL_TOKENS_PER_CALL = 14000
+DEFAULT_AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_SESSION = Decimal("1.00")
+DEFAULT_AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_CALL = Decimal("0.25")
+DEFAULT_AI_PROVIDER_BUDGET_MODE = "enforce"
 
 PROVIDER_ENV_VARS = {
     "mock": None,
@@ -131,6 +156,76 @@ def get_operator_gate_settings() -> OperatorGateSettings:
     )
 
 
+def get_provider_budget_settings() -> ProviderBudgetSettings:
+    errors: list[str] = []
+    calls_enabled = _strict_bool_env(
+        "AI_PROVIDER_CALLS_ENABLED",
+        DEFAULT_AI_PROVIDER_CALLS_ENABLED,
+        errors=errors,
+    )
+    global_disable = _strict_bool_env(
+        "AI_PROVIDER_GLOBAL_DISABLE",
+        DEFAULT_AI_PROVIDER_GLOBAL_DISABLE,
+        errors=errors,
+    )
+    max_calls = _strict_int_env(
+        "AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION",
+        DEFAULT_AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION,
+        minimum=1,
+        errors=errors,
+    )
+    max_input_tokens = _strict_int_env(
+        "AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL",
+        DEFAULT_AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL,
+        minimum=1,
+        errors=errors,
+    )
+    max_output_tokens = _strict_int_env(
+        "AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL",
+        DEFAULT_AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL,
+        minimum=1,
+        errors=errors,
+    )
+    max_total_tokens = _strict_int_env(
+        "AI_PROVIDER_MAX_TOTAL_TOKENS_PER_CALL",
+        DEFAULT_AI_PROVIDER_MAX_TOTAL_TOKENS_PER_CALL,
+        minimum=1,
+        errors=errors,
+    )
+    max_session_cost = _strict_decimal_env(
+        "AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_SESSION",
+        DEFAULT_AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_SESSION,
+        minimum=Decimal("0.00"),
+        errors=errors,
+    )
+    max_call_cost = _strict_decimal_env(
+        "AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_CALL",
+        DEFAULT_AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_CALL,
+        minimum=Decimal("0.00"),
+        errors=errors,
+    )
+    budget_mode = os.getenv("AI_PROVIDER_BUDGET_MODE", DEFAULT_AI_PROVIDER_BUDGET_MODE).strip().lower()
+    if not budget_mode:
+        budget_mode = DEFAULT_AI_PROVIDER_BUDGET_MODE
+    if budget_mode not in {"enforce", "warn"}:
+        errors.append("AI_PROVIDER_BUDGET_MODE must be 'enforce' or 'warn'.")
+        budget_mode = DEFAULT_AI_PROVIDER_BUDGET_MODE
+
+    return ProviderBudgetSettings(
+        calls_enabled=calls_enabled,
+        global_disable=global_disable,
+        max_calls_per_demo_session=max_calls,
+        max_input_tokens_per_call=max_input_tokens,
+        max_output_tokens_per_call=max_output_tokens,
+        max_total_tokens_per_call=max_total_tokens,
+        max_estimated_cost_usd_per_session=max_session_cost,
+        max_estimated_cost_usd_per_call=max_call_cost,
+        budget_mode=budget_mode,
+        configured=not errors,
+        validation_errors=tuple(errors),
+    )
+
+
 def _int_env(name: str, default: int) -> int:
     raw_value = os.getenv(name)
     if not raw_value or not raw_value.strip():
@@ -156,6 +251,49 @@ def _bool_env(name: str, default: bool) -> bool:
     if raw_value is None or not raw_value.strip():
         return default
     return raw_value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _strict_bool_env(name: str, default: bool, *, errors: list[str]) -> bool:
+    raw_value = os.getenv(name)
+    if raw_value is None or not raw_value.strip():
+        return default
+    normalized = raw_value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    errors.append(f"{name} must be a boolean value.")
+    return default
+
+
+def _strict_int_env(name: str, default: int, *, minimum: int, errors: list[str]) -> int:
+    raw_value = os.getenv(name)
+    if raw_value is None or not raw_value.strip():
+        return default
+    try:
+        value = int(raw_value)
+    except ValueError:
+        errors.append(f"{name} must be an integer.")
+        return default
+    if value < minimum:
+        errors.append(f"{name} must be greater than or equal to {minimum}.")
+        return default
+    return value
+
+
+def _strict_decimal_env(name: str, default: Decimal, *, minimum: Decimal, errors: list[str]) -> Decimal:
+    raw_value = os.getenv(name)
+    if raw_value is None or not raw_value.strip():
+        return default
+    try:
+        value = Decimal(raw_value.strip())
+    except Exception:
+        errors.append(f"{name} must be a decimal value.")
+        return default
+    if value < minimum:
+        errors.append(f"{name} must be greater than or equal to {minimum}.")
+        return default
+    return value
 
 
 def _parse_csv_env(name: str, default: tuple[str, ...]) -> list[str]:

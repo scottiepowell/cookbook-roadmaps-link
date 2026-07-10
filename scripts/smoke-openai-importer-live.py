@@ -13,6 +13,7 @@ MAX_BUDGET_CENTS = 25
 DEFAULT_TEXT = "omelet with eggs cheese maybe onions cooked in butter fold it over"
 DEFAULT_MAX_OUTPUT_TOKENS = 900
 DEFAULT_AI_TIMEOUT_SECONDS = 60
+DEFAULT_BUDGET_SESSION_ID = "live-openai-importer-smoke"
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parse_args(argv)
     _apply_overrides(args)
+    os.environ.setdefault("AI_PROVIDER_BUDGET_SESSION_ID", DEFAULT_BUDGET_SESSION_ID)
 
     guard = evaluate_live_guard(os.environ)
     if not guard.should_run:
@@ -63,6 +65,14 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # pragma: no cover - manual-only defensive guard.
         return _fail_safely(f"unexpected importer failure: {_safe_error(exc)}")
 
+    if getattr(response, "provider", "none") != "openai":
+        warnings = " ".join(getattr(response, "warnings", []) or [])
+        if _looks_like_budget_block(warnings):
+            return _fail_safely("live importer smoke blocked by budget settings.")
+        return _fail_safely(
+            f"live importer smoke did not use the openai provider: provider={getattr(response, 'provider', 'none')}"
+        )
+
     summary = format_success_summary(response)
     _assert_no_secret_leaks(summary)
     print("\n".join(summary))
@@ -85,6 +95,8 @@ def evaluate_live_guard(env: dict[str, str]) -> GuardResult:
         return GuardResult(False, 0, "SKIP: AI_PROVIDER is not openai.")
     if not env.get("OPENAI_API_KEY", "").strip():
         return GuardResult(False, 0, "SKIP: OpenAI API key is not configured.")
+    if env.get("AI_PROVIDER_CALLS_ENABLED") == "false" or env.get("AI_PROVIDER_GLOBAL_DISABLE") == "true":
+        return GuardResult(False, 0, "SKIP: provider calls are disabled by budget settings.")
 
     raw_budget = env.get("OPENAI_LIVE_TEST_BUDGET_CENTS") or str(MAX_BUDGET_CENTS)
     try:
@@ -178,6 +190,11 @@ def _safe_error(exc: BaseException) -> str:
     for pattern in ("OPENAI_API_KEY", "sk-", "Authorization:", ".env"):
         text = text.replace(pattern, "[redacted]")
     return text
+
+
+def _looks_like_budget_block(text: str) -> bool:
+    lowered = text.lower()
+    return any(token in lowered for token in ("budget", "disabled", "exhausted", "cap", "misconfigured"))
 
 
 def _fail_safely(message: str) -> int:

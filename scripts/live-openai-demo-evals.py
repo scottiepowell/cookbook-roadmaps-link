@@ -13,6 +13,7 @@ from typing import Any, Callable
 MAX_BUDGET_CENTS = 25
 MAX_OUTPUT_TOKENS_LIMIT = 300
 DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
+DEFAULT_BUDGET_SESSION_ID = "live-openai-demo-evals"
 LIVE_CASES_PATH = Path("evals/ai_cookbook/live_cases.json")
 
 
@@ -31,6 +32,7 @@ def main() -> int:
     sys.path.insert(0, str(repo_root / "ai-api"))
     sys.path.insert(0, str(repo_root))
     os.chdir(repo_root)
+    os.environ.setdefault("AI_PROVIDER_BUDGET_SESSION_ID", DEFAULT_BUDGET_SESSION_ID)
 
     guard = evaluate_live_eval_guard(os.environ)
     if not guard.should_run:
@@ -65,6 +67,8 @@ def evaluate_live_eval_guard(env: dict[str, str]) -> GuardResult:
         return GuardResult(False, 0, _requirements_message("AI_PROVIDER=openai is required."))
     if not env.get("OPENAI_API_KEY", "").strip():
         return GuardResult(False, 0, _requirements_message("OPENAI_API_KEY must be present."))
+    if env.get("AI_PROVIDER_CALLS_ENABLED") == "false" or env.get("AI_PROVIDER_GLOBAL_DISABLE") == "true":
+        return GuardResult(False, 0, _requirements_message("provider calls are disabled by budget settings."))
 
     raw_budget = env.get("OPENAI_LIVE_TEST_BUDGET_CENTS")
     if not raw_budget:
@@ -163,6 +167,10 @@ def run_case(
         error_type = exc.__class__.__name__
         payload = {"error": _safe_error(exc)}
     latency_ms = int((time.perf_counter() - started) * 1000)
+
+    if _looks_like_budget_block(payload):
+        error_type = "BudgetBlocked"
+        payload.setdefault("error", "Provider call was blocked by budget settings.")
 
     assert_no_secret_leaks(payload)
     response_path = responses_dir / f"{workflow}.json"
@@ -401,6 +409,15 @@ def _safe_error(exc: BaseException) -> str:
     for marker in ("OPENAI_API_KEY", "sk-", "Authorization:"):
         text = text.replace(marker, "[redacted]")
     return text[:500]
+
+
+def _looks_like_budget_block(payload: dict[str, Any]) -> bool:
+    provider = str(payload.get("provider") or "").lower()
+    if provider != "none":
+        return False
+    warnings = " ".join(str(item) for item in payload.get("warnings") or [])
+    lowered = warnings.lower()
+    return any(token in lowered for token in ("budget", "disabled", "exhausted", "cap", "misconfigured"))
 
 
 if __name__ == "__main__":

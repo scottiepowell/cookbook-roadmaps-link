@@ -15,6 +15,7 @@ MAX_BUDGET_CENTS = 25
 MAX_LIVE_CALLS = 4
 DEFAULT_MAX_OUTPUT_TOKENS = "200"
 MAX_OUTPUT_TOKENS_LIMIT = 300
+DEFAULT_BUDGET_SESSION_ID = "live-openai-smoke"
 SECRET_PATTERNS = (
     "OPENAI_API_KEY",
     "sk-",
@@ -60,6 +61,7 @@ def main() -> int:
     sys.path.insert(0, str(repo_root / "ai-api"))
 
     os.environ.setdefault("AI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS)
+    os.environ.setdefault("AI_PROVIDER_BUDGET_SESSION_ID", DEFAULT_BUDGET_SESSION_ID)
     guard = evaluate_live_guard(os.environ)
     if not guard.should_run:
         print(guard.message)
@@ -129,6 +131,8 @@ def evaluate_live_guard(env: dict[str, str]) -> GuardResult:
         return GuardResult(False, 0, "SKIP: AI_PROVIDER is not openai.")
     if not env.get("OPENAI_API_KEY", "").strip():
         return GuardResult(False, 0, "SKIP: OpenAI API key is not configured.")
+    if env.get("AI_PROVIDER_CALLS_ENABLED") == "false" or env.get("AI_PROVIDER_GLOBAL_DISABLE") == "true":
+        return GuardResult(False, 0, "SKIP: provider calls are disabled by budget settings.")
 
     raw_budget = env.get("OPENAI_LIVE_TEST_BUDGET_CENTS")
     try:
@@ -164,7 +168,11 @@ def _run_importer_smoke(provider: Any, summary: SmokeSummary) -> None:
         ),
         provider=provider,
     )
-    assert response.provider == "openai"
+    if getattr(response, "provider", "none") != "openai":
+        warnings = " ".join(getattr(response, "warnings", []) or [])
+        if _looks_like_budget_block(warnings):
+            raise ProviderError("provider call blocked by budget settings.")
+        raise ProviderError(f"provider did not return openai: {getattr(response, 'provider', 'none')}")
     assert response.draft.title.strip(), "importer returned an empty title"
     assert response.draft.ingredients, "importer returned no ingredients"
     assert response.draft.instructions, "importer returned no instructions"
@@ -196,7 +204,11 @@ def _run_saved_recipe_ask_smoke(provider: Any, summary: SmokeSummary) -> None:
             ),
         ],
     )
-    assert response.provider == "openai"
+    if getattr(response, "provider", "none") != "openai":
+        warnings = " ".join(getattr(response, "warnings", []) or [])
+        if _looks_like_budget_block(warnings):
+            raise ProviderError("provider call blocked by budget settings.")
+        raise ProviderError(f"provider did not return openai: {getattr(response, 'provider', 'none')}")
     assert response.citations and response.citations[0].recipe_id == "1", "saved-recipe citation missing"
     _assert_no_secret_leaks(response.model_dump())
     summary.record("ask_my_cookbook", response)
@@ -246,7 +258,11 @@ def _run_dataset_ask_smoke(provider: Any, summary: SmokeSummary, temp_dir: Path)
         else:
             os.environ["RECIPE_DATASET_DIR"] = old_dataset_dir
 
-    assert response.provider == "openai"
+    if getattr(response, "provider", "none") != "openai":
+        warnings = " ".join(getattr(response, "warnings", []) or [])
+        if _looks_like_budget_block(warnings):
+            raise ProviderError("provider call blocked by budget settings.")
+        raise ProviderError(f"provider did not return openai: {getattr(response, 'provider', 'none')}")
     assert response.citations and response.citations[0].source_id == "live-1", "dataset citation missing"
     _assert_no_secret_leaks(response.model_dump())
     summary.record("dataset_ask", response)
@@ -271,7 +287,11 @@ def _run_meal_plan_smoke(provider: Any, summary: SmokeSummary, temp_dir: Path) -
         else:
             os.environ["COOKBOOK_DB_PATH"] = old_db_path
 
-    assert response.provider == "openai"
+    if getattr(response, "provider", "none") != "openai":
+        warnings = " ".join(getattr(response, "warnings", []) or [])
+        if _looks_like_budget_block(warnings):
+            raise ProviderError("provider call blocked by budget settings.")
+        raise ProviderError(f"provider did not return openai: {getattr(response, 'provider', 'none')}")
     assert response.citations and response.selection.matched_recipe_ids == ["1"], "meal-plan citation missing"
     planned_ids = [meal.recipe_id for day in response.plan.days for meal in day.meals]
     assert set(planned_ids).issubset({"1"}), "meal plan used a non-selected recipe"
@@ -353,6 +373,11 @@ def _safe_error(exc: BaseException) -> str:
     for pattern in SECRET_PATTERNS:
         text = text.replace(pattern, "[redacted]")
     return text
+
+
+def _looks_like_budget_block(text: str) -> bool:
+    lowered = text.lower()
+    return any(token in lowered for token in ("budget", "disabled", "exhausted", "cap", "misconfigured"))
 
 
 def _fail_safely(message: str) -> int:

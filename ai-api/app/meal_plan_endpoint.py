@@ -1,6 +1,9 @@
 from pydantic import ValidationError
 
+from app.ai_access_models import AiAccessWorkflow
+from app.ai_budget_guard import check_provider_budget
 from app.config import get_ai_settings
+from app.config import get_provider_budget_settings
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_meal_plan_preferences
 from app.meal_planner import (
     build_no_match_meal_plan_response,
@@ -36,7 +39,9 @@ class MealPlanValidationError(MealPlanError):
 def create_meal_plan(
     request: MealPlanRequest,
     provider: LLMProvider | None = None,
+    session_state: object | None = None,
 ) -> MealPlanResponse:
+    settings = get_ai_settings()
     input_quality = classify_meal_plan_preferences(_meal_plan_quality_text(request))
     if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
         return MealPlanResponse(
@@ -65,6 +70,38 @@ def create_meal_plan(
             response.warnings = [*input_quality.warnings, *response.warnings]
         return response
 
+    provider_name = provider.name if provider is not None else settings.provider
+    provider_model = getattr(provider, "model", None)
+    if provider_model is None:
+        provider_model = settings.openai_model if provider_name == "openai" else settings.model
+    budget_decision = check_provider_budget(
+        AiAccessWorkflow.MEAL_PLAN,
+        provider_name,
+        provider_model,
+        _estimate_input_tokens(request, foundation.candidates),
+        settings.max_output_tokens,
+        session_state,
+        get_provider_budget_settings(),
+    )
+    if not budget_decision.allowed:
+        warnings = [*foundation.warnings]
+        if input_quality.status == WEAK_BUT_USABLE:
+            warnings.extend(input_quality.warnings)
+        warnings.append(budget_decision.safe_message)
+        return MealPlanResponse(
+            plan=deterministic_partial_meal_plan(request, foundation.candidates),
+            citations=foundation.candidates,
+            provider="none",
+            model="none",
+            selection=MealPlanSelectionMetadata(
+                candidate_count=len(foundation.candidates),
+                matched_recipe_ids=[candidate.recipe_id for candidate in foundation.candidates],
+                requested_slots=request.days * request.meals_per_day,
+            ),
+            warnings=warnings,
+            usage=None,
+            input_quality=input_quality.to_dict(),
+        )
     active_provider = provider or _get_configured_provider()
     try:
         provider_response = active_provider.generate_structured(
@@ -73,7 +110,7 @@ def create_meal_plan(
                 system=MEAL_PLAN_SYSTEM_PROMPT,
                 schema_name="MealPlanDraft",
                 schema=MealPlanDraft.model_json_schema(),
-                max_output_tokens=get_ai_settings().max_output_tokens,
+                max_output_tokens=settings.max_output_tokens,
             )
         )
     except ProviderError as exc:
@@ -197,3 +234,8 @@ def _coerce_to_saved_candidates(
 
 def _planned_meal_count(plan: MealPlanDraft) -> int:
     return sum(len(day.meals) for day in plan.days)
+
+
+def _estimate_input_tokens(request: MealPlanRequest, candidates: list) -> int:
+    prompt = _build_prompt(request, candidates)
+    return max(1, len(prompt.split()))

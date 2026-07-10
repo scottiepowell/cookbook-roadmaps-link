@@ -95,6 +95,15 @@ The tests verify:
 - missing tokens, disallowed workflows, and misconfigured fingerprints return safe blocked or misconfigured decisions;
 - protected importer, dataset ask, recipe-session, and meal-plan routes return safe allow/block responses without leaking raw tokens, headers, prompts, or local paths.
 
+0029E adds deterministic provider budget-enforcement tests that remain offline and mock-friendly. The checks verify:
+
+- mock/provider-skipped calls remain zero-cost and allowed by default;
+- global provider disable and provider-call disable settings block live provider calls before invocation;
+- per-call and per-session token/cost caps block safely when exceeded;
+- invalid budget configuration fails closed for live provider calls;
+- safe meter events and budget snapshots serialize without secrets or local paths;
+- importer, dataset ask, recipe-session, and meal-plan routes still behave normally in mock/offline mode and report safe budget messages when live calls are blocked.
+
 The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
 
 The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.

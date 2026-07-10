@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 
+from app.ai_access_models import AiAccessWorkflow
+from app.ai_budget_guard import check_provider_budget
 from app.config import get_ai_settings
+from app.config import get_provider_budget_settings
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_question_input
 from app.providers import LLMProvider, LLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError
@@ -55,7 +58,9 @@ def ask_cookbook(
     request: AskRequest,
     provider: LLMProvider | None = None,
     recipes: list[RecipeDocument] | None = None,
+    session_state: object | None = None,
 ) -> AskResponse:
+    settings = get_ai_settings()
     input_quality = classify_question_input(request.question)
     if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
         return AskResponse(
@@ -90,13 +95,39 @@ def ask_cookbook(
             input_quality=input_quality.to_dict(),
         )
 
+    provider_name = provider.name if provider is not None else settings.provider
+    provider_model = getattr(provider, "model", None)
+    if provider_model is None:
+        provider_model = settings.openai_model if provider_name == "openai" else settings.model
+    budget_decision = check_provider_budget(
+        AiAccessWorkflow.ASK_MY_COOKBOOK,
+        provider_name,
+        provider_model,
+        _estimate_input_tokens(request.question, retrieved),
+        settings.max_output_tokens,
+        session_state,
+        get_provider_budget_settings(),
+    )
+    if not budget_decision.allowed:
+        warnings = list(input_quality.warnings) if input_quality.status == WEAK_BUT_USABLE else []
+        warnings.append(budget_decision.safe_message)
+        return AskResponse(
+            answer=budget_decision.safe_message,
+            citations=[item.citation for item in retrieved],
+            provider="none",
+            model="none",
+            retrieval=retrieval,
+            warnings=warnings,
+            usage=None,
+            input_quality=input_quality.to_dict(),
+        )
     active_provider = provider or _get_configured_provider()
     try:
         provider_response = active_provider.generate_text(
             LLMRequest(
                 prompt=_build_prompt(request.question, retrieved),
                 system=ASK_SYSTEM_PROMPT,
-                max_output_tokens=get_ai_settings().max_output_tokens,
+                max_output_tokens=settings.max_output_tokens,
                 temperature=0,
             )
         )
@@ -182,3 +213,8 @@ def _retrieval_query(question: str) -> str:
         if token.lower().strip(".,:;!()[]{}") not in QUESTION_STOP_WORDS
     ]
     return " ".join(tokens)
+
+
+def _estimate_input_tokens(question: str, retrieved: list[RetrievedRecipe]) -> int:
+    prompt = _build_prompt(question, retrieved)
+    return max(1, len(prompt.split()))

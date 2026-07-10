@@ -36,6 +36,7 @@ Demo and evidence links:
 - [Live OpenAI regression notes](docs/live-openai-demo-regression-notes-2026-07-08.md)
 - [Production access metering architecture](docs/production-access-metering-architecture.md)
 - [AI session metering schema](docs/ai-session-metering-schema.md)
+- [AI provider budget enforcement](docs/ai-provider-budget-enforcement.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
 - [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
 - [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md)
@@ -134,7 +135,7 @@ The live importer `503` blocker from manual testing was traced to strict structu
 
 Production access architecture is proposed, not implemented. Before any public live provider-backed AI exposure, the AI demo needs an access layer with time-limited sessions, per-call metering, provider budget enforcement, a global live-provider disable switch, protected routes, and metadata-only logging by default. The first schema-only scaffold for that future layer is in `ai-api/app/ai_access_models.py` and [AI session metering schema](docs/ai-session-metering-schema.md), covering demo sessions, access grants, meter events, quality events, audit events, and budget snapshots without runtime auth, storage, billing, invite flow, or budget enforcement. Payment integration is deferred, and the platform rule remains: shared infrastructure is allowed, but each demo owns its own data boundary.
 
-The first local/private access guardrail now exists in [AI Local Operator Access Gate](docs/ai-local-operator-access-gate.md). It is disabled by default, protects importer/dataset ask/recipe-session/meal-plan workflows when enabled, and compares safe fingerprints on `X-AI-Operator-Token` or `Authorization: Bearer ...` without echoing raw tokens or local paths.
+The first local/private access guardrail now exists in [AI Local Operator Access Gate](docs/ai-local-operator-access-gate.md). It is disabled by default, protects importer/dataset ask/recipe-session/meal-plan workflows when enabled, and compares safe fingerprints on `X-AI-Operator-Token` or `Authorization: Bearer ...` without echoing raw tokens or local paths. The provider budget guard in [AI Provider Budget Enforcement](docs/ai-provider-budget-enforcement.md) runs after the gate and blocks live provider calls when the demo is globally disabled, caps are exceeded, or the live budget configuration is invalid.
 
 ## Architecture
 

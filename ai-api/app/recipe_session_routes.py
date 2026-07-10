@@ -237,7 +237,7 @@ def _generate_and_store_draft(
     source: str | None = None,
 ) -> RecipeSessionState:
     try:
-        response = import_recipe_text(RecipeImportRequest(text=text, source=source))
+        response = import_recipe_text(RecipeImportRequest(text=text, source=source), session_state=session)
     except RecipeImportProviderError as exc:
         raise HTTPException(status_code=503, detail="Recipe-session provider is not available.") from exc
     except RecipeImportValidationError as exc:
@@ -249,10 +249,14 @@ def _generate_and_store_draft(
     requirements.last_retrieval_cache_key = response.retrieval.cache.retrieval_cache_key if response.retrieval else None
     requirements.last_retrieval_summary = _requirements_retrieval_summary(response)
 
+    response_state_value = response_state.value
+    if response.draft is None:
+        response_state_value = RecipeSessionResponseState.REJECTED.value
+
     updated = default_recipe_session_store.update_session(
         session.interaction_id,
         requirements,
-        response_state=response_state.value,
+        response_state=response_state_value,
         draft=response.draft,
         citations=response.citations,
         retrieval=response.retrieval,

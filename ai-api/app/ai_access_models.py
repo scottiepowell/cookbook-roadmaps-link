@@ -41,6 +41,15 @@ class AiProviderMeterStatus(StrEnum):
     FAILED = "failed"
 
 
+class AiProviderBudgetStatus(StrEnum):
+    ALLOWED = "allowed"
+    BLOCKED = "blocked"
+    DISABLED = "disabled"
+    EXHAUSTED = "exhausted"
+    MISCONFIGURED = "misconfigured"
+    SKIPPED = "skipped"
+
+
 class AiQualityStatus(StrEnum):
     PASSED = "passed"
     FAILED = "failed"
@@ -321,6 +330,36 @@ class AiOperatorGateDecision(SafeAccessModel):
     safe_metadata: SAFE_METADATA = Field(default_factory=dict)
 
     @field_validator("reason", "grant_type", "metadata_fingerprint", "safe_message")
+    @classmethod
+    def _safe_strings(cls, value: str | None) -> str | None:
+        _raise_if_forbidden(value)
+        return value
+
+    def safe_view(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+class AiProviderBudgetDecision(SafeAccessModel):
+    allowed: bool
+    status: AiProviderBudgetStatus
+    workflow: AiAccessWorkflow
+    provider: str
+    model: str | None = None
+    reason: str
+    safe_message: str
+    provider_call_count: int = Field(default=0, ge=0)
+    max_provider_calls: int | None = Field(default=None, ge=0)
+    estimated_cost_usd: Decimal = Field(default=Decimal("0.00"), ge=0)
+    max_estimated_cost_usd: Decimal | None = Field(default=None, ge=0)
+    estimated_input_tokens: int | None = Field(default=None, ge=0)
+    estimated_output_tokens: int | None = Field(default=None, ge=0)
+    max_input_tokens: int | None = Field(default=None, ge=0)
+    max_output_tokens: int | None = Field(default=None, ge=0)
+    budget_snapshot: AiBudgetSnapshot | None = None
+    meter_event: AiProviderMeterEvent | None = None
+    safe_metadata: SAFE_METADATA = Field(default_factory=dict)
+
+    @field_validator("provider", "model", "reason", "safe_message")
     @classmethod
     def _safe_strings(cls, value: str | None) -> str | None:
         _raise_if_forbidden(value)

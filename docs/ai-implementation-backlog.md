@@ -1676,9 +1676,17 @@ Completed behavior:
 
 ## 0029E: Provider Call Budget Enforcement
 
-Status: planned.
+Status: complete.
 
 Goal: Centralize provider-call budget checks for call count, token caps, estimated cost, and global provider disable.
+
+Completed behavior:
+
+- centralized budget settings cover live-call enablement, global disable, call-count caps, token caps, and estimated cost caps;
+- mock/local provider calls remain zero-cost and allowed by default;
+- live provider calls are blocked before invocation when the budget is invalid, disabled, exhausted, or over cap;
+- safe `AiProviderBudgetDecision`, `AiBudgetSnapshot`, and `AiProviderMeterEvent` values are produced for operator/debug visibility;
+- importer, dataset ask, recipe-session, and meal-plan paths use the shared helper so callers do not duplicate budget logic.
 
 ## 0029F: Invite-Only Demo Session Flow
 

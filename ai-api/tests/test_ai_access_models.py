@@ -19,6 +19,8 @@ from app.ai_access_models import (
     AiProviderMeterStatus,
     AiOperatorGateDecision,
     AiOperatorGateStatus,
+    AiProviderBudgetDecision,
+    AiProviderBudgetStatus,
     AiQualityEvent,
     AiQualityStatus,
     safe_operator_view,
@@ -222,6 +224,46 @@ def test_operator_gate_decision_safe_view():
         metadata_fingerprint="fp_gate_001",
         safe_message="Operator token was accepted.",
         safe_metadata={"client_host_kind": "local"},
+    )
+
+    view = decision.safe_view()
+    assert view["allowed"] is True
+    assert view["status"] == "allowed"
+    _assert_safe(view)
+
+
+def test_provider_budget_decision_safe_view():
+    decision = AiProviderBudgetDecision(
+        allowed=True,
+        status=AiProviderBudgetStatus.ALLOWED,
+        workflow=AiAccessWorkflow.IMPORTER,
+        provider="openai",
+        model="gpt-5.4-nano",
+        reason="Provider call allowed within budget.",
+        safe_message="Provider call allowed within budget.",
+        provider_call_count=1,
+        max_provider_calls=10,
+        estimated_cost_usd=Decimal("0.0025"),
+        max_estimated_cost_usd=Decimal("1.00"),
+        estimated_input_tokens=120,
+        estimated_output_tokens=300,
+        max_input_tokens=12000,
+        max_output_tokens=1200,
+        budget_snapshot=AiBudgetSnapshot(
+            session_id="budget_session_001",
+            provider_call_count=1,
+            max_provider_calls=10,
+            estimated_cost_usd=Decimal("0.0025"),
+            max_estimated_cost_usd=Decimal("1.00"),
+        ),
+        meter_event=AiProviderMeterEvent(
+            event_id="meter_budget_001",
+            workflow=AiAccessWorkflow.IMPORTER,
+            provider="openai",
+            model="gpt-5.4-nano",
+            status=AiProviderMeterStatus.ALLOWED,
+            reason="Provider call allowed within budget.",
+        ),
     )
 
     view = decision.safe_view()
