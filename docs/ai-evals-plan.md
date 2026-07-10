@@ -77,6 +77,8 @@ Future 0030 recipe-session evals should verify:
 - safety-relevant ambiguity, such as raw versus cooked chicken in casserole, either asks one bounded question or generates with a clear disclosed assumption;
 - session metadata does not expose raw prompts, raw provider responses, API keys, environment values, local absolute paths, or secret-like strings.
 
+The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:
@@ -165,6 +167,7 @@ evals/
 - Importer context packing tests should stay deterministic and offline, and should validate bounded prompt selection rather than raw prompt text size alone.
 - Retrieval cache tests should verify index/retrieval reuse, invalidation, eviction, and safe fingerprint metadata without requiring the real dataset.
 - Importer RAG E2E tests must use generated fixtures and the mock provider, exercise the public API route, and remain light enough for normal repository validation.
+- Recipe-session requirements scaffold tests must remain deterministic, offline, and unwired from public endpoints until the dedicated session API task.
 
 ## Manual Live OpenAI Smoke Tests
 

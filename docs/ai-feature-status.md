@@ -74,6 +74,7 @@ status=passed
 | Local retrieval cache | Pass | deterministic cache hit/miss tests plus safe fingerprint metadata |
 | RAG importer E2E integration | Pass | real `/ai/import-recipe` route test with generated dataset fixtures and mock provider |
 | Requirements/session interaction architecture | Proposed | `docs/recipe-session-requirements-architecture.md`; designs requirement extraction, clarification, session state, delta detection, and RAG refresh policy without runtime endpoints or persistent memory |
+| Requirements/session alpha scaffold | Complete, internal-only | deterministic unit tests | Adds requirements state models, conservative extraction, confidence labels, clarification decisions, follow-up delta classification, RAG refresh decisions, and a bounded process-local session store. Not wired to public endpoints. |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 

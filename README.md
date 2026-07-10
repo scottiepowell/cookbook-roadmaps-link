@@ -124,6 +124,8 @@ The RAG importer path now has an offline E2E regression test that exercises the 
 
 The next recipe-creation product layer is documented, not implemented, in [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md). It designs a session-scoped requirements state, one-question clarification policy, follow-up delta classifier, and RAG refresh rules so future revisions like `actually make it no-bake` can update requirements, refresh retrieval, and explain why citations changed. It does not add production storage, persistent user memory, auth, paid access, public route exposure, embeddings, vector databases, or a full chat UI.
 
+The first internal scaffold for that layer now exists in `ai-api/app/recipe_requirements.py` and `ai-api/app/recipe_session.py`. It provides deterministic requirements extraction, confidence labels, clarification and follow-up classification, RAG refresh decisions, and a bounded in-memory test/demo session store, but it is not exposed as public recipe-session endpoints yet.
+
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts.
 
 The live importer `503` blocker from manual testing was traced to strict structured-output schema metadata that OpenAI rejected. The schema normalizer now strips unsupported metadata such as `default`, `examples`, `title`, and `description` before the provider call, while application behavior still defaults importer servings to 4.

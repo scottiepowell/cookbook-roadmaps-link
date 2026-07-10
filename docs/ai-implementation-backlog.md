@@ -1471,6 +1471,38 @@ Done criteria:
 - test strategy covers requirements extraction, clarification, delta classification, RAG refresh, cache/session interaction, safety boundaries, and API states;
 - no production storage, auth, paid access, persistent memory, public route exposure, vector database, embeddings, runtime endpoints, or full chat UI are implemented.
 
+## 0030B: Recipe Session Requirements Alpha Scaffold
+
+Status: complete.
+
+Goal: Add deterministic offline building blocks for the 0030A recipe-session requirements layer without adding public runtime endpoints.
+
+Files likely touched:
+
+- `ai-api/app/recipe_requirements.py`
+- `ai-api/app/recipe_session.py`
+- `ai-api/tests/test_recipe_requirements.py`
+- `ai-api/tests/test_recipe_session.py`
+- `docs/recipe-session-requirements-architecture.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-evals-plan.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0030B-recipe-session-requirements-alpha-scaffold-results.md`
+
+Done criteria:
+
+- requirements state models support dish intent, serving count, ingredients, exclusions, methods, equipment, time, dietary constraints, assumptions, confidence, questions, retrieval summaries, citation IDs, and TTL timestamps;
+- requirement sources distinguish user-provided, inferred, defaulted, RAG-supported, and clarified-by-user values;
+- deterministic extraction handles common cheesecake, carbonara, omelet, and chicken/rice casserole notes;
+- confidence labels are `high`, `medium`, `low`, and `rejected`;
+- clarification decisions ask one bounded question for vague or safety-relevant ambiguous input and avoid questions for specific input;
+- follow-up delta classification supports the 0030A taxonomy;
+- RAG refresh decisions detect retrieval-affecting requirement changes and ignore chatter, formatting-only, regenerate, and finalize requests;
+- bounded in-memory test/demo session store supports create/get/update/expire/clear with no disk persistence;
+- normal validation remains offline/mock-only;
+- no production storage, auth, paid access, public route exposure, persistent memory, Redis, embeddings, vector databases, runtime API endpoints, or full chat UI are implemented.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

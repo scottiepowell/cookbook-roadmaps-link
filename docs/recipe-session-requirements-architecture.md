@@ -8,6 +8,16 @@ The goal is to let the recipe creator understand what the user is trying to make
 
 This is a design document. It does not implement runtime endpoints, production storage, auth, paid access, public route exposure, database migrations, embeddings, vector databases, Redis, long-term memory, or a full chat UI.
 
+## Alpha Scaffold Status
+
+`0030B` adds the first narrow implementation scaffold for this architecture:
+
+- `ai-api/app/recipe_requirements.py` defines session-scoped requirements models, deterministic extraction, confidence labels, clarification decisions, follow-up delta classification, and RAG refresh decisions.
+- `ai-api/app/recipe_session.py` defines a bounded process-local in-memory session store for tests and local demo scaffolding only.
+- `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py` cover extraction, confidence, clarification, delta classification, RAG refresh decisions, safe serialization, and store bounds/TTL behavior.
+
+The scaffold is not wired to public runtime endpoints yet. It does not add production storage, auth, paid access, persistent user memory, Redis, embeddings, vector databases, or a full chat UI.
+
 ## Problem
 
 The completed 0029B RAG line makes a single importer request much stronger:
