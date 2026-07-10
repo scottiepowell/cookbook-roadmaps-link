@@ -12,6 +12,8 @@ def test_demo_ui_route_returns_html():
     assert "Cookbook AI" in response.text
     assert "Structured Recipe Importer" in response.text
     assert "Recipe Session Alpha" in response.text
+    assert "process-only requirements flow" in response.text
+    assert "Sessions expire" in response.text
     assert "Start session" in response.text
     assert "Send follow-up" in response.text
     assert "Finalize for demo" in response.text
@@ -52,8 +54,9 @@ def test_demo_static_assets_load():
     assert "last_citation_ids" in js_response.text
     assert "Clarification question" in js_response.text
     assert "No draft was generated because one clarification is needed." in js_response.text
-    assert "No material recipe requirements changed, so RAG was not refreshed." in js_response.text
-    assert "No production storage write was performed." in js_response.text
+    assert "Existing draft and citations were reused" in js_response.text
+    assert "does not write to production storage" in js_response.text
+    assert "Recipe session was not found or has expired." in js_response.text
     assert "Recoverable demo issue" in js_response.text
     assert "servings" in js_response.text
     assert "data.citations" in js_response.text

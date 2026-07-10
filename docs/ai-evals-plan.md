@@ -83,7 +83,9 @@ The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which 
 
 The 0030D demo UI layer extends `ai-api/tests/test_demo_ui.py` and `scripts/demo-ai-mock.ps1`. Static tests verify the `Recipe Session Alpha` controls, supported response-state rendering, friendly error handling, and forbidden-text boundaries. The mock demo smoke path exercises start, material follow-up/RAG refresh, get, finalize, vague clarification, and chatter/no-refresh flows through the local endpoints.
 
-The 0030E session eval harness adds `evals/ai_cookbook/session_cases.yaml` and `evals/ai_cookbook/session_eval.py`, integrated into `evals/ai_cookbook/run_evals.py` as the `recipe_session` group. It runs start/message/get/finalize flows through FastAPI `TestClient`, uses generated dataset fixtures and the mock provider, clears session/cache state between cases, and checks response text for prompt, secret, stack trace, and local path leakage. The offline eval baseline now includes 36 cases.
+The 0030E session eval harness adds `evals/ai_cookbook/session_cases.yaml` and `evals/ai_cookbook/session_eval.py`, integrated into `evals/ai_cookbook/run_evals.py` as the `recipe_session` group. It runs start/message/get/finalize flows through FastAPI `TestClient`, uses generated dataset fixtures and the mock provider, clears session/cache state between cases, and checks response text for prompt, secret, stack trace, and local path leakage.
+
+The 0030F hardening pass expands recipe-session regression coverage with equipment-change refresh, excluded-ingredient refresh, finalize-without-draft, missing finalize, repeated finalize, repeated no-refresh, and safe pre-draft follow-up checks. The offline eval baseline now includes 39 cases.
 
 ## Meal-Plan Checks
 
@@ -148,7 +150,7 @@ evals/
 | Requirements Session | Vague dessert | `make dessert` | Returns `clarification_needed`, asks one bounded question, and does not run RAG |
 | Requirements Session | Specific cheesecake | `cheesecake cream cheese sugar eggs vanilla graham cracker crust bake and chill` | Returns `draft_generated`, runs RAG, and records interpreted requirements |
 | Requirements Session | Method change | `actually no bake` after baked cheesecake | Classifies `relevant_requirement_update`, refreshes RAG, and explains the method change |
-| Requirements Session Eval | Regression baseline | detailed draft, vague clarification, no-bake refresh, chatter, formatting, clarification answer, finalize, missing session | `run_evals.py` exercises the recipe-session API offline and fails on state, refresh, citation, or safety regressions |
+| Requirements Session Eval | Regression baseline | detailed draft, vague clarification, no-bake refresh, air-fryer refresh, excluded-ingredient refresh, chatter, formatting, clarification answer, finalize, finalize-before-draft, missing session | `run_evals.py` exercises the recipe-session API offline and fails on state, refresh, citation, or safety regressions |
 | Requirements Session UI | Demo panel smoke | start cheesecake, send no-bake follow-up, get, finalize, start vague dessert, send chatter | Static UI renders session states and mock smoke exercises endpoints offline |
 | Requirements Session | Chatter | `thanks` | Returns `no_material_change` and does not refresh RAG |
 | Requirements Session | Finalize | `save this` | Returns `ready_to_finalize` without production write-back |

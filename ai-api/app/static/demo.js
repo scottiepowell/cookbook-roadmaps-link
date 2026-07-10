@@ -378,18 +378,18 @@ function renderRecipeSession(target, data) {
   }
 
   if (data.response_state === "no_material_change") {
-    target.append(answerCard("No refresh", "No material recipe requirements changed, so RAG was not refreshed."));
+    target.append(answerCard("No refresh", "No material recipe requirements changed. Existing draft and citations were reused; no RAG refresh was needed."));
   }
 
   if (data.response_state === "rag_refreshed" || data.response_state === "draft_revised") {
     target.append(answerCard(
       "RAG refresh status",
-      data.rag_refreshed ? "RAG was refreshed because material recipe requirements changed." : "Draft revised without a required RAG refresh.",
+      data.rag_refreshed ? (data.rag_refresh_reason || "RAG was refreshed because material recipe requirements changed.") : "Draft revised without a required RAG refresh.",
     ));
   }
 
   if (data.response_state === "ready_to_finalize") {
-    target.append(answerCard("Finalize for demo", "Ready to finalize for demo only. No production storage write was performed."));
+    target.append(answerCard("Finalize for demo", "Ready to finalize for demo only. This alpha action does not write to production storage."));
   }
 
   target.append(warningSection(data.warnings || []));
@@ -747,6 +747,9 @@ function friendlyError(status, detail) {
   const safeDetail = String(detail || "Request failed.").replace(/\s+/g, " ").slice(0, 220);
   if (status === 422) {
     return `${safeDetail} Configure local saved recipe or dataset fixtures, then retry.`;
+  }
+  if (status === 404) {
+    return "Recipe session was not found or has expired. Start a new local alpha session and retry.";
   }
   if (status >= 500) {
     return "The sidecar could not complete this workflow. Check service logs and retry after confirming provider and data readiness.";

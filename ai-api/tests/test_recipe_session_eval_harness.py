@@ -12,7 +12,10 @@ EXPECTED_CASE_IDS = [
     "carbonara_chatter_no_refresh",
     "omelet_formatting_no_refresh",
     "clarification_answer_generates_draft",
+    "air_fryer_followup_refreshes_rag",
+    "excluded_ingredient_followup_refreshes_rag",
     "finalize_demo_only",
+    "finalize_without_draft_stays_clarification",
     "missing_session_safe",
 ]
 

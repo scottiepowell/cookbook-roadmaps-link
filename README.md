@@ -37,6 +37,7 @@ Demo and evidence links:
 - [Production access metering architecture](docs/production-access-metering-architecture.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
 - [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
+- [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)
 - [AI feature status](docs/ai-feature-status.md)
 - [REST request examples](scripts/demo-ai-requests.http)
@@ -124,7 +125,7 @@ The RAG importer path now has an offline E2E regression test that exercises the 
 
 The next recipe-creation product layer is documented, not implemented, in [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md). It designs a session-scoped requirements state, one-question clarification policy, follow-up delta classifier, and RAG refresh rules so future revisions like `actually make it no-bake` can update requirements, refresh retrieval, and explain why citations changed. It does not add production storage, persistent user memory, auth, paid access, public route exposure, embeddings, vector databases, or a full chat UI.
 
-The first local alpha implementation for that layer now exists in `ai-api/app/recipe_requirements.py`, `ai-api/app/recipe_session.py`, and `ai-api/app/recipe_session_routes.py`. It provides deterministic requirements extraction, confidence labels, clarification and follow-up classification, RAG refresh decisions, a bounded in-memory test/demo session store, and local `/ai/recipe-session/*` endpoints for start/message/get/finalize flows. The `/demo` UI includes a compact Recipe Session Alpha panel for starting a session, sending a follow-up, viewing RAG refresh/no-refresh state, and finalizing for demo. `evals/ai_cookbook/run_evals.py` now includes deterministic `recipe_session` cases for draft generation, clarification, RAG refresh, no-refresh, finalize, missing-session safety, and leakage checks. These endpoints, UI controls, and evals are offline/mock-friendly and are not production storage, auth, paid access, public access, persistent user memory, or a full chat UI.
+The first local alpha implementation for that layer now exists in `ai-api/app/recipe_requirements.py`, `ai-api/app/recipe_session.py`, and `ai-api/app/recipe_session_routes.py`. It provides deterministic requirements extraction, confidence labels, clarification and follow-up classification, RAG refresh decisions, a bounded in-memory test/demo session store, and local `/ai/recipe-session/*` endpoints for start/message/get/finalize flows. The `/demo` UI includes a compact Recipe Session Alpha panel for starting a session, sending a follow-up, viewing RAG refresh/no-refresh state, and finalizing for demo. `evals/ai_cookbook/run_evals.py` now includes deterministic `recipe_session` cases for draft generation, clarification, method/equipment/exclusion RAG refresh, no-refresh, finalize, finalize-before-draft, missing-session safety, and leakage checks. The [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md) documents the local demo checklist and boundaries. These endpoints, UI controls, evals, and runbook are offline/mock-friendly and are not production storage, auth, paid access, public access, persistent user memory, or a full chat UI.
 
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts.
 
@@ -172,6 +173,7 @@ Follow the [First Deploy Guide](docs/first-deploy-guide.md).
 - [Production access metering architecture](docs/production-access-metering-architecture.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
 - [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
+- [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md)
 - [AI session metering data model](docs/ai-session-metering-data-model.md)
 - [AI access control threat model](docs/ai-access-control-threat-model.md)
 - [AI sidecar architecture](docs/ai-sidecar-architecture.md)

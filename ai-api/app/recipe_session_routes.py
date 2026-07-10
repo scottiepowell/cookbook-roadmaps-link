@@ -208,7 +208,9 @@ def finalize_recipe_session(
         log_ai_workflow("recipe.session.finalize", request, status="clarification_needed", warning_count=len(warnings))
         return _session_response(session)
 
-    warnings.append("Demo finalize only; no production cookbook write-back was performed.")
+    finalize_warning = "Demo finalize only; no production cookbook write-back was performed."
+    if finalize_warning not in warnings:
+        warnings.append(finalize_warning)
     session = _update_session_metadata(
         session,
         response_state=RecipeSessionResponseState.READY_TO_FINALIZE,

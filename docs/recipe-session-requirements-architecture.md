@@ -42,6 +42,13 @@ This UI is still an operator/developer demo panel, not a production recipe edito
 
 The session eval harness does not require live OpenAI, real `recipe-dataset/`, production storage, browser automation, screenshots, or persistent user memory.
 
+`0030F` hardens the local alpha acceptance surface:
+
+- session API safety tests cover empty/symbol input, unknown and expired get/message/finalize, follow-up before draft, finalize before draft, repeated finalize, repeated no-refresh messages, contradictory method updates, equipment changes, and excluded-ingredient updates;
+- session evals add air-fryer refresh, excluded-ingredient refresh, and finalize-without-draft cases, raising the offline eval baseline to 39/39 cases;
+- the demo UI labels process-local alpha behavior, session expiration, no-refresh reuse, friendly missing/expired-session errors, and demo-only finalize boundaries more clearly;
+- [Recipe Session Alpha Acceptance Runbook](recipe-session-alpha-acceptance-runbook.md) defines the local acceptance checklist and validation commands.
+
 ## Problem
 
 The completed 0029B RAG line makes a single importer request much stronger:
@@ -826,8 +833,8 @@ Eval cases:
 
 Recommended follow-on tasks:
 
-1. `0030F`: Session API response hardening and any missing revision metadata discovered by manual use.
-2. `0030G`: Operator UX polish for requirement diff display, still without production persistence.
-3. `0030H`: Optional richer alpha session E2E eval cases if new product flows appear.
+1. `0030G`: Operator UX polish for requirement diff display, still without production persistence.
+2. `0030H`: Optional richer alpha session E2E eval cases if new product flows appear.
+3. `0031A`: Production-readiness design for any future protected recipe-session exposure.
 
 Each phase should keep normal validation offline and mock-only.

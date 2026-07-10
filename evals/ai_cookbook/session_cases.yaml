@@ -65,6 +65,30 @@
     "expect_no_start_draft": true
   },
   {
+    "id": "air_fryer_followup_refreshes_rag",
+    "flow": "message",
+    "start_text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight",
+    "message_text": "use air fryer instead",
+    "expected_start_state": "draft_generated",
+    "expected_message_states": ["rag_refreshed", "draft_revised"],
+    "expect_rag_refreshed": true,
+    "expected_changed_fields": ["cooking_method", "equipment_constraints"],
+    "expected_requirement_contains": {"equipment_constraints": "air fryer"},
+    "expect_draft": true
+  },
+  {
+    "id": "excluded_ingredient_followup_refreshes_rag",
+    "flow": "message",
+    "start_text": "carbonara pasta for 4 with spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat no heavy cream",
+    "message_text": "no nuts",
+    "expected_start_state": "draft_generated",
+    "expected_message_states": ["rag_refreshed", "draft_revised"],
+    "expect_rag_refreshed": true,
+    "expected_changed_fields": ["excluded_ingredients"],
+    "expected_requirement_contains": {"excluded_ingredients": "nuts"},
+    "expect_draft": true
+  },
+  {
     "id": "finalize_demo_only",
     "flow": "finalize",
     "start_text": "chicken and rice casserole for 4 with cooked chicken rice cream of chicken soup cheddar bake until bubbly",
@@ -72,6 +96,14 @@
     "expected_finalize_state": "ready_to_finalize",
     "expect_draft": true,
     "expect_demo_warning": true
+  },
+  {
+    "id": "finalize_without_draft_stays_clarification",
+    "flow": "finalize",
+    "start_text": "make dessert",
+    "expected_start_state": "clarification_needed",
+    "expected_finalize_state": "clarification_needed",
+    "expect_no_draft_warning": true
   },
   {
     "id": "missing_session_safe",

@@ -177,6 +177,9 @@ def _run_finalize_case(client: TestClient, case: dict[str, Any], dataset_dir: Pa
     if case.get("expect_demo_warning"):
         warnings = " ".join(payload.get("warnings") or []).lower()
         assert "no production cookbook write-back" in warnings, f"{case['id']}: missing demo-only finalize warning"
+    if case.get("expect_no_draft_warning"):
+        warnings = " ".join(payload.get("warnings") or []).lower()
+        assert "no generated draft" in warnings, f"{case['id']}: missing no-draft finalize warning"
     return payload
 
 
@@ -194,6 +197,9 @@ def _run_missing_session_case(client: TestClient, case: dict[str, Any], dataset_
     message_response = client.post(f"/ai/recipe-session/{interaction_id}/message", json={"text": "thanks"})
     message_payload = _checked_json(f"{case['id']}:message", message_response, dataset_dir, expected_status=404)
     assert (message_payload.get("detail") or {}).get("response_state") == case["expected_response_state"]
+    finalize_response = client.post(f"/ai/recipe-session/{interaction_id}/finalize", json={})
+    finalize_payload = _checked_json(f"{case['id']}:finalize", finalize_response, dataset_dir, expected_status=404)
+    assert (finalize_payload.get("detail") or {}).get("response_state") == case["expected_response_state"]
     return detail
 
 
@@ -237,8 +243,8 @@ def _assert_message_expectations(case: dict[str, Any], payload: dict[str, Any]) 
             f"{case['id']}: delta_label={(payload.get('decision') or {}).get('delta_label')!r}"
         )
     for field, expected in (case.get("expected_requirement_contains") or {}).items():
-        value = ((payload.get("requirements") or {}).get(field) or {}).get("value") or ""
-        assert expected in value, f"{case['id']}: requirements.{field}={value!r} missing {expected!r}"
+        value = (payload.get("requirements") or {}).get(field)
+        assert _requirement_contains(value, expected), f"{case['id']}: requirements.{field}={value!r} missing {expected!r}"
     _assert_draft_expectation(case, payload)
 
 
@@ -263,6 +269,14 @@ def _assert_state(label: str, payload: dict[str, Any], expected: str) -> None:
     assert payload.get("response_state") == expected, (
         f"{label}: response_state={payload.get('response_state')!r} expected {expected!r}"
     )
+
+
+def _requirement_contains(value: Any, expected: str) -> bool:
+    if isinstance(value, dict):
+        return expected in str(value.get("value") or "")
+    if isinstance(value, list):
+        return any(expected in str(item.get("value") if isinstance(item, dict) else item) for item in value)
+    return expected in str(value or "")
 
 
 def _checked_json(

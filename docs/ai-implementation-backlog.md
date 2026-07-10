@@ -1596,6 +1596,42 @@ Done criteria:
 - tests cover case loading, happy-path execution, failure summaries, and independence from live provider environment settings;
 - no production storage, persistent memory, auth, paid access, public route exposure, browser automation, screenshots, Redis, embeddings, vector database, or live OpenAI calls are added.
 
+## 0030F: Recipe Session Alpha Hardening And Acceptance
+
+Status: complete.
+
+Goal: Review and harden the local Recipe Session Alpha across API responses, session state safety, UI rendering, mock smoke flow, session evals, runbook coverage, edge cases, and artifact safety.
+
+Files likely touched:
+
+- `ai-api/app/recipe_session_routes.py`
+- `ai-api/app/static/demo.html`
+- `ai-api/app/static/demo.js`
+- `ai-api/tests/test_recipe_session_api.py`
+- `ai-api/tests/test_demo_ui.py`
+- `ai-api/tests/test_recipe_session_eval_harness.py`
+- `evals/ai_cookbook/session_cases.yaml`
+- `evals/ai_cookbook/session_eval.py`
+- `docs/recipe-session-alpha-acceptance-runbook.md`
+- `docs/recipe-session-requirements-architecture.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-evals-plan.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0030F-recipe-session-alpha-hardening-and-acceptance-results.md`
+
+Done criteria:
+
+- API response safety tests cover prompt, provider-response, secret, stack trace, generated path, and local path leakage across start/message/get/finalize paths;
+- edge-case tests cover empty/symbol starts, very vague starts, expired and unknown sessions, follow-up before draft, finalize before draft, repeated finalize, repeated no-refresh, contradictory method updates, equipment changes, and excluded-ingredient updates;
+- demo UI labels alpha/demo-only behavior, session expiration, no-refresh reuse, friendly missing/expired-session errors, and demo-only finalize boundaries;
+- session evals include equipment-change refresh, excluded-ingredient refresh, finalize-before-draft, and missing finalize checks;
+- mock demo validation continues to exercise start, material follow-up/RAG refresh, get, finalize, vague clarification, chatter/no-refresh, and forbidden-text safety offline;
+- [Recipe Session Alpha Acceptance Runbook](recipe-session-alpha-acceptance-runbook.md) documents local validation, expected states, known Windows pytest temp ACL issue, and non-goals;
+- normal validation remains offline/mock-only;
+- no production storage, persistent memory, auth, paid access, public route exposure, browser automation, screenshots, Redis, embeddings, vector database, invite flow, budget enforcement runtime, or live OpenAI calls are added.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

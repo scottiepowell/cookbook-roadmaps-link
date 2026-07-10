@@ -15,11 +15,19 @@ FORBIDDEN_RESPONSE_TEXT = (
     "OPENAI_API_KEY",
     "sk-",
     "Authorization",
+    ".env",
+    "raw prompt",
+    "raw provider",
+    "provider response",
     "Creation requirements",
     "Retrieved dataset examples",
     "C:\\",
+    "/Users/",
+    "/home/",
     ".tmp-ai-demo",
     "Traceback",
+    "COOKBOOK_DB_PATH",
+    "cookbook_db_path",
 )
 
 
@@ -118,15 +126,16 @@ def test_start_vague_request_returns_one_clarification_without_draft(session_cli
 def test_start_unusable_input_returns_rejected(session_client):
     client, dataset_dir = session_client
 
-    response = client.post("/ai/recipe-session/start", json={"text": "!!!!!"})
+    for text in ("", "!!!!!"):
+        response = client.post("/ai/recipe-session/start", json={"text": text})
 
-    assert response.status_code == 200
-    data = response.json()
-    _assert_safe_response(response.text, dataset_dir)
-    assert data["response_state"] == "rejected"
-    assert data["draft"] is None
-    assert data["retrieval"] is None
-    assert data["warnings"]
+        assert response.status_code == 200
+        data = response.json()
+        _assert_safe_response(response.text, dataset_dir)
+        assert data["response_state"] == "rejected"
+        assert data["draft"] is None
+        assert data["retrieval"] is None
+        assert data["warnings"]
 
 
 def test_get_existing_session_returns_safe_state(session_client):
@@ -185,6 +194,89 @@ def test_message_chatter_and_formatting_do_not_refresh(session_client):
         assert data["changed_fields"] == []
 
 
+def test_repeated_no_refresh_messages_keep_existing_draft_without_refresh(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "omelette for 4 with eggs cheddar onions butter folded in a skillet"},
+    ).json()
+
+    for text in ("thanks", "looks good"):
+        response = client.post(f"/ai/recipe-session/{started['interaction_id']}/message", json={"text": text})
+        assert response.status_code == 200
+        data = response.json()
+        _assert_safe_response(response.text, dataset_dir)
+        assert data["response_state"] == "no_material_change"
+        assert data["rag_refreshed"] is False
+        assert data["draft"] is not None
+        assert data["changed_fields"] == []
+
+
+def test_follow_up_before_draft_exists_stays_safe(session_client):
+    client, dataset_dir = session_client
+    started = client.post("/ai/recipe-session/start", json={"text": "make dessert"}).json()
+
+    response = client.post(f"/ai/recipe-session/{started['interaction_id']}/message", json={"text": "thanks"})
+
+    assert response.status_code == 200
+    data = response.json()
+    _assert_safe_response(response.text, dataset_dir)
+    assert data["response_state"] == "no_material_change"
+    assert data["draft"] is None
+    assert data["retrieval"] is None
+
+
+def test_material_follow_ups_refresh_for_equipment_and_exclusions(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill"},
+    ).json()
+
+    air_fryer = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "use air fryer instead"},
+    )
+    assert air_fryer.status_code == 200
+    air_fryer_data = air_fryer.json()
+    _assert_safe_response(air_fryer.text, dataset_dir)
+    assert air_fryer_data["rag_refreshed"] is True
+    assert "equipment_constraints" in air_fryer_data["changed_fields"]
+    assert air_fryer_data["requirements"]["equipment_constraints"][0]["value"] == "air fryer"
+
+    no_nuts = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "no nuts"},
+    )
+    assert no_nuts.status_code == 200
+    no_nuts_data = no_nuts.json()
+    _assert_safe_response(no_nuts.text, dataset_dir)
+    assert no_nuts_data["rag_refreshed"] is True
+    assert "excluded_ingredients" in no_nuts_data["changed_fields"]
+    assert any(item["value"] == "nuts" for item in no_nuts_data["requirements"]["excluded_ingredients"])
+
+
+def test_contradictory_method_follow_up_is_controlled_and_safe(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill"},
+    ).json()
+
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "make it no-bake but bake it overnight"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    _assert_safe_response(response.text, dataset_dir)
+    assert data["response_state"] == "rag_refreshed"
+    assert data["rag_refreshed"] is True
+    assert "cooking_method" in data["changed_fields"]
+    assert data["draft"] is not None
+
+
 def test_clarification_answer_updates_session_and_generates(session_client):
     client, dataset_dir = session_client
     started = client.post("/ai/recipe-session/start", json={"text": "make dessert"}).json()
@@ -220,13 +312,50 @@ def test_finalize_session_with_draft_is_demo_safe(session_client):
     assert any("no production cookbook write-back" in warning.lower() for warning in data["warnings"])
 
 
+def test_finalize_before_draft_is_demo_safe(session_client):
+    client, dataset_dir = session_client
+    started = client.post("/ai/recipe-session/start", json={"text": "make dessert"}).json()
+
+    response = client.post(f"/ai/recipe-session/{started['interaction_id']}/finalize", json={})
+
+    assert response.status_code == 200
+    data = response.json()
+    _assert_safe_response(response.text, dataset_dir)
+    assert data["response_state"] == "clarification_needed"
+    assert data["draft"] is None
+    assert any("no generated draft" in warning.lower() for warning in data["warnings"])
+
+
+def test_repeated_finalize_is_idempotent_for_demo_warning(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "chicken and rice casserole for 4 with cooked chicken rice cream of chicken soup cheddar bake until bubbly"},
+    ).json()
+
+    first = client.post(f"/ai/recipe-session/{started['interaction_id']}/finalize", json={})
+    second = client.post(f"/ai/recipe-session/{started['interaction_id']}/finalize", json={})
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    data = second.json()
+    _assert_safe_response(second.text, dataset_dir)
+    assert data["response_state"] == "ready_to_finalize"
+    assert sum(1 for warning in data["warnings"] if "no production cookbook write-back" in warning.lower()) == 1
+
+
 def test_missing_and_expired_sessions_return_safe_404(session_client):
     client, dataset_dir = session_client
 
-    missing = client.get("/ai/recipe-session/not-real")
-    assert missing.status_code == 404
-    _assert_safe_response(missing.text, dataset_dir)
-    assert missing.json()["detail"]["response_state"] == "not_found"
+    for method, path, kwargs in (
+        ("get", "/ai/recipe-session/not-real", {}),
+        ("post", "/ai/recipe-session/not-real/message", {"json": {"text": "thanks"}}),
+        ("post", "/ai/recipe-session/not-real/finalize", {"json": {}}),
+    ):
+        missing = getattr(client, method)(path, **kwargs)
+        assert missing.status_code == 404
+        _assert_safe_response(missing.text, dataset_dir)
+        assert missing.json()["detail"]["response_state"] == "not_found"
 
     expired_requirements = extract_recipe_requirements("cheesecake with cream cheese sugar eggs vanilla graham cracker crust")
     default_recipe_session_store.create_session(
@@ -234,10 +363,15 @@ def test_missing_and_expired_sessions_return_safe_404(session_client):
         now=datetime(2000, 1, 1, tzinfo=UTC),
         interaction_id="expired-session",
     )
-    expired = client.get("/ai/recipe-session/expired-session")
-    assert expired.status_code == 404
-    _assert_safe_response(expired.text, dataset_dir)
-    assert expired.json()["detail"]["response_state"] == "not_found"
+    for method, path, kwargs in (
+        ("get", "/ai/recipe-session/expired-session", {}),
+        ("post", "/ai/recipe-session/expired-session/message", {"json": {"text": "thanks"}}),
+        ("post", "/ai/recipe-session/expired-session/finalize", {"json": {}}),
+    ):
+        expired = getattr(client, method)(path, **kwargs)
+        assert expired.status_code == 404
+        _assert_safe_response(expired.text, dataset_dir)
+        assert expired.json()["detail"]["response_state"] == "not_found"
 
 
 def test_session_flow_e2e_start_message_get_finalize(session_client):
