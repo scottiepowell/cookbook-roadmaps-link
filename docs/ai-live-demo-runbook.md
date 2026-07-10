@@ -113,6 +113,8 @@ If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_cat
 
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was fine for smaller smoke tests, but not for RAG-informed structured drafts like cheesecake.
 
+The local operator gate is opt-in, disabled by default, and documented in [AI Local Operator Access Gate](ai-local-operator-access-gate.md). When enabled, the protected AI workflows require a matching safe fingerprint on `X-AI-Operator-Token` or `Authorization: Bearer ...`, unless the explicit local bypass is turned on for local/TestClient requests. The mock smoke script pins the gate off so its checks stay stable in a dirty shell.
+
 ## Manual Live RAG Capture Matrix
 
 Use this matrix when recording manual live importer or retrieval checks. Keep the notes terse and do not commit raw live JSON artifacts.

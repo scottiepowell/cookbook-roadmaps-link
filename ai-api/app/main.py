@@ -5,7 +5,9 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import get_ai_settings, get_provider_config, get_recipe_dataset_dir
+from app.ai_access_models import AiAccessWorkflow
+from app.ai_operator_gate import check_operator_gate, operator_gate_http_exception
+from app.config import get_ai_settings, get_operator_gate_settings, get_provider_config, get_recipe_dataset_dir
 from app.dataset_rag import DatasetAskProviderError, ask_dataset_recipes
 from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
@@ -147,6 +149,7 @@ def search_dataset_post(payload: DatasetSearchRequest, request: Request) -> Data
 
 @app.post("/dataset/ask", response_model=DatasetAskResponse)
 def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskResponse:
+    _require_operator_gate(request, AiAccessWorkflow.DATASET_ASK)
     try:
         response = ask_dataset_recipes(payload)
         log_ai_workflow(
@@ -172,6 +175,7 @@ def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskRespo
 
 @app.post("/ai/import-recipe", response_model=RecipeImportResponse)
 def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImportResponse:
+    _require_operator_gate(request, AiAccessWorkflow.IMPORTER)
     try:
         response = import_recipe_text(payload)
         log_ai_workflow(
@@ -231,6 +235,7 @@ def ask_my_cookbook(payload: AskRequest, request: Request) -> AskResponse:
 
 @app.post("/ai/meal-plan", response_model=MealPlanResponse)
 def meal_plan(payload: MealPlanRequest, request: Request) -> MealPlanResponse:
+    _require_operator_gate(request, AiAccessWorkflow.MEAL_PLAN)
     try:
         response = create_meal_plan(payload)
         log_ai_workflow(
@@ -298,3 +303,20 @@ def _provider_debug_log_fields(exc: BaseException) -> dict[str, str]:
         "provider_error_type": details.exception_type,
         "safe_error_summary": details.safe_summary,
     }
+
+
+def _require_operator_gate(request: Request, workflow: AiAccessWorkflow) -> None:
+    decision = check_operator_gate(
+        workflow,
+        request.headers,
+        get_operator_gate_settings(),
+        client_host=request.client.host if request.client else None,
+    )
+    log_ai_workflow(
+        "operator.gate",
+        request,
+        status=decision.status.value,
+        warning_count=0,
+    )
+    if not decision.allowed:
+        raise operator_gate_http_exception(decision)

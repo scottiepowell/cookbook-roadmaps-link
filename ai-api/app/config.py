@@ -26,6 +26,14 @@ class RetrievalCacheSettings:
     ttl_seconds: int
 
 
+@dataclass(frozen=True)
+class OperatorGateSettings:
+    enabled: bool
+    token_fingerprint: str
+    allowed_workflows: tuple[str, ...]
+    local_bypass: bool
+
+
 DEFAULT_AI_PROVIDER = "mock"
 DEFAULT_AI_MODEL = "mock-basic"
 DEFAULT_AI_MAX_OUTPUT_TOKENS = 700
@@ -37,6 +45,9 @@ DEFAULT_RECIPE_DATASET_INDEX_LIMIT = 100
 DEFAULT_AI_RETRIEVAL_CACHE_ENABLED = True
 DEFAULT_AI_RETRIEVAL_CACHE_MAX_ENTRIES = 128
 DEFAULT_AI_RETRIEVAL_CACHE_TTL_SECONDS = 900
+DEFAULT_AI_OPERATOR_GATE_ENABLED = False
+DEFAULT_AI_OPERATOR_GATE_ALLOWED_WORKFLOWS = ("importer", "dataset_ask", "recipe_session", "meal_plan")
+DEFAULT_AI_OPERATOR_GATE_LOCAL_BYPASS = True
 
 PROVIDER_ENV_VARS = {
     "mock": None,
@@ -103,6 +114,23 @@ def get_retrieval_cache_settings() -> RetrievalCacheSettings:
     )
 
 
+def get_operator_gate_settings() -> OperatorGateSettings:
+    token_fingerprint = _normalize_fingerprint(os.getenv("AI_OPERATOR_GATE_TOKEN_FINGERPRINT"))
+    raw_token = os.getenv("AI_OPERATOR_GATE_TOKEN")
+    if not token_fingerprint and raw_token and raw_token.strip():
+        token_fingerprint = _fingerprint_token(raw_token.strip())
+    allowed_workflows = _parse_csv_env(
+        "AI_OPERATOR_GATE_ALLOWED_WORKFLOWS",
+        DEFAULT_AI_OPERATOR_GATE_ALLOWED_WORKFLOWS,
+    )
+    return OperatorGateSettings(
+        enabled=_bool_env("AI_OPERATOR_GATE_ENABLED", default=DEFAULT_AI_OPERATOR_GATE_ENABLED),
+        token_fingerprint=token_fingerprint,
+        allowed_workflows=tuple(allowed_workflows),
+        local_bypass=_bool_env("AI_OPERATOR_GATE_LOCAL_BYPASS", default=DEFAULT_AI_OPERATOR_GATE_LOCAL_BYPASS),
+    )
+
+
 def _int_env(name: str, default: int) -> int:
     raw_value = os.getenv(name)
     if not raw_value or not raw_value.strip():
@@ -128,3 +156,27 @@ def _bool_env(name: str, default: bool) -> bool:
     if raw_value is None or not raw_value.strip():
         return default
     return raw_value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _parse_csv_env(name: str, default: tuple[str, ...]) -> list[str]:
+    raw_value = os.getenv(name)
+    if raw_value is None or not raw_value.strip():
+        return list(default)
+    values: list[str] = []
+    for piece in raw_value.split(","):
+        value = piece.strip().lower()
+        if value and value not in values:
+            values.append(value)
+    return values or list(default)
+
+
+def _normalize_fingerprint(value: str | None) -> str:
+    if not value:
+        return ""
+    return value.strip().lower()
+
+
+def _fingerprint_token(value: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()

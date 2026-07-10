@@ -88,6 +88,13 @@ The tests verify:
 - budget snapshots calculate remaining provider calls, remaining estimated cost, exhaustion state, and status reason;
 - safe operator views exclude raw prompts, raw provider responses, API keys, environment values, raw invite tokens, local paths, and private storage URLs.
 
+0029D adds deterministic local operator-gate tests that remain offline and mock-friendly. The checks verify:
+
+- gate-disabled requests pass through unchanged;
+- enabled gates can allow local-bypass requests or fingerprint-matched `X-AI-Operator-Token` / `Authorization: Bearer ...` requests;
+- missing tokens, disallowed workflows, and misconfigured fingerprints return safe blocked or misconfigured decisions;
+- protected importer, dataset ask, recipe-session, and meal-plan routes return safe allow/block responses without leaking raw tokens, headers, prompts, or local paths.
+
 The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
 
 The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.

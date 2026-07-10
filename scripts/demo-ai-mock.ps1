@@ -10,6 +10,11 @@ if (-not (Test-Path $Python)) {
 }
 
 $env:AI_PROVIDER = "mock"
+$env:AI_OPERATOR_GATE_ENABLED = "false"
+Remove-Item Env:AI_OPERATOR_GATE_TOKEN_FINGERPRINT -ErrorAction SilentlyContinue
+Remove-Item Env:AI_OPERATOR_GATE_TOKEN -ErrorAction SilentlyContinue
+Remove-Item Env:AI_OPERATOR_GATE_ALLOWED_WORKFLOWS -ErrorAction SilentlyContinue
+Remove-Item Env:AI_OPERATOR_GATE_LOCAL_BYPASS -ErrorAction SilentlyContinue
 
 Write-Host "AI demo mock path: offline evals"
 & $Python "evals\ai_cookbook\run_evals.py"
@@ -46,6 +51,11 @@ try:
     os.environ["COOKBOOK_DB_PATH"] = str(paths["db_path"])
     os.environ["RECIPE_DATASET_DIR"] = str(paths["dataset_dir"])
     os.environ["AI_PROVIDER"] = "mock"
+    os.environ["AI_OPERATOR_GATE_ENABLED"] = "false"
+    os.environ.pop("AI_OPERATOR_GATE_TOKEN_FINGERPRINT", None)
+    os.environ.pop("AI_OPERATOR_GATE_TOKEN", None)
+    os.environ.pop("AI_OPERATOR_GATE_ALLOWED_WORKFLOWS", None)
+    os.environ.pop("AI_OPERATOR_GATE_LOCAL_BYPASS", None)
     default_recipe_session_store.clear()
 
     client = TestClient(app)

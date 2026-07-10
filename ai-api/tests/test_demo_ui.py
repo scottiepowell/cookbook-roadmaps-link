@@ -108,6 +108,11 @@ def test_seeded_demo_data_supports_saved_recipe_workflows(tmp_path, monkeypatch)
     monkeypatch.setenv("AI_PROVIDER", "mock")
     monkeypatch.setenv("COOKBOOK_DB_PATH", str(paths["db_path"]))
     monkeypatch.setenv("RECIPE_DATASET_DIR", str(paths["dataset_dir"]))
+    monkeypatch.setenv("AI_OPERATOR_GATE_ENABLED", "false")
+    monkeypatch.delenv("AI_OPERATOR_GATE_TOKEN_FINGERPRINT", raising=False)
+    monkeypatch.delenv("AI_OPERATOR_GATE_TOKEN", raising=False)
+    monkeypatch.delenv("AI_OPERATOR_GATE_ALLOWED_WORKFLOWS", raising=False)
+    monkeypatch.delenv("AI_OPERATOR_GATE_LOCAL_BYPASS", raising=False)
 
     client = TestClient(app)
 

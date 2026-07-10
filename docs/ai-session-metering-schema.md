@@ -58,6 +58,24 @@ Fields include:
 
 The model does not store plain invite codes or raw tokens. Future tasks that need token-like identifiers should store only fingerprints or hashes.
 
+## Local Operator Gate
+
+`AiOperatorGateDecision` captures a safe allow/block decision for the local operator gate used by the AI demo workflows.
+
+Fields include:
+
+- `enabled`
+- `allowed`
+- `workflow`
+- `reason`
+- `status`: `allowed`, `blocked`, `disabled`, or `misconfigured`
+- `grant_type`
+- `metadata_fingerprint`
+- `safe_message`
+- `safe_metadata`
+
+The helper compares fingerprints, not raw tokens, and the safe view omits raw headers, raw tokens, API keys, request bodies, and private paths. The gate is optional, disabled by default, and intended for local/private operator workflows only.
+
 ## Provider Meter Event
 
 `AiProviderMeterEvent` represents one provider-metering decision or provider-call outcome.

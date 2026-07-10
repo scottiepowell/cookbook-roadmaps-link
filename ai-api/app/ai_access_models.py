@@ -66,6 +66,13 @@ class AiAccessWorkflow(StrEnum):
     MEAL_PLAN = "meal_plan"
 
 
+class AiOperatorGateStatus(StrEnum):
+    ALLOWED = "allowed"
+    BLOCKED = "blocked"
+    DISABLED = "disabled"
+    MISCONFIGURED = "misconfigured"
+
+
 SAFE_METADATA_VALUE = str | int | float | bool | None
 SAFE_METADATA = dict[str, SAFE_METADATA_VALUE]
 
@@ -293,6 +300,27 @@ class AiBudgetSnapshot(BaseModel):
         return self
 
     @field_validator("session_id", "grant_id")
+    @classmethod
+    def _safe_strings(cls, value: str | None) -> str | None:
+        _raise_if_forbidden(value)
+        return value
+
+    def safe_view(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+class AiOperatorGateDecision(SafeAccessModel):
+    enabled: bool
+    allowed: bool
+    workflow: AiAccessWorkflow
+    reason: str
+    status: AiOperatorGateStatus
+    grant_type: str | None = None
+    metadata_fingerprint: str | None = None
+    safe_message: str
+    safe_metadata: SAFE_METADATA = Field(default_factory=dict)
+
+    @field_validator("reason", "grant_type", "metadata_fingerprint", "safe_message")
     @classmethod
     def _safe_strings(cls, value: str | None) -> str | None:
         _raise_if_forbidden(value)

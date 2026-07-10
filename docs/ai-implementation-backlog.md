@@ -1662,9 +1662,17 @@ Done criteria:
 
 ## 0029D: Local Operator Access Gate
 
-Status: planned.
+Status: complete.
 
 Goal: Add a local/private operator gate for controlled AI demo access before invite-only or public exposure.
+
+Completed behavior:
+
+- local operator gate settings are opt-in and disabled by default so offline and mock demo paths remain unchanged;
+- protected AI demo workflows can be blocked or allowed using safe fingerprint comparison against `X-AI-Operator-Token` or `Authorization: Bearer ...`;
+- supported workflows include importer, dataset ask/RAG, recipe-session alpha, and meal plan;
+- local requests can use the explicit local bypass when enabled, but the helper and API responses remain safe and do not expose raw tokens, headers, or local paths;
+- TestClient-based unit tests cover disabled, allowed, blocked, misconfigured, and route-level gate behavior.
 
 ## 0029E: Provider Call Budget Enforcement
 

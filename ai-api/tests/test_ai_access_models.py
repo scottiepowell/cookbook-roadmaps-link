@@ -17,6 +17,8 @@ from app.ai_access_models import (
     AiDemoSessionType,
     AiProviderMeterEvent,
     AiProviderMeterStatus,
+    AiOperatorGateDecision,
+    AiOperatorGateStatus,
     AiQualityEvent,
     AiQualityStatus,
     safe_operator_view,
@@ -207,6 +209,25 @@ def test_budget_snapshot_exhausted_by_cost():
     assert snapshot.remaining_estimated_cost_usd == Decimal("0.00")
     assert snapshot.is_exhausted is True
     assert snapshot.status_reason == "cost_limit_exhausted"
+
+
+def test_operator_gate_decision_safe_view():
+    decision = AiOperatorGateDecision(
+        enabled=True,
+        allowed=True,
+        workflow=AiAccessWorkflow.IMPORTER,
+        reason="Operator token matched via x-ai-operator-token.",
+        status=AiOperatorGateStatus.ALLOWED,
+        grant_type="x-ai-operator-token",
+        metadata_fingerprint="fp_gate_001",
+        safe_message="Operator token was accepted.",
+        safe_metadata={"client_host_kind": "local"},
+    )
+
+    view = decision.safe_view()
+    assert view["allowed"] is True
+    assert view["status"] == "allowed"
+    _assert_safe(view)
 
 
 @pytest.mark.parametrize(

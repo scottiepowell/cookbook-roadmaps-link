@@ -47,6 +47,11 @@ def clear_provider_env(monkeypatch):
         "AI_RETRIEVAL_CACHE_ENABLED",
         "AI_RETRIEVAL_CACHE_MAX_ENTRIES",
         "AI_RETRIEVAL_CACHE_TTL_SECONDS",
+        "AI_OPERATOR_GATE_ENABLED",
+        "AI_OPERATOR_GATE_TOKEN_FINGERPRINT",
+        "AI_OPERATOR_GATE_TOKEN",
+        "AI_OPERATOR_GATE_ALLOWED_WORKFLOWS",
+        "AI_OPERATOR_GATE_LOCAL_BYPASS",
     ):
         monkeypatch.delenv(name, raising=False)
 

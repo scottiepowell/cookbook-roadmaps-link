@@ -13,6 +13,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Dataset normalization | Complete | dataset index internals | pytest, offline evals | Normalizes aliases, punctuation, accents, singular/plural variants, and preserved phrases for deterministic retrieval while keeping original values for display and citations. |
 | Dataset Ask/RAG | Complete | `POST /dataset/ask` | pytest, offline evals, live smoke | Answers from retrieved dataset records with provenance citations. |
 | Saved-recipe meal planning | Complete | `POST /ai/meal-plan` | pytest, offline evals, live smoke | Plans from selected saved recipe candidates; no DB write-back. |
+| Local operator gate | Complete, local/private | `ai-api/app/ai_operator_gate.py`, protected AI routes | pytest, offline route tests | Opt-in gate compares safe token fingerprints, supports an explicit local bypass, protects importer/dataset ask/recipe-session/meal-plan workflows when enabled, and returns safe allow/block/misconfigured decisions without raw token leakage. |
 | Bounded input quality | Complete | importer, Ask, dataset search/RAG, meal planning | pytest, offline evals | Rejects unusable input before provider calls, asks at most one clarification question for recoverable vague input, and lets weak usable input proceed with warnings. |
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
 | Retrieval relevance eval harness | Complete | `evals/ai_cookbook/run_evals.py` | offline eval tests | Deterministically scores importer retrieval relevance against generated distractor fixtures, including top-1 dish match, top-k material relevance, anchor coverage, and weak-match warnings. |
@@ -83,6 +84,7 @@ status=passed
 | Recipe-session alpha acceptance | Complete, local alpha | [Recipe Session Alpha Acceptance Runbook](recipe-session-alpha-acceptance-runbook.md), `scripts/demo-ai-mock.ps1` | Hardens API response safety, UI messaging, edge-case tests, mock smoke behavior, and operator runbook boundaries for local demos. |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
+| Local operator gate | Pass | helper and route tests | Gate is disabled by default, uses safe fingerprints and a local bypass, and keeps offline/mock validation unchanged unless explicitly enabled. |
 
 ## Demo Starting Points
 

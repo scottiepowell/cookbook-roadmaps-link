@@ -134,6 +134,8 @@ The live importer `503` blocker from manual testing was traced to strict structu
 
 Production access architecture is proposed, not implemented. Before any public live provider-backed AI exposure, the AI demo needs an access layer with time-limited sessions, per-call metering, provider budget enforcement, a global live-provider disable switch, protected routes, and metadata-only logging by default. The first schema-only scaffold for that future layer is in `ai-api/app/ai_access_models.py` and [AI session metering schema](docs/ai-session-metering-schema.md), covering demo sessions, access grants, meter events, quality events, audit events, and budget snapshots without runtime auth, storage, billing, invite flow, or budget enforcement. Payment integration is deferred, and the platform rule remains: shared infrastructure is allowed, but each demo owns its own data boundary.
 
+The first local/private access guardrail now exists in [AI Local Operator Access Gate](docs/ai-local-operator-access-gate.md). It is disabled by default, protects importer/dataset ask/recipe-session/meal-plan workflows when enabled, and compares safe fingerprints on `X-AI-Operator-Token` or `Authorization: Bearer ...` without echoing raw tokens or local paths.
+
 ## Architecture
 
 GitHub Actions assumes a repository-scoped AWS role through OIDC and deploys Docker Compose through Systems Manager. Vanilla Cookbook listens only on EC2 loopback; `cloudflared` creates the outbound public route.
