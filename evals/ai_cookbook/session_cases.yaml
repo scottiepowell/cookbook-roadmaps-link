@@ -1,0 +1,83 @@
+[
+  {
+    "id": "detailed_cheesecake_generates_draft",
+    "flow": "start",
+    "start_text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight",
+    "expected_start_state": "draft_generated",
+    "expected_confidence": ["high"],
+    "expect_draft": true,
+    "expect_citations": true,
+    "expected_support_not": "none",
+    "expect_clarification": false
+  },
+  {
+    "id": "vague_dessert_clarifies",
+    "flow": "start",
+    "start_text": "make dessert",
+    "expected_start_state": "clarification_needed",
+    "expect_draft": false,
+    "expect_citations": false,
+    "expect_clarification": true
+  },
+  {
+    "id": "no_bake_refreshes_rag",
+    "flow": "message",
+    "start_text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight",
+    "message_text": "actually make it no-bake",
+    "expected_start_state": "draft_generated",
+    "expected_message_states": ["rag_refreshed", "draft_revised"],
+    "expect_rag_refreshed": true,
+    "expected_changed_fields": ["cooking_method"],
+    "expected_requirement_contains": {"cooking_method": "no-bake"},
+    "expect_draft": true
+  },
+  {
+    "id": "carbonara_chatter_no_refresh",
+    "flow": "message",
+    "start_text": "carbonara pasta for 4 with spaghetti eggs parmesan pancetta black pepper save pasta water mix off heat no heavy cream",
+    "message_text": "thanks",
+    "expected_start_state": "draft_generated",
+    "expected_message_states": ["no_material_change"],
+    "expect_rag_refreshed": false,
+    "expected_changed_fields": []
+  },
+  {
+    "id": "omelet_formatting_no_refresh",
+    "flow": "message",
+    "start_text": "omelette for 4 with eggs cheddar onions butter folded in a skillet",
+    "message_text": "make it shorter",
+    "expected_start_state": "draft_generated",
+    "expected_message_states": ["no_material_change"],
+    "expected_delta_label": "formatting_only",
+    "expect_rag_refreshed": false,
+    "expected_changed_fields": []
+  },
+  {
+    "id": "clarification_answer_generates_draft",
+    "flow": "message",
+    "start_text": "make dessert",
+    "message_text": "cheesecake, no-bake, for 4 people",
+    "expected_start_state": "clarification_needed",
+    "expected_message_states": ["rag_refreshed", "draft_revised"],
+    "expected_delta_labels": ["clarification_answer", "relevant_requirement_update"],
+    "expected_requirement_contains": {"dish_intent": "cheesecake", "cooking_method": "no-bake"},
+    "expect_draft": true,
+    "expect_no_start_draft": true
+  },
+  {
+    "id": "finalize_demo_only",
+    "flow": "finalize",
+    "start_text": "chicken and rice casserole for 4 with cooked chicken rice cream of chicken soup cheddar bake until bubbly",
+    "expected_start_state": "draft_generated",
+    "expected_finalize_state": "ready_to_finalize",
+    "expect_draft": true,
+    "expect_demo_warning": true
+  },
+  {
+    "id": "missing_session_safe",
+    "flow": "missing_session",
+    "missing_interaction_id": "rs_missing_eval_session",
+    "expected_status_code": 404,
+    "expected_response_state": "not_found"
+  }
+]

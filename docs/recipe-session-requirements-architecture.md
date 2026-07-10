@@ -34,6 +34,14 @@ These endpoints are local/offline/mock-friendly and reuse the existing importer/
 
 This UI is still an operator/developer demo panel, not a production recipe editor or full chat app. Sessions remain process-local and expire. Finalize is demo-only and does not write to production storage.
 
+`0030E` adds a dedicated offline/mock regression baseline for recipe-session behavior:
+
+- `evals/ai_cookbook/session_cases.yaml` defines deterministic start/message/get/finalize cases.
+- `evals/ai_cookbook/session_eval.py` runs those cases through FastAPI `TestClient` with generated dataset fixtures and the mock provider.
+- `evals/ai_cookbook/run_evals.py` includes the `recipe_session` group, covering detailed draft generation, vague clarification, material RAG refresh, chatter/formatting no-refresh, clarification answer, demo finalize, missing-session safety, and prompt/secret/path leakage checks.
+
+The session eval harness does not require live OpenAI, real `recipe-dataset/`, production storage, browser automation, screenshots, or persistent user memory.
+
 ## Problem
 
 The completed 0029B RAG line makes a single importer request much stronger:
@@ -759,7 +767,7 @@ Decision:
 
 ## Test Strategy
 
-Future implementation should add offline tests only.
+Implementation should add offline tests only.
 
 Unit tests:
 
@@ -784,6 +792,13 @@ Integration tests:
 - regenerate reuses current retrieval context;
 - finalize does not write to production storage.
 
+Offline eval baseline:
+
+- `evals/ai_cookbook/run_evals.py` includes the `recipe_session` group;
+- cases use generated dataset fixtures and mock provider settings only;
+- cases reset the process-local session store and retrieval cache between runs;
+- response text is checked for raw prompts, raw provider responses, provider keys, stack traces, generated dataset paths, and local absolute paths.
+
 E2E tests:
 
 - generated fixture dataset only;
@@ -805,13 +820,14 @@ Eval cases:
 | `thanks` | `no_material_change`, no RAG. |
 | `use gluten-free crust` | dietary/ingredient constraint update; refresh or update retrieval query. |
 | chicken casserole with unknown chicken state | clarification or safe disclosed assumption. |
+| unknown session ID | safe `not_found` or `404` without stack trace or path leakage. |
 
 ## Implementation Phasing
 
 Recommended follow-on tasks:
 
-1. `0030E`: Session API response hardening and any missing revision metadata discovered by manual use.
-2. `0030F`: Optional richer alpha session E2E eval cases if the compact demo panel is insufficient.
-3. `0030G`: Operator UX polish for requirement diff display, still without production persistence.
+1. `0030F`: Session API response hardening and any missing revision metadata discovered by manual use.
+2. `0030G`: Operator UX polish for requirement diff display, still without production persistence.
+3. `0030H`: Optional richer alpha session E2E eval cases if new product flows appear.
 
 Each phase should keep normal validation offline and mock-only.

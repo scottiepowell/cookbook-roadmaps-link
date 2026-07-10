@@ -49,6 +49,8 @@ def main() -> int:
     evals: list[tuple[str, dict[str, Any]]] = []
     for case in _load_retrieval_relevance_cases():
         evals.append(("retrieval_relevance", case))
+    for case in _load_session_cases():
+        evals.append(("recipe_session", case))
     for case in _load_json("dataset_ask_cases.json"):
         evals.append(("dataset_ask", case))
     for case in _load_json("workflow_cases.json"):
@@ -112,6 +114,12 @@ def _load_retrieval_relevance_cases() -> list[dict[str, Any]]:
     return load_retrieval_cases()
 
 
+def _load_session_cases() -> list[dict[str, Any]]:
+    from evals.ai_cookbook.session_eval import load_session_cases
+
+    return load_session_cases()
+
+
 def _run_case(case_type: str, case: dict[str, Any]) -> str | None:
     if case_type == "dataset_ask":
         _run_dataset_ask_case(case)
@@ -127,6 +135,8 @@ def _run_case(case_type: str, case: dict[str, Any]) -> str | None:
         _run_provider_config_case()
     elif case_type == "retrieval_relevance":
         return _run_retrieval_relevance_case(case)
+    elif case_type == "recipe_session":
+        return _run_recipe_session_case(case)
     else:
         raise AssertionError(f"unknown eval type {case_type!r}")
     return None
@@ -285,6 +295,14 @@ def _run_retrieval_relevance_case(case: dict[str, Any]) -> str:
     from evals.ai_cookbook.retrieval_eval import evaluate_retrieval_case
 
     result = evaluate_retrieval_case(case)
+    assert result.passed, result.summary
+    return result.summary
+
+
+def _run_recipe_session_case(case: dict[str, Any]) -> str:
+    from evals.ai_cookbook.session_eval import evaluate_session_case
+
+    result = evaluate_session_case(case)
     assert result.passed, result.summary
     return result.summary
 

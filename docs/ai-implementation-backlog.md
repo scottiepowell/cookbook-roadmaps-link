@@ -1568,6 +1568,34 @@ Done criteria:
 - mock demo validation exercises the recipe-session endpoint flow offline;
 - no production storage, persistent memory, auth, paid access, public route exposure, browser automation, screenshots, Redis, embeddings, vector database, or full chat UI is implemented.
 
+## 0030E: Recipe Session Eval Harness And Regression Baseline
+
+Status: complete.
+
+Goal: Add deterministic offline/mock eval cases for recipe-session behavior so the alpha session workflow is tracked as a regression surface in `run_evals.py`.
+
+Files likely touched:
+
+- `evals/ai_cookbook/session_cases.yaml`
+- `evals/ai_cookbook/session_eval.py`
+- `evals/ai_cookbook/run_evals.py`
+- `ai-api/tests/test_recipe_session_eval_harness.py`
+- `docs/ai-evals-plan.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-implementation-backlog.md`
+- `docs/recipe-session-requirements-architecture.md`
+- `README.md`
+- `outbox/0030E-recipe-session-eval-harness-and-regression-baseline-results.md`
+
+Done criteria:
+
+- dedicated recipe-session eval cases exist for detailed draft generation, vague clarification, material method-change RAG refresh, chatter no-refresh, formatting-only no-refresh, clarification answer, demo finalize, and missing-session safety;
+- `evals/ai_cookbook/session_eval.py` runs start/message/get/finalize flows through FastAPI `TestClient` with generated dataset fixtures and mock provider settings only;
+- `evals/ai_cookbook/run_evals.py` includes the `recipe_session` eval group and fails non-zero on session behavior regressions;
+- eval responses are checked for prompt, provider-response, secret, stack trace, generated path, and local absolute path leakage;
+- tests cover case loading, happy-path execution, failure summaries, and independence from live provider environment settings;
+- no production storage, persistent memory, auth, paid access, public route exposure, browser automation, screenshots, Redis, embeddings, vector database, or live OpenAI calls are added.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.
