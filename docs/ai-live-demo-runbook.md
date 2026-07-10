@@ -78,6 +78,8 @@ The generated `.tmp-ai-demo` fixture dataset still contains only three records. 
 
 The importer prompt now packs a bounded snippet set instead of sending raw retrieved records. The demo UI exposes `retrieved_examples`, `packed_examples`, `context_chars_used`, `weak_examples_included`, and `context_budget_warning` so you can tell whether the provider saw strong support or only weak structure-only examples.
 
+The demo UI also includes a local `Recipe Session Alpha` panel. Use it to start a session from rough recipe notes, inspect interpreted requirements, answer one clarification, send a follow-up, see whether RAG refreshed, get the current session state, and finalize for demo. The session store is process-local and expires; `Finalize for demo` does not write to production cookbook storage.
+
 ## Importer-Only Diagnostic
 
 Prefer the dedicated live importer smoke script:
@@ -221,7 +223,16 @@ The automated E2E integration test `ai-api/tests/test_rag_e2e_integration.py` co
 
 The dataset index now normalizes conservative aliases and phrase variants such as `omelette` -> `omelet`, `parmigiano-reggiano` -> `parmesan`, `no-bake` -> `no bake`, and `graham crackers` -> `graham cracker` while preserving the original recipe values for citations and display.
 
-The next product layer is documented in [Recipe Session Requirements Architecture](recipe-session-requirements-architecture.md). Local alpha endpoints now exist under `/ai/recipe-session/*` for start/message/get/finalize flows. They are offline/mock-friendly, use bounded process-local memory, and reuse the existing importer/RAG path for draft generation. They are not production storage, public access, auth, paid access, or a full chat UI.
+The next product layer is documented in [Recipe Session Requirements Architecture](recipe-session-requirements-architecture.md). Local alpha endpoints now exist under `/ai/recipe-session/*` for start/message/get/finalize flows, and the demo UI has a compact `Recipe Session Alpha` panel for exercising those endpoints. They are offline/mock-friendly, use bounded process-local memory, and reuse the existing importer/RAG path for draft generation. They are not production storage, public access, auth, paid access, or a full chat UI.
+
+Suggested local session checks:
+
+| Flow | Input | Expected result |
+| --- | --- | --- |
+| Clarification | `make dessert` | `clarification_needed`, one question, no draft |
+| RAG refresh | start baked cheesecake, then `actually make it no-bake` | `rag_refreshed` or revised draft, changed method visible |
+| No refresh | `thanks`, `looks good`, or `make it shorter` | `no_material_change`, no RAG refresh |
+| Finalize | click `Finalize for demo` after a draft | `ready_to_finalize`, demo-only warning |
 
 The live importer `503` issue observed during manual recipe-entry testing was caused by strict structured-output schema metadata that OpenAI rejected. `ai-api/app/providers/openai_schema.py` now strips unsupported metadata such as `default`, `examples`, `title`, and `description` recursively before the request is sent, while application-side importer behavior still defaults servings to 4.
 

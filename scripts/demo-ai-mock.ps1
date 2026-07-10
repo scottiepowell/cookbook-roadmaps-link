@@ -29,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, "ai-api")
 
 from app.demo_data import seed_demo_data
+from app.recipe_session import default_recipe_session_store
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -45,6 +46,7 @@ try:
     os.environ["COOKBOOK_DB_PATH"] = str(paths["db_path"])
     os.environ["RECIPE_DATASET_DIR"] = str(paths["dataset_dir"])
     os.environ["AI_PROVIDER"] = "mock"
+    default_recipe_session_store.clear()
 
     client = TestClient(app)
     checks = [
@@ -65,7 +67,66 @@ try:
             if forbidden in text:
                 raise SystemExit(f"{name} leaked forbidden text: {forbidden}")
         print(f"PASS: {name}")
+
+    session_start = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight"},
+    )
+    if session_start.status_code != 200:
+        raise SystemExit(f"recipe_session_start failed with HTTP {session_start.status_code}: {session_start.text}")
+    session_data = session_start.json()
+    if session_data.get("response_state") != "draft_generated" or not session_data.get("interaction_id"):
+        raise SystemExit(f"recipe_session_start returned unexpected state: {session_start.text}")
+    interaction_id = session_data["interaction_id"]
+    print("PASS: recipe_session_start")
+
+    session_message = client.post(
+        f"/ai/recipe-session/{interaction_id}/message",
+        json={"text": "actually make it no-bake"},
+    )
+    if session_message.status_code != 200:
+        raise SystemExit(f"recipe_session_message failed with HTTP {session_message.status_code}: {session_message.text}")
+    message_data = session_message.json()
+    if message_data.get("response_state") not in ("rag_refreshed", "draft_revised") or message_data.get("rag_refreshed") is not True:
+        raise SystemExit(f"recipe_session_message returned unexpected state: {session_message.text}")
+    print("PASS: recipe_session_message")
+
+    session_get = client.get(f"/ai/recipe-session/{interaction_id}")
+    if session_get.status_code != 200:
+        raise SystemExit(f"recipe_session_get failed with HTTP {session_get.status_code}: {session_get.text}")
+    print("PASS: recipe_session_get")
+
+    session_finalize = client.post(f"/ai/recipe-session/{interaction_id}/finalize", json={"format": "draft_json"})
+    if session_finalize.status_code != 200 or session_finalize.json().get("response_state") != "ready_to_finalize":
+        raise SystemExit(f"recipe_session_finalize returned unexpected state: {session_finalize.text}")
+    print("PASS: recipe_session_finalize")
+
+    vague = client.post("/ai/recipe-session/start", json={"text": "make dessert"})
+    if vague.status_code != 200 or vague.json().get("response_state") != "clarification_needed":
+        raise SystemExit(f"recipe_session_clarification returned unexpected state: {vague.text}")
+    print("PASS: recipe_session_clarification")
+
+    chatter = client.post(f"/ai/recipe-session/{interaction_id}/message", json={"text": "thanks"})
+    if chatter.status_code != 200:
+        raise SystemExit(f"recipe_session_chatter failed with HTTP {chatter.status_code}: {chatter.text}")
+    chatter_data = chatter.json()
+    if chatter_data.get("response_state") != "no_material_change" or chatter_data.get("rag_refreshed") is not False:
+        raise SystemExit(f"recipe_session_chatter returned unexpected state: {chatter.text}")
+    print("PASS: recipe_session_chatter")
+
+    for name, response in (
+        ("recipe_session_start", session_start),
+        ("recipe_session_message", session_message),
+        ("recipe_session_get", session_get),
+        ("recipe_session_finalize", session_finalize),
+        ("recipe_session_clarification", vague),
+        ("recipe_session_chatter", chatter),
+    ):
+        for forbidden in ("OPENAI_API_KEY", "sk-", "Authorization:", "Traceback", ".tmp-ai-demo"):
+            if forbidden in response.text:
+                raise SystemExit(f"{name} leaked forbidden text: {forbidden}")
 finally:
+    default_recipe_session_store.clear()
     shutil.rmtree(root, ignore_errors=True)
     try:
         tmp_parent.rmdir()

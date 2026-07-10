@@ -49,10 +49,26 @@ const workflows = {
     input: "meal-plan-preferences",
     sample: "lemon dinner",
   },
+  recipeSession: {
+    card: "recipe-session",
+    result: "session-result",
+    button: '[data-action="session-start"]',
+    reset: '[data-reset="recipe-session"]',
+    input: "session-start-text",
+    followup: "session-followup-text",
+    sample: "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight",
+    followupSample: "actually make it no-bake",
+  },
 };
+
+let activeRecipeSessionId = null;
 
 document.getElementById("refresh-readiness").addEventListener("click", refreshReadiness);
 document.querySelector(workflows.importer.button).addEventListener("click", runImporter);
+document.querySelector('[data-action="session-start"]').addEventListener("click", startRecipeSession);
+document.querySelector('[data-action="session-message"]').addEventListener("click", sendRecipeSessionMessage);
+document.querySelector('[data-action="session-get"]').addEventListener("click", getRecipeSession);
+document.querySelector('[data-action="session-finalize"]').addEventListener("click", finalizeRecipeSession);
 document.querySelector(workflows.cookbook.button).addEventListener("click", runCookbookQuery);
 document.querySelector(workflows.datasetSearch.button).addEventListener("click", runDatasetSearch);
 document.querySelector(workflows.datasetRag.button).addEventListener("click", runDatasetRag);
@@ -107,6 +123,61 @@ async function runImporter() {
     }),
     evidence: importerEvidenceSection,
   });
+}
+
+async function startRecipeSession() {
+  const workflow = workflows.recipeSession;
+  const payload = {
+    text: document.getElementById(workflow.input).value,
+    source: "sidecar demo recipe session",
+  };
+  await runSessionWorkflow(
+    workflow,
+    requestJson("/ai/recipe-session/start", postOptions(payload), "recipe-session-start"),
+    "Starting session...",
+  );
+}
+
+async function sendRecipeSessionMessage() {
+  const workflow = workflows.recipeSession;
+  if (!activeRecipeSessionId) {
+    renderError(document.getElementById(workflow.result), "Start a recipe session before sending a follow-up message.");
+    return;
+  }
+  const payload = {
+    text: document.getElementById(workflow.followup).value,
+  };
+  await runSessionWorkflow(
+    workflow,
+    requestJson(`/ai/recipe-session/${encodeURIComponent(activeRecipeSessionId)}/message`, postOptions(payload), "recipe-session-message"),
+    "Sending follow-up...",
+  );
+}
+
+async function getRecipeSession() {
+  const workflow = workflows.recipeSession;
+  if (!activeRecipeSessionId) {
+    renderError(document.getElementById(workflow.result), "Start a recipe session before loading session state.");
+    return;
+  }
+  await runSessionWorkflow(
+    workflow,
+    requestJson(`/ai/recipe-session/${encodeURIComponent(activeRecipeSessionId)}`, {}, "recipe-session-get"),
+    "Loading session...",
+  );
+}
+
+async function finalizeRecipeSession() {
+  const workflow = workflows.recipeSession;
+  if (!activeRecipeSessionId) {
+    renderError(document.getElementById(workflow.result), "Start a recipe session before finalizing for demo.");
+    return;
+  }
+  await runSessionWorkflow(
+    workflow,
+    requestJson(`/ai/recipe-session/${encodeURIComponent(activeRecipeSessionId)}/finalize`, postOptions({format: "draft_json"}), "recipe-session-finalize"),
+    "Finalizing for demo...",
+  );
 }
 
 async function runCookbookQuery() {
@@ -208,6 +279,24 @@ async function runWorkflow(workflow, promise, view) {
   }
 }
 
+async function runSessionWorkflow(workflow, promise, loadingLabel) {
+  setLoading(workflow, true);
+  const target = document.getElementById(workflow.result);
+  target.className = "result";
+  target.innerHTML = `<div class="answer-card">${loadingLabel || "Running session request..."}</div>`;
+  try {
+    const data = await promise;
+    if (data.interaction_id) {
+      activeRecipeSessionId = data.interaction_id;
+    }
+    renderRecipeSession(target, data);
+  } catch (error) {
+    renderError(target, error.message);
+  } finally {
+    setLoading(workflow, false);
+  }
+}
+
 async function requestJson(url, options = {}, workflow = "manual") {
   const mergedOptions = withWorkflowHeader(options, workflow);
   const response = await fetch(url, mergedOptions);
@@ -253,6 +342,116 @@ function renderSuccess(target, data, view) {
   target.append(view.evidence ? view.evidence(data) : citationSection(view.citations(data)));
   target.append(warningSection(data.warnings || []));
   target.append(jsonDetails(data));
+}
+
+function renderRecipeSession(target, data) {
+  target.innerHTML = "";
+  target.append(sessionStatusHeader(data));
+
+  if (data.response_state === "clarification_needed") {
+    target.append(sessionQuestionCard(data));
+  }
+
+  target.append(metadataGrid({
+    interaction_id: data.interaction_id || "none",
+    response_state: data.response_state || "none",
+    revision_count: data.revision_count ?? 0,
+    confidence_label: data.requirements?.confidence_label || "none",
+    rag_refreshed: data.rag_refreshed ? "true" : "false",
+    rag_refresh_reason: data.rag_refresh_reason || "none",
+    changed_fields: (data.changed_fields || []).join(", ") || "none",
+    support_level: data.support_level || "none",
+    last_citation_ids: (data.citations || []).map((citation) => citation.id).filter(Boolean).join(", ") || "none",
+    expires_at: data.expires_at || "none",
+  }));
+
+  target.append(sessionRequirementsSection(data.requirements || {}));
+
+  if (data.draft) {
+    target.append(answerCard(`Draft: ${data.draft.title || "Recipe draft"}`, importerAnswer(data)));
+  } else if (data.response_state === "clarification_needed") {
+    target.append(answerCard("Draft", "No draft was generated because one clarification is needed."));
+  }
+
+  if (data.retrieval || data.citations?.length) {
+    target.append(importerEvidenceSection(data));
+  }
+
+  if (data.response_state === "no_material_change") {
+    target.append(answerCard("No refresh", "No material recipe requirements changed, so RAG was not refreshed."));
+  }
+
+  if (data.response_state === "rag_refreshed" || data.response_state === "draft_revised") {
+    target.append(answerCard(
+      "RAG refresh status",
+      data.rag_refreshed ? "RAG was refreshed because material recipe requirements changed." : "Draft revised without a required RAG refresh.",
+    ));
+  }
+
+  if (data.response_state === "ready_to_finalize") {
+    target.append(answerCard("Finalize for demo", "Ready to finalize for demo only. No production storage write was performed."));
+  }
+
+  target.append(warningSection(data.warnings || []));
+  target.append(jsonDetails(data));
+}
+
+function sessionStatusHeader(data) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "session-status";
+  const state = document.createElement("span");
+  state.className = `status-pill ${data.response_state === "rejected" ? "error" : data.response_state === "clarification_needed" ? "warn" : "ok"}`;
+  state.textContent = data.response_state || "unknown";
+  const id = document.createElement("span");
+  id.className = "meta-pill";
+  id.textContent = data.interaction_id ? `Session ${data.interaction_id}` : "No active session";
+  wrapper.append(state, id);
+  return wrapper;
+}
+
+function sessionQuestionCard(data) {
+  const card = document.createElement("div");
+  card.className = "question-card";
+  const heading = document.createElement("h3");
+  heading.textContent = "Clarification question";
+  const body = document.createElement("p");
+  body.textContent = data.clarification_question || "One more recipe detail is needed.";
+  card.append(heading, body);
+  return card;
+}
+
+function sessionRequirementsSection(requirements) {
+  const section = document.createElement("div");
+  section.className = "subsection";
+  const heading = document.createElement("h3");
+  heading.textContent = "Interpreted requirements";
+  section.append(heading, metadataGrid({
+    dish_intent: requirementValue(requirements.dish_intent),
+    serving_count: requirementValue(requirements.serving_count),
+    required_ingredients: requirementList(requirements.required_ingredients),
+    excluded_ingredients: requirementList(requirements.excluded_ingredients),
+    cooking_method: requirementValue(requirements.cooking_method),
+    equipment_constraints: requirementList(requirements.equipment_constraints),
+    dietary_constraints: requirementList(requirements.dietary_constraints),
+    open_questions: (requirements.open_questions || []).join("; ") || "none",
+    resolved_questions: (requirements.resolved_questions || []).map((item) => `${item.question} -> ${item.answer}`).join("; ") || "none",
+    assumptions: requirementList(requirements.assumptions),
+  }));
+  return section;
+}
+
+function requirementValue(field) {
+  if (!field) {
+    return "none";
+  }
+  return `${field.value} (${field.source || "source unknown"})`;
+}
+
+function requirementList(items) {
+  if (!items || !items.length) {
+    return "none";
+  }
+  return items.map((item) => requirementValue(item)).join(", ");
 }
 
 function inputQualityCard(title, inputQuality) {
@@ -451,6 +650,12 @@ function readinessSkeleton() {
 function resetWorkflow(workflow) {
   const input = document.getElementById(workflow.input);
   input.value = workflow.sample;
+  if (workflow.followup) {
+    document.getElementById(workflow.followup).value = workflow.followupSample || "";
+  }
+  if (workflow.card === "recipe-session") {
+    activeRecipeSessionId = null;
+  }
   const target = document.getElementById(workflow.result);
   target.className = "result empty";
   target.textContent = "Reset complete. Run this workflow when ready.";

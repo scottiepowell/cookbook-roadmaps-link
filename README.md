@@ -13,7 +13,7 @@ Completed AI workflows:
 - Dataset search/RAG: `GET/POST /dataset/search` and `POST /dataset/ask` use bounded local dataset fixtures with provenance citations.
 - Meal planning: `POST /ai/meal-plan` builds plans from saved recipe candidates.
 - Bounded input quality: weak or vague input gets deterministic warnings or one clarification question, while empty or nonsensical input is rejected before provider calls.
-- Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows.
+- Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows, including the local Recipe Session Alpha panel.
 - Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
 
 Validation proof:
@@ -124,7 +124,7 @@ The RAG importer path now has an offline E2E regression test that exercises the 
 
 The next recipe-creation product layer is documented, not implemented, in [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md). It designs a session-scoped requirements state, one-question clarification policy, follow-up delta classifier, and RAG refresh rules so future revisions like `actually make it no-bake` can update requirements, refresh retrieval, and explain why citations changed. It does not add production storage, persistent user memory, auth, paid access, public route exposure, embeddings, vector databases, or a full chat UI.
 
-The first local alpha implementation for that layer now exists in `ai-api/app/recipe_requirements.py`, `ai-api/app/recipe_session.py`, and `ai-api/app/recipe_session_routes.py`. It provides deterministic requirements extraction, confidence labels, clarification and follow-up classification, RAG refresh decisions, a bounded in-memory test/demo session store, and local `/ai/recipe-session/*` endpoints for start/message/get/finalize flows. These endpoints are offline/mock-friendly and are not production storage, auth, paid access, public access, persistent user memory, or a full chat UI.
+The first local alpha implementation for that layer now exists in `ai-api/app/recipe_requirements.py`, `ai-api/app/recipe_session.py`, and `ai-api/app/recipe_session_routes.py`. It provides deterministic requirements extraction, confidence labels, clarification and follow-up classification, RAG refresh decisions, a bounded in-memory test/demo session store, and local `/ai/recipe-session/*` endpoints for start/message/get/finalize flows. The `/demo` UI includes a compact Recipe Session Alpha panel for starting a session, sending a follow-up, viewing RAG refresh/no-refresh state, and finalizing for demo. These endpoints and UI controls are offline/mock-friendly and are not production storage, auth, paid access, public access, persistent user memory, or a full chat UI.
 
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts.
 

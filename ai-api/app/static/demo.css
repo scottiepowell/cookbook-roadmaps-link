@@ -161,7 +161,7 @@ pre {
 .flow-list {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
@@ -319,6 +319,27 @@ pre {
 .metadata-item strong {
   display: block;
   overflow-wrap: anywhere;
+}
+
+.session-status {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.question-card {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+.question-card h3 {
+  font-size: 0.95rem;
+  margin: 0 0 6px;
 }
 
 .subsection {

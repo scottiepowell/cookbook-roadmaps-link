@@ -81,6 +81,8 @@ The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tes
 
 The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.
 
+The 0030D demo UI layer extends `ai-api/tests/test_demo_ui.py` and `scripts/demo-ai-mock.ps1`. Static tests verify the `Recipe Session Alpha` controls, supported response-state rendering, friendly error handling, and forbidden-text boundaries. The mock demo smoke path exercises start, material follow-up/RAG refresh, get, finalize, vague clarification, and chatter/no-refresh flows through the local endpoints.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:
@@ -142,6 +144,7 @@ evals/
 | Requirements Session | Vague dessert | `make dessert` | Returns `clarification_needed`, asks one bounded question, and does not run RAG |
 | Requirements Session | Specific cheesecake | `cheesecake cream cheese sugar eggs vanilla graham cracker crust bake and chill` | Returns `draft_generated`, runs RAG, and records interpreted requirements |
 | Requirements Session | Method change | `actually no bake` after baked cheesecake | Classifies `relevant_requirement_update`, refreshes RAG, and explains the method change |
+| Requirements Session UI | Demo panel smoke | start cheesecake, send no-bake follow-up, get, finalize, start vague dessert, send chatter | Static UI renders session states and mock smoke exercises endpoints offline |
 | Requirements Session | Chatter | `thanks` | Returns `no_material_change` and does not refresh RAG |
 | Requirements Session | Finalize | `save this` | Returns `ready_to_finalize` without production write-back |
 | Requirements Session API | Alpha session flow | start baked cheesecake -> `actually make it no-bake` -> get -> finalize | Local endpoints preserve session state, refresh RAG for method change, return safe draft/citation metadata, and do not write production storage |
@@ -172,6 +175,7 @@ evals/
 - Importer RAG E2E tests must use generated fixtures and the mock provider, exercise the public API route, and remain light enough for normal repository validation.
 - Recipe-session requirements scaffold tests must remain deterministic, offline, and unwired from public endpoints until the dedicated session API task.
 - Recipe-session alpha API tests must use generated fixtures, the mock provider, and bounded in-memory session state only.
+- Recipe-session demo UI tests must remain static or TestClient-based, with no browser automation, screenshots, production storage, or live provider calls.
 
 ## Manual Live OpenAI Smoke Tests
 

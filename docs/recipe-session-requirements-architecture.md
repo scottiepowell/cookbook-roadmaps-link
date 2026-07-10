@@ -25,6 +25,15 @@ This is a design document. It does not implement runtime endpoints, production s
 
 These endpoints are local/offline/mock-friendly and reuse the existing importer/RAG path for draft generation. They store only bounded process-local demo session state and safe draft/citation/retrieval summaries. They do not add production storage, auth, paid access, persistent user memory, Redis, embeddings, vector databases, public route exposure, or a full chat UI.
 
+`0030D` adds the smallest useful local demo UI layer for the alpha endpoints:
+
+- `GET /demo` and `GET /demo/ai` include a `Recipe Session Alpha` section.
+- The section can start a session, send one follow-up, get current state, finalize for demo, and reset local UI state.
+- It displays interpreted requirements, clarification questions, RAG refresh/no-refresh decisions, support level, citation IDs, draft summaries, citations, warnings, and expiration.
+- `scripts/demo-ai-mock.ps1` exercises the session start/message/get/finalize, vague-clarification, and chatter/no-refresh paths offline with the mock provider.
+
+This UI is still an operator/developer demo panel, not a production recipe editor or full chat app. Sessions remain process-local and expire. Finalize is demo-only and does not write to production storage.
+
 ## Problem
 
 The completed 0029B RAG line makes a single importer request much stronger:
@@ -590,6 +599,8 @@ The alpha UI does not need a full chat surface. It should show a recipe creation
 
 UI language should avoid overstating support. Weak examples should be labeled as broad or structure-only examples, not authoritative sources.
 
+Alpha implementation status: `0030D` implements this as the `Recipe Session Alpha` panel in the existing sidecar demo UI. It is intentionally compact and operator-focused: textareas for initial notes and follow-up messages, buttons for start/message/get/finalize/reset, safe requirement and state metadata, draft summary/citations when present, and recoverable error cards. It does not implement a persistent conversation transcript, browser automation, production save, auth, paid access, or public route exposure.
+
 ## Example Flows
 
 ### Flow A: Enough Information, No Clarification
@@ -799,11 +810,8 @@ Eval cases:
 
 Recommended follow-on tasks:
 
-1. `0030B`: Requirements extraction and state schema tests.
-2. `0030C`: Clarification and delta classifier policy tests.
-3. `0030D`: Session route alpha with in-memory session store.
-4. `0030E`: RAG refresh integration and revision metadata.
-5. `0030F`: UI session panel for interpreted requirements and refresh reasons.
-6. `0030G`: Offline session E2E eval harness.
+1. `0030E`: Session API response hardening and any missing revision metadata discovered by manual use.
+2. `0030F`: Optional richer alpha session E2E eval cases if the compact demo panel is insufficient.
+3. `0030G`: Operator UX polish for requirement diff display, still without production persistence.
 
 Each phase should keep normal validation offline and mock-only.

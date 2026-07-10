@@ -11,6 +11,10 @@ def test_demo_ui_route_returns_html():
     assert "text/html" in response.headers["content-type"]
     assert "Cookbook AI" in response.text
     assert "Structured Recipe Importer" in response.text
+    assert "Recipe Session Alpha" in response.text
+    assert "Start session" in response.text
+    assert "Send follow-up" in response.text
+    assert "Finalize for demo" in response.text
     assert "System and demo data" in response.text
     assert "Step 1" in response.text
     assert "Step 5" in response.text
@@ -36,6 +40,21 @@ def test_demo_static_assets_load():
     assert "fetch(" in js_response.text
     assert "importerAnswer" in js_response.text
     assert "importerEvidenceSection" in js_response.text
+    assert "renderRecipeSession" in js_response.text
+    assert "/ai/recipe-session/start" in js_response.text
+    assert "recipe-session-message" in js_response.text
+    assert "recipe-session-finalize" in js_response.text
+    assert "clarification_needed" in js_response.text
+    assert "rag_refreshed" in js_response.text
+    assert "draft_revised" in js_response.text
+    assert "no_material_change" in js_response.text
+    assert "ready_to_finalize" in js_response.text
+    assert "last_citation_ids" in js_response.text
+    assert "Clarification question" in js_response.text
+    assert "No draft was generated because one clarification is needed." in js_response.text
+    assert "No material recipe requirements changed, so RAG was not refreshed." in js_response.text
+    assert "No production storage write was performed." in js_response.text
+    assert "Recoverable demo issue" in js_response.text
     assert "servings" in js_response.text
     assert "data.citations" in js_response.text
     assert "No importer citations were returned for this response." in js_response.text

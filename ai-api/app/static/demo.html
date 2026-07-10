@@ -34,6 +34,7 @@
         </div>
         <ol class="flow-list" aria-label="Guided workflow order">
           <li>Importer</li>
+          <li>Recipe session</li>
           <li>Saved-recipe Q&A</li>
           <li>Dataset search</li>
           <li>Dataset RAG</li>
@@ -74,6 +75,27 @@
           </div>
         </div>
         <div id="import-result" class="result empty">Run this workflow to see a structured draft.</div>
+      </section>
+
+      <section class="workflow" data-workflow-card="recipe-session">
+        <div class="workflow-copy">
+          <p class="step">Alpha</p>
+          <h2>Recipe Session Alpha</h2>
+          <p>Exercise the local session requirements flow without production storage.</p>
+          <label for="session-start-text">Initial recipe notes</label>
+          <textarea id="session-start-text" data-sample="classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight">classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight</textarea>
+          <label for="session-followup-text">Follow-up message</label>
+          <textarea id="session-followup-text" data-sample="actually make it no-bake">actually make it no-bake</textarea>
+          <div class="button-row">
+            <button data-action="session-start" type="button">Start session</button>
+            <button data-action="session-message" type="button">Send follow-up</button>
+            <button data-action="session-get" type="button">Get session</button>
+            <button data-action="session-finalize" type="button">Finalize for demo</button>
+            <button data-reset="recipe-session" class="secondary" type="button">Reset session</button>
+          </div>
+          <p class="hint">Process-local alpha state only. Finalize does not write to production storage.</p>
+        </div>
+        <div id="session-result" class="result empty">Start a recipe session to see interpreted requirements and revision state.</div>
       </section>
 
       <section class="workflow" data-workflow-card="cookbook">

@@ -1535,6 +1535,39 @@ Done criteria:
 - tests cover start, message, get, finalize, clarification, rejection, no-refresh chatter, formatting-only messages, missing/expired sessions, and safe serialization;
 - no production storage, persistent memory, auth, paid access, public route exposure, Redis, embeddings, vector database, or full chat UI is implemented.
 
+## 0030D: Recipe Session Demo UI And E2E Smoke
+
+Status: complete.
+
+Goal: Add the smallest useful local demo UI layer and offline smoke coverage for the recipe-session alpha endpoints.
+
+Files likely touched:
+
+- `ai-api/app/static/demo.html`
+- `ai-api/app/static/demo.js`
+- `ai-api/app/static/demo.css`
+- `ai-api/tests/test_demo_ui.py`
+- `scripts/demo-ai-mock.ps1`
+- `docs/recipe-session-requirements-architecture.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-evals-plan.md`
+- `docs/ai-implementation-backlog.md`
+- `README.md`
+- `outbox/0030D-recipe-session-demo-ui-and-e2e-smoke-results.md`
+
+Done criteria:
+
+- the existing sidecar demo UI includes a `Recipe Session Alpha` panel;
+- the panel can start a session, send a follow-up, get current state, finalize for demo, and reset local UI state;
+- the panel displays safe interpreted requirements, clarification questions, RAG refresh/no-refresh status, changed fields, support level, citation IDs, draft summary, citations, warnings, and expiry;
+- vague input such as `make dessert` shows one clarification question and no fake draft;
+- material follow-up such as `actually make it no-bake` shows RAG refresh/revised state;
+- chatter and formatting-only follow-ups show no-refresh behavior;
+- finalize is demo-only and does not write to production storage;
+- mock demo validation exercises the recipe-session endpoint flow offline;
+- no production storage, persistent memory, auth, paid access, public route exposure, browser automation, screenshots, Redis, embeddings, vector database, or full chat UI is implemented.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.
