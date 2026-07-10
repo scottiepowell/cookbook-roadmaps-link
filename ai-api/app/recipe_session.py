@@ -4,9 +4,10 @@ from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.recipe_requirements import RecipeRequirementsState
+from app.schemas import RecipeImportCitation, RecipeImportDraft, RecipeImportRetrievalMetadata
 
 
 class RecipeSessionState(BaseModel):
@@ -16,6 +17,12 @@ class RecipeSessionState(BaseModel):
     updated_at: datetime
     expires_at: datetime
     revision_count: int = 0
+    response_state: str | None = None
+    draft: RecipeImportDraft | None = None
+    citations: list[RecipeImportCitation] = Field(default_factory=list)
+    retrieval: RecipeImportRetrievalMetadata | None = None
+    warnings: list[str] = Field(default_factory=list)
+    finalized_for_demo: bool = False
 
 
 class RecipeSessionStore:
@@ -79,6 +86,12 @@ class RecipeSessionStore:
         updated_state: RecipeRequirementsState,
         *,
         now: datetime | None = None,
+        response_state: str | None = None,
+        draft: RecipeImportDraft | None = None,
+        citations: list[RecipeImportCitation] | None = None,
+        retrieval: RecipeImportRetrievalMetadata | None = None,
+        warnings: list[str] | None = None,
+        finalized_for_demo: bool | None = None,
     ) -> RecipeSessionState | None:
         current_time = now or datetime.now(UTC)
         existing = self.get_session(interaction_id, now=current_time)
@@ -101,6 +114,12 @@ class RecipeSessionStore:
             updated_at=current_time,
             expires_at=expires_at,
             revision_count=requirements.revision_count,
+            response_state=response_state if response_state is not None else existing.response_state,
+            draft=draft if draft is not None else existing.draft,
+            citations=citations if citations is not None else existing.citations,
+            retrieval=retrieval if retrieval is not None else existing.retrieval,
+            warnings=warnings if warnings is not None else existing.warnings,
+            finalized_for_demo=finalized_for_demo if finalized_for_demo is not None else existing.finalized_for_demo,
         )
         self._sessions[interaction_id] = session
         self._sessions.move_to_end(interaction_id)

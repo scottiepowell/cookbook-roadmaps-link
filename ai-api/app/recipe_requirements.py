@@ -34,6 +34,8 @@ class RecipeSessionResponseState(StrEnum):
     NO_MATERIAL_CHANGE = "no_material_change"
     READY_TO_FINALIZE = "ready_to_finalize"
     REJECTED = "rejected"
+    NOT_FOUND = "not_found"
+    EXPIRED = "expired"
 
 
 class RecipeFollowUpLabel(StrEnum):
@@ -151,6 +153,7 @@ INGREDIENT_TERMS = (
     "spaghetti",
     "parmesan",
     "pancetta",
+    "ricotta",
     "vanilla",
     "chicken",
     "cheddar",

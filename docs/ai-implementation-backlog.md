@@ -1503,6 +1503,38 @@ Done criteria:
 - normal validation remains offline/mock-only;
 - no production storage, auth, paid access, public route exposure, persistent memory, Redis, embeddings, vector databases, runtime API endpoints, or full chat UI are implemented.
 
+## 0030C: Recipe Session Alpha API Endpoints
+
+Status: complete.
+
+Goal: Add local/offline alpha recipe-session endpoints on top of the 0030B scaffold without adding production storage or public session runtime.
+
+Files likely touched:
+
+- `ai-api/app/recipe_session_routes.py`
+- `ai-api/app/main.py`
+- `ai-api/app/schemas.py`
+- `ai-api/app/recipe_session.py`
+- `ai-api/app/recipe_requirements.py`
+- `ai-api/tests/test_recipe_session_api.py`
+- `docs/recipe-session-requirements-architecture.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-evals-plan.md`
+- `docs/ai-live-demo-runbook.md`
+- `README.md`
+- `outbox/0030C-recipe-session-alpha-api-endpoints-results.md`
+
+Done criteria:
+
+- local alpha endpoints exist for start, message, get, and finalize;
+- start creates a bounded in-memory session and returns `draft_generated`, `clarification_needed`, or `rejected`;
+- message classifies follow-up input, returns `no_material_change` for chatter or formatting-only messages, and refreshes RAG for material requirement changes;
+- draft generation reuses the existing importer/RAG pipeline instead of duplicating provider logic;
+- get returns safe current session state;
+- finalize is demo-safe and does not write to production storage;
+- tests cover start, message, get, finalize, clarification, rejection, no-refresh chatter, formatting-only messages, missing/expired sessions, and safe serialization;
+- no production storage, persistent memory, auth, paid access, public route exposure, Redis, embeddings, vector database, or full chat UI is implemented.
+
 ## 0029C: Session And Metering Schema Draft
 
 Status: planned.

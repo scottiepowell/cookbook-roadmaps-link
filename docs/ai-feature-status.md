@@ -75,6 +75,7 @@ status=passed
 | RAG importer E2E integration | Pass | real `/ai/import-recipe` route test with generated dataset fixtures and mock provider |
 | Requirements/session interaction architecture | Proposed | `docs/recipe-session-requirements-architecture.md`; designs requirement extraction, clarification, session state, delta detection, and RAG refresh policy without runtime endpoints or persistent memory |
 | Requirements/session alpha scaffold | Complete, internal-only | deterministic unit tests | Adds requirements state models, conservative extraction, confidence labels, clarification decisions, follow-up delta classification, RAG refresh decisions, and a bounded process-local session store. Not wired to public endpoints. |
+| Recipe-session alpha API | Complete, local alpha | `POST /ai/recipe-session/start`, `POST /ai/recipe-session/{id}/message`, `GET /ai/recipe-session/{id}`, `POST /ai/recipe-session/{id}/finalize` | Wires the requirements scaffold into local/offline session endpoints, reuses the importer/RAG pipeline for draft generation, and stores only bounded in-memory demo state. Not production storage or public access. |
 | Provider-call avoidance | Pass | rejected and clarification paths tested offline |
 | Local live importer diagnostics | Pass | offline sanitizer tests plus runbook diagnostic and dedicated importer smoke script |
 

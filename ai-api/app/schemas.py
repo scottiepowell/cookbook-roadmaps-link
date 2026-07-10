@@ -223,6 +223,87 @@ class RecipeImportResponse(BaseModel):
     input_quality: InputQualityResponse | None = None
 
 
+class RecipeSessionStartRequest(BaseModel):
+    text: str
+    source: str | None = None
+
+
+class RecipeSessionMessageRequest(BaseModel):
+    text: str
+
+
+class RecipeSessionFinalizeRequest(BaseModel):
+    format: str | None = None
+
+
+class RecipeRequirementValueResponse(BaseModel):
+    value: str | int
+    source: str
+
+
+class RecipeSessionRequirementsResponse(BaseModel):
+    dish_intent: RecipeRequirementValueResponse | None = None
+    serving_count: RecipeRequirementValueResponse | None = None
+    required_ingredients: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    optional_ingredients: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    excluded_ingredients: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    cooking_method: RecipeRequirementValueResponse | None = None
+    equipment_constraints: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    time_constraints: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    dietary_constraints: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    texture_or_style_goals: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    assumptions: list[RecipeRequirementValueResponse] = Field(default_factory=list)
+    requirement_sources: dict[str, list[str]] = Field(default_factory=dict)
+    confidence_label: str
+    open_questions: list[str] = Field(default_factory=list)
+    resolved_questions: list[dict[str, str]] = Field(default_factory=list)
+
+
+class RecipeSessionDecisionResponse(BaseModel):
+    should_clarify: bool | None = None
+    question: str | None = None
+    reason: str | None = None
+    confidence_label: str | None = None
+    delta_label: str | None = None
+    provider_generation_likely_needed: bool | None = None
+    clarification_may_be_needed: bool | None = None
+
+
+class RecipeSessionRetrievalSummary(BaseModel):
+    query: str | None = None
+    retrieved_count: int = 0
+    top_titles: list[str] = Field(default_factory=list)
+    relevance_category: str | None = None
+    rag_refresh_reason: str | None = None
+
+
+class RecipeSessionDraftSummary(BaseModel):
+    title: str
+    servings: int | None = None
+    ingredient_count: int = 0
+    instruction_count: int = 0
+
+
+class RecipeSessionApiResponse(BaseModel):
+    interaction_id: str | None = None
+    response_state: str
+    requirements: RecipeSessionRequirementsResponse | None = None
+    decision: RecipeSessionDecisionResponse | None = None
+    clarification_question: str | None = None
+    rag_refreshed: bool = False
+    rag_refresh_reason: str | None = None
+    changed_fields: list[str] = Field(default_factory=list)
+    draft: RecipeImportDraft | None = None
+    draft_summary: RecipeSessionDraftSummary | None = None
+    citations: list[RecipeImportCitation] = Field(default_factory=list)
+    retrieval: RecipeImportRetrievalMetadata | None = None
+    retrieval_summary: RecipeSessionRetrievalSummary | None = None
+    support_level: str | None = None
+    revision_count: int = 0
+    expires_at: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
 class AskRequest(BaseModel):
     question: str
     limit: int = Field(default=3, ge=1, le=10)

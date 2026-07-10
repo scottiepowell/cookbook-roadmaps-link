@@ -16,7 +16,14 @@ This is a design document. It does not implement runtime endpoints, production s
 - `ai-api/app/recipe_session.py` defines a bounded process-local in-memory session store for tests and local demo scaffolding only.
 - `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py` cover extraction, confidence, clarification, delta classification, RAG refresh decisions, safe serialization, and store bounds/TTL behavior.
 
-The scaffold is not wired to public runtime endpoints yet. It does not add production storage, auth, paid access, persistent user memory, Redis, embeddings, vector databases, or a full chat UI.
+`0030C` adds local alpha API endpoints on top of that scaffold:
+
+- `POST /ai/recipe-session/start`
+- `POST /ai/recipe-session/{interaction_id}/message`
+- `GET /ai/recipe-session/{interaction_id}`
+- `POST /ai/recipe-session/{interaction_id}/finalize`
+
+These endpoints are local/offline/mock-friendly and reuse the existing importer/RAG path for draft generation. They store only bounded process-local demo session state and safe draft/citation/retrieval summaries. They do not add production storage, auth, paid access, persistent user memory, Redis, embeddings, vector databases, public route exposure, or a full chat UI.
 
 ## Problem
 
@@ -360,6 +367,8 @@ The alpha API can be session-oriented while still using the existing importer ge
 
 Purpose: start a recipe creation interaction from user notes.
 
+Alpha implementation: available locally as of 0030C. It extracts requirements, creates an in-memory session, returns `clarification_needed` or `rejected` without provider calls when appropriate, and otherwise calls the existing importer/RAG pipeline for a mock/offline draft.
+
 Request:
 
 ```json
@@ -433,6 +442,8 @@ Response state `clarification_needed`:
 
 Purpose: process a follow-up message, classify the delta, refresh RAG when needed, and optionally revise the draft.
 
+Alpha implementation: available locally as of 0030C. It classifies follow-up messages, returns `no_material_change` for chatter or formatting-only updates, refreshes RAG for material requirement changes, and reuses importer/RAG generation for revised drafts.
+
 Request:
 
 ```json
@@ -495,6 +506,8 @@ Response state `no_material_change`:
 
 Purpose: return current safe session state for UI recovery.
 
+Alpha implementation: available locally as of 0030C. Missing or expired sessions return a safe 404 response.
+
 Response:
 
 ```json
@@ -517,6 +530,8 @@ Response:
 ### `POST /ai/recipe-session/{id}/finalize`
 
 Purpose: mark the current draft as accepted for export or later cookbook write-back. Alpha should not write to the production cookbook database.
+
+Alpha implementation: available locally as of 0030C. It marks the session as ready to finalize for demo purposes only and does not write to Vanilla Cookbook storage.
 
 Request:
 

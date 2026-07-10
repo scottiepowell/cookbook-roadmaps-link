@@ -13,6 +13,7 @@ from app.meal_plan_endpoint import MealPlanProviderError, MealPlanValidationErro
 from app.observability import configure_logging, log_ai_workflow, request_logging_middleware
 from app.providers.errors import extract_provider_debug_details
 from app.recipe_reader import NoRecipeTableFoundError, RecipeReaderError, load_recipe_documents
+from app.recipe_session_routes import router as recipe_session_router
 from app.rag import AskProviderError, ask_cookbook
 from app.schemas import (
     AskRequest,
@@ -36,6 +37,7 @@ from app.search import search_recipes
 app = FastAPI(title="Cookbook AI API", version="0.1.0")
 configure_logging()
 app.middleware("http")(request_logging_middleware)
+app.include_router(recipe_session_router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

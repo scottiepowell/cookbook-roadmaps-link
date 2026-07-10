@@ -221,7 +221,7 @@ The automated E2E integration test `ai-api/tests/test_rag_e2e_integration.py` co
 
 The dataset index now normalizes conservative aliases and phrase variants such as `omelette` -> `omelet`, `parmigiano-reggiano` -> `parmesan`, `no-bake` -> `no bake`, and `graham crackers` -> `graham cracker` while preserving the original recipe values for citations and display.
 
-The next planned product layer is documented in [Recipe Session Requirements Architecture](recipe-session-requirements-architecture.md). It proposes a session-scoped requirements state, one-question clarification policy, delta classifier, and RAG refresh rules for follow-up messages. That layer is architecture-only today; the current demo still exercises the single-request importer workflow.
+The next product layer is documented in [Recipe Session Requirements Architecture](recipe-session-requirements-architecture.md). Local alpha endpoints now exist under `/ai/recipe-session/*` for start/message/get/finalize flows. They are offline/mock-friendly, use bounded process-local memory, and reuse the existing importer/RAG path for draft generation. They are not production storage, public access, auth, paid access, or a full chat UI.
 
 The live importer `503` issue observed during manual recipe-entry testing was caused by strict structured-output schema metadata that OpenAI rejected. `ai-api/app/providers/openai_schema.py` now strips unsupported metadata such as `default`, `examples`, `title`, and `description` recursively before the request is sent, while application-side importer behavior still defaults servings to 4.
 

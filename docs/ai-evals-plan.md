@@ -79,6 +79,8 @@ Future 0030 recipe-session evals should verify:
 
 The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
 
+The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:
@@ -142,6 +144,7 @@ evals/
 | Requirements Session | Method change | `actually no bake` after baked cheesecake | Classifies `relevant_requirement_update`, refreshes RAG, and explains the method change |
 | Requirements Session | Chatter | `thanks` | Returns `no_material_change` and does not refresh RAG |
 | Requirements Session | Finalize | `save this` | Returns `ready_to_finalize` without production write-back |
+| Requirements Session API | Alpha session flow | start baked cheesecake -> `actually make it no-bake` -> get -> finalize | Local endpoints preserve session state, refresh RAG for method change, return safe draft/citation metadata, and do not write production storage |
 | Dataset RAG | Grounded ask | `What recipe uses lemon?` | Cites retrieved Kaggle fixture source ID/title/license |
 | Dataset RAG | No match | `Which indexed recipe uses saffron?` | Returns no-match response and does not call provider |
 | Importer | Clean recipe | pasted recipe text | Valid importer schema with title, ingredients, and steps |
@@ -168,6 +171,7 @@ evals/
 - Retrieval cache tests should verify index/retrieval reuse, invalidation, eviction, and safe fingerprint metadata without requiring the real dataset.
 - Importer RAG E2E tests must use generated fixtures and the mock provider, exercise the public API route, and remain light enough for normal repository validation.
 - Recipe-session requirements scaffold tests must remain deterministic, offline, and unwired from public endpoints until the dedicated session API task.
+- Recipe-session alpha API tests must use generated fixtures, the mock provider, and bounded in-memory session state only.
 
 ## Manual Live OpenAI Smoke Tests
 
