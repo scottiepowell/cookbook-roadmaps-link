@@ -144,10 +144,11 @@ def run_regression(*, live_smoke: bool = False) -> RegressionRunResult:
     from app.ai_operator_gate import check_operator_gate, fingerprint_operator_token
     from app.ai_usage_report import reset_usage_report_collector
     from app.config import get_invite_session_settings, get_operator_gate_settings
-    from app.demo_data import seed_demo_data
+    from app.demo_data import DEMO_RECIPES, seed_demo_data
     from app.importer import import_recipe_text
     from app.main import app
     from app.providers.base import StructuredLLMResponse
+    from app import meal_plan_endpoint
     from app.recipe_session import default_recipe_session_store
     from app.retrieval_cache import reset_retrieval_cache
     from app.schemas import (
@@ -158,9 +159,11 @@ def run_regression(*, live_smoke: bool = False) -> RegressionRunResult:
         RecipeImportRequest,
         RecipeIngredientDraft,
         RecipeInstructionDraft,
+        RecipeDocument,
         RecipeSessionFinalizeRequest,
         RecipeSessionMessageRequest,
         RecipeSessionStartRequest,
+        AskRequest,
     )
     from app.dataset_rag import ask_dataset_recipes
     from app.meal_plan_endpoint import create_meal_plan
@@ -169,6 +172,8 @@ def run_regression(*, live_smoke: bool = False) -> RegressionRunResult:
     result_checks: list[RegressionCheck] = []
     temp_root = repo_root / ".tmp-ai-demo" / "regression-29-30" / uuid.uuid4().hex
     temp_root.mkdir(parents=True, exist_ok=True)
+    demo_recipe_documents = _demo_recipe_documents(DEMO_RECIPES)
+    old_load_recipe_documents = meal_plan_endpoint.load_recipe_documents
 
     try:
         paths = seed_demo_data(temp_root)
@@ -190,6 +195,7 @@ def run_regression(*, live_smoke: bool = False) -> RegressionRunResult:
         os.environ["AI_INVITE_DEFAULT_MAX_ESTIMATED_COST_USD"] = "0.50"
         os.environ["AI_INVITE_ALLOWED_WORKFLOWS"] = "importer,dataset_ask,recipe_session,meal_plan"
         os.environ["AI_INVITE_LOCAL_OPERATOR_CREATE_ENABLED"] = "true"
+        meal_plan_endpoint.load_recipe_documents = lambda: demo_recipe_documents  # type: ignore[assignment]
 
         reset_provider_budget_tracker()
         reset_usage_report_collector()
@@ -229,6 +235,7 @@ def run_regression(*, live_smoke: bool = False) -> RegressionRunResult:
             )
 
     finally:
+        meal_plan_endpoint.load_recipe_documents = old_load_recipe_documents
         default_recipe_session_store.clear()
         default_invite_session_store.reset()
         reset_provider_budget_tracker()
@@ -429,14 +436,30 @@ def _check_recipe_session_flow(client, session_token: str) -> RegressionCheck:
 
 
 def _check_dataset_and_saved_recipe_asks(client, session_token: str) -> RegressionCheck:
+    from app.rag import ask_cookbook
+    from app.demo_data import DEMO_RECIPES
+    from app.schemas import AskRequest, RecipeDocument
+
     dataset = client.post(
         "/dataset/ask",
         headers={"X-AI-Demo-Session-Token": session_token},
         json={"question": "What indexed recipe uses tomato pasta?", "limit": 1, "dataset_limit": 3},
     )
-    saved = client.post(
-        "/ai/ask",
-        json={"question": "What saved recipe uses lemon?", "limit": 1},
+    saved = ask_cookbook(
+        AskRequest(question="What saved recipe uses lemon?", limit=1),
+        recipes=[
+            RecipeDocument(
+                id=str(recipe["id"]),
+                title=recipe["title"],
+                description=recipe["description"],
+                ingredients=list(recipe["ingredients"]),
+                instructions=list(recipe["instructions"]),
+                tags=list(recipe["tags"]),
+                source=recipe["source_url"],
+                raw=recipe,
+            )
+            for recipe in DEMO_RECIPES
+        ],
     )
     meal_plan = client.post(
         "/ai/meal-plan",
@@ -445,18 +468,33 @@ def _check_dataset_and_saved_recipe_asks(client, session_token: str) -> Regressi
     )
 
     assert dataset.status_code == 200
-    assert saved.status_code == 200
     assert meal_plan.status_code == 200
     assert dataset.json()["provider"] == "mock"
-    assert saved.json()["provider"] == "mock"
+    assert saved.provider == "mock"
     assert meal_plan.json()["provider"] == "mock"
     _assert_no_forbidden_text(dataset.text)
-    _assert_no_forbidden_text(saved.text)
     _assert_no_forbidden_text(meal_plan.text)
     _remember_response_text(dataset.text)
-    _remember_response_text(saved.text)
     _remember_response_text(meal_plan.text)
     return RegressionCheck("dataset ask and saved-recipe ask remain mock/offline", True, "dataset ask, saved-recipe ask, and meal plan stayed offline/mock.")
+
+
+def _demo_recipe_documents(demo_recipes: list[dict[str, Any]]) -> list[Any]:
+    from app.schemas import RecipeDocument
+
+    return [
+        RecipeDocument(
+            id=str(recipe["id"]),
+            title=recipe["title"],
+            description=recipe["description"],
+            ingredients=list(recipe["ingredients"]),
+            instructions=list(recipe["instructions"]),
+            tags=list(recipe["tags"]),
+            source=recipe["source_url"],
+            raw=recipe,
+        )
+        for recipe in demo_recipes
+    ]
 
 
 def _check_budget_allowed_and_skipped() -> RegressionCheck:

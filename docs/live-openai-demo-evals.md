@@ -67,6 +67,8 @@ Process environment values still win over `.env` values. If `OPENAI_ENABLE_LIVE_
 
 Budget must be between 1 and 25 cents. `AI_MAX_OUTPUT_TOKENS` must be between 1 and 300 for eval runs.
 
+The importer workflow uses a separate live-only output cap so RAG-informed structured drafts can complete without raising the global eval guard. By default the importer cap is 900 tokens, the workflow-specific ceiling is 1200 tokens, and the wrapper accepts `OPENAI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS` or `AI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS` when you need to tune it locally. The general 300-token live-eval cap still applies to the non-importer workflows.
+
 ## Run
 
 ```powershell
@@ -110,6 +112,8 @@ The default rates are intentionally kept in one source-code table in `evals/ai_c
 ## Expected Checks
 
 Importer checks include schema shape, non-empty title, ingredients, instructions, provider/model, warning count, non-placeholder title, at least two preserved input ingredients across structured fields, ingredient-grounded descriptions when descriptions are present, missing-quantity or unspecified-detail notes, concise action-oriented instructions, generic-placeholder avoidance, and unrelated-food avoidance. Ingredient evidence uses canonical alias groups, so useful outputs can pass when ingredients are preserved in the title, ingredient list, or instructions even if the description is absent or worded differently.
+
+Importer failures now also carry sanitized provider diagnostics when available. The summary and result records can include a failure category plus `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields, but they never expose raw prompts, raw responses, API keys, auth headers, or `.env` values.
 
 Ask My Cookbook checks that the answer or citations include `Lemon Herb White Beans`, citations are present, retrieved count is positive, the answer is concise, cited recipe titles appear in the answer, and no known saved-recipe title outside retrieved citations is mentioned.
 

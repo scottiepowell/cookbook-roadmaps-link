@@ -132,9 +132,9 @@ Expected live-path signals for the current manual acceptance target:
 - stronger multi-step instructions;
 - citations when dataset retrieval returns matches.
 
-If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields. Those diagnostics must not include API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings.
+If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields. Those diagnostics must not include API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings. The live importer eval wrapper now records the same safe failure categories in its summary output.
 
-The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was fine for smaller smoke tests, but not for RAG-informed structured drafts like cheesecake. If the provider budget guard is enabled and the budget is too tight, the importer returns a safe budget message instead of a provider call.
+The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was fine for smaller smoke tests, but not for RAG-informed structured drafts like cheesecake. If the provider budget guard is enabled and the budget is too tight, the importer returns a safe budget message instead of a provider call. The live eval harness uses a separate importer-only cap with a 900-token default and a 1200-token ceiling, controlled by `OPENAI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS` or `AI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS`, so importer evals stay distinct from the 300-token non-importer live-eval cap.
 
 The local operator gate is opt-in, disabled by default, and documented in [AI Local Operator Access Gate](ai-local-operator-access-gate.md). When enabled, the protected AI workflows require a matching safe fingerprint on `X-AI-Operator-Token` or `Authorization: Bearer ...`, unless the explicit local bypass is turned on for local/TestClient requests. The mock smoke script pins the gate off so its checks stay stable in a dirty shell.
 
@@ -176,7 +176,7 @@ $env:OPENAI_MODEL="gpt-5.4-nano"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-evals.ps1
 ```
 
-The command seeds generated demo data, runs readiness, importer, Ask My Cookbook, dataset search, dataset Ask/RAG, and meal planning, then writes ignored results under `.tmp-ai-demo/live-evals/<timestamp>/`.
+The command seeds generated demo data, runs readiness, importer, Ask My Cookbook, dataset search, dataset Ask/RAG, and meal planning, then writes ignored results under `.tmp-ai-demo/live-evals/<timestamp>/`. Importer live eval failures can surface sanitized provider categories when available, but no raw prompts, raw responses, or local paths.
 
 See [Live OpenAI Demo Evals](live-openai-demo-evals.md).
 

@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -12,9 +13,15 @@ from typing import Any, Callable
 
 MAX_BUDGET_CENTS = 25
 MAX_OUTPUT_TOKENS_LIMIT = 300
+IMPORTER_MAX_OUTPUT_TOKENS_LIMIT = 1200
+DEFAULT_IMPORTER_MAX_OUTPUT_TOKENS = 900
 DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
 DEFAULT_BUDGET_SESSION_ID = "live-openai-demo-evals"
 LIVE_CASES_PATH = Path("evals/ai_cookbook/live_cases.json")
+IMPORTER_OUTPUT_TOKEN_ENV_NAMES = (
+    "OPENAI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS",
+    "AI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS",
+)
 
 
 @dataclass(frozen=True)
@@ -114,6 +121,7 @@ def run_live_eval_suite(run_dir: Path, expected_model: str) -> tuple[list[dict[s
     responses_dir = run_dir / "responses"
     responses_dir.mkdir(parents=True, exist_ok=True)
     paths = seed_demo_data(fixtures_dir)
+    importer_max_output_tokens = _resolve_importer_output_tokens(os.environ)
 
     old_env = {name: os.environ.get(name) for name in ("COOKBOOK_DB_PATH", "RECIPE_DATASET_DIR", "RECIPE_DATASET_INDEX_LIMIT")}
     os.environ["COOKBOOK_DB_PATH"] = str(paths["db_path"])
@@ -125,7 +133,11 @@ def run_live_eval_suite(run_dir: Path, expected_model: str) -> tuple[list[dict[s
         cases = load_cases(Path.cwd() / LIVE_CASES_PATH)
         dispatch: dict[str, Callable[[dict[str, Any]], Any]] = {
             "readiness": lambda case: demo_readiness(),
-            "importer": lambda case: import_recipe_text(RecipeImportRequest(**case["request"]), provider=provider),
+            "importer": lambda case: _run_importer_case(
+                case,
+                provider=provider,
+                max_output_tokens=importer_max_output_tokens,
+            ),
             "ask_my_cookbook": lambda case: ask_cookbook(AskRequest(**case["request"]), provider=provider),
             "dataset_search": lambda case: search_dataset_recipes(**case["request"]),
             "dataset_ask": lambda case: ask_dataset_recipes(DatasetAskRequest(**case["request"]), provider=provider),
@@ -159,11 +171,13 @@ def run_case(
     workflow = case["workflow"]
     started = time.perf_counter()
     error_type = None
+    caught_exc: BaseException | None = None
     payload: dict[str, Any]
     try:
         response = runner(case)
         payload = _to_plain_dict(response)
     except Exception as exc:
+        caught_exc = exc
         error_type = exc.__class__.__name__
         payload = {"error": _safe_error(exc)}
     latency_ms = int((time.perf_counter() - started) * 1000)
@@ -172,6 +186,7 @@ def run_case(
         error_type = "BudgetBlocked"
         payload.setdefault("error", "Provider call was blocked by budget settings.")
 
+    failure_info = _classify_live_eval_failure(workflow, payload, caught_exc, error_type)
     assert_no_secret_leaks(payload)
     response_path = responses_dir / f"{workflow}.json"
     response_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -204,6 +219,7 @@ def run_case(
         "clarification_question_present": bool(input_quality.get("clarifying_question")),
         "rejected_before_provider": input_quality.get("status") == "rejected" and not provider_called,
         "provider_called": provider_called,
+        **failure_info,
         "latency_ms": latency_ms,
         "input_tokens": int(usage.get("input_tokens") or 0),
         "output_tokens": int(usage.get("output_tokens") or 0),
@@ -267,15 +283,16 @@ def render_markdown_summary(summary: dict[str, Any], records: list[dict[str, Any
         f"- Threshold warnings: `{len(summary['threshold_warnings'])}`",
         f"- Threshold failures: `{len(summary['threshold_failures'])}`",
         "",
-        "| Workflow | Result | Latency ms | Citations | Retrieved | Tokens | Cost USD | Cost Source | Response |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |",
+        "| Workflow | Result | Failure | Latency ms | Citations | Retrieved | Tokens | Cost USD | Cost Source | Response |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |",
     ]
     for record in records:
         result = "PASS" if record["overall_passed"] else "FAIL"
         lines.append(
-            "| {workflow} | {result} | {latency} | {citations} | {retrieved} | {tokens} | {cost} | {cost_source} | `{path}` |".format(
+            "| {workflow} | {result} | {failure} | {latency} | {citations} | {retrieved} | {tokens} | {cost} | {cost_source} | `{path}` |".format(
                 workflow=record["workflow"],
                 result=result,
+                failure=record.get("failure_category") or "-",
                 latency=record["latency_ms"],
                 citations=record["citation_count"],
                 retrieved=record["retrieved_count"],
@@ -296,7 +313,17 @@ def render_markdown_summary(summary: dict[str, Any], records: list[dict[str, Any
                 lines.append(f"- `{record['workflow']}`: {check['name']} - {check['detail']}")
         if record.get("error_type"):
             failed_any = True
-            lines.append(f"- `{record['workflow']}` failed with `{record['error_type']}`.")
+            failure_bits = [record["error_type"]]
+            if record.get("failure_category"):
+                failure_bits.insert(0, str(record["failure_category"]))
+            if record.get("provider_error_category"):
+                provider_bits = [str(record["provider_error_category"])]
+                if record.get("provider_error_type"):
+                    provider_bits.append(str(record["provider_error_type"]))
+                failure_bits.append("/".join(provider_bits))
+            if record.get("safe_error_summary"):
+                failure_bits.append(str(record["safe_error_summary"]))
+            lines.append(f"- `{record['workflow']}` failed with {' | '.join(failure_bits)}.")
     if not failed_any:
         lines.append("- None.")
     lines.append("")
@@ -391,6 +418,123 @@ def _float_env(name: str) -> float | None:
         return None
 
 
+def _resolve_importer_output_tokens(env: dict[str, str]) -> int:
+    for name in IMPORTER_OUTPUT_TOKEN_ENV_NAMES:
+        raw = env.get(name)
+        if raw is None or not raw.strip():
+            continue
+        try:
+            value = int(raw)
+        except ValueError as exc:
+            raise ValueError(f"{name} must be an integer.") from exc
+        if value < 1 or value > IMPORTER_MAX_OUTPUT_TOKENS_LIMIT:
+            raise ValueError(
+                f"{name} must be between 1 and {IMPORTER_MAX_OUTPUT_TOKENS_LIMIT}."
+            )
+        return value
+    return DEFAULT_IMPORTER_MAX_OUTPUT_TOKENS
+
+
+@contextmanager
+def _temporary_env(overrides: dict[str, str | None]):
+    original = {name: os.environ.get(name) for name in overrides}
+    try:
+        for name, value in overrides.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+        yield
+    finally:
+        for name, value in original.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+
+
+def _run_importer_case(
+    case: dict[str, Any],
+    *,
+    provider: Any,
+    max_output_tokens: int,
+) -> Any:
+    from app.importer import import_recipe_text
+    from app.schemas import RecipeImportRequest
+
+    with _temporary_env(
+        {
+            "AI_MAX_OUTPUT_TOKENS": str(max_output_tokens),
+            "AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL": str(max_output_tokens),
+        }
+    ):
+        return import_recipe_text(RecipeImportRequest(**case["request"]), provider=provider)
+
+
+def _classify_live_eval_failure(
+    workflow: str,
+    payload: dict[str, Any],
+    exc: BaseException | None,
+    error_type: str | None,
+) -> dict[str, Any]:
+    from app.importer import RecipeImportValidationError
+    from app.providers.errors import describe_provider_exception, extract_provider_debug_details
+
+    failure_category = None
+    provider_error_category = None
+    provider_error_type = None
+    safe_error_summary = None
+
+    if error_type is None and not _looks_like_budget_block(payload):
+        return {
+            "failure_category": None,
+            "provider_error_category": None,
+            "provider_error_type": None,
+            "safe_error_summary": None,
+        }
+
+    if _looks_like_budget_block(payload):
+        warning_text = " ".join(str(item) for item in payload.get("warnings") or [])
+        safe_error_summary = str(payload.get("error") or warning_text or "Provider call was blocked by budget settings.")
+        return {
+            "failure_category": "budget_block_before_invocation",
+            "provider_error_category": "budget_block_before_invocation",
+            "provider_error_type": "BudgetBlocked",
+            "safe_error_summary": _safe_error_text(safe_error_summary),
+        }
+
+    if exc is not None and isinstance(exc, RecipeImportValidationError):
+        safe_error_summary = _safe_error(exc)
+        return {
+            "failure_category": "validation_schema_failure",
+            "provider_error_category": "validation_schema_failure",
+            "provider_error_type": exc.__class__.__name__,
+            "safe_error_summary": safe_error_summary,
+        }
+
+    if exc is not None:
+        details = extract_provider_debug_details(exc) or describe_provider_exception(exc)
+        provider_error_category = details.category
+        provider_error_type = details.exception_type
+        safe_error_summary = details.safe_summary
+        failure_category = "provider_call_failure"
+        if provider_error_category == "output_cap_or_incomplete_response":
+            failure_category = "provider_call_failure"
+        return {
+            "failure_category": failure_category,
+            "provider_error_category": provider_error_category,
+            "provider_error_type": provider_error_type,
+            "safe_error_summary": safe_error_summary,
+        }
+
+    return {
+        "failure_category": None,
+        "provider_error_category": None,
+        "provider_error_type": None,
+        "safe_error_summary": None,
+    }
+
+
 def _load_dotenv(path: Path) -> None:
     if not path.exists():
         return
@@ -406,6 +550,12 @@ def _load_dotenv(path: Path) -> None:
 
 def _safe_error(exc: BaseException) -> str:
     text = str(exc)
+    for marker in ("OPENAI_API_KEY", "sk-", "Authorization:"):
+        text = text.replace(marker, "[redacted]")
+    return text[:500]
+
+
+def _safe_error_text(text: str) -> str:
     for marker in ("OPENAI_API_KEY", "sk-", "Authorization:"):
         text = text.replace(marker, "[redacted]")
     return text[:500]

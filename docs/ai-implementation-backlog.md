@@ -1783,6 +1783,19 @@ Done criteria:
 - `OPENAI_ENABLE_LIVE_TESTS=false` still skips live calls cleanly;
 - `.env` remains uncommitted and ignored.
 
+## 0030L: Live Importer Eval Output Cap And Safe Diagnostics
+
+Status: complete.
+
+Goal: Let the live importer eval path use a workflow-specific higher output cap while keeping the general live-eval guard strict, and record sanitized provider failure diagnostics in the summary output.
+
+Completed behavior:
+
+- `scripts/live-openai-demo-evals.py` now applies a separate importer-only output cap with a 900-token default and a 1200-token ceiling, so importer evals can stay distinct from the 300-token non-importer live-eval guard;
+- importer failures now surface sanitized `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields when provider diagnostics are available;
+- the regression harness and live-eval docs continue to treat live checks as explicit opt-in and keep normal validation offline/mock-only;
+- the docs and status pages now describe the importer-specific cap and the safe failure classifications without exposing raw prompts, responses, keys, or local paths.
+
 ## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
 
 Status: planned.

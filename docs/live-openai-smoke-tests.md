@@ -29,6 +29,8 @@ $env:AI_MAX_OUTPUT_TOKENS="200"
 
 `OPENAI_API_KEY` must also be available in the process environment or local ignored `.env`. Never commit `.env` or paste key values into mailbox files, docs, logs, issues, or PRs.
 
+The dedicated importer-only live diagnostic keeps a separate output-cap rule for structured recipe drafts and reports sanitized provider failure categories when `-ProviderDebug` is set. See [AI Live Demo Runbook](ai-live-demo-runbook.md) for the importer-specific guidance.
+
 The PowerShell wrapper can also load an ignored local `.env` file explicitly:
 
 ```powershell

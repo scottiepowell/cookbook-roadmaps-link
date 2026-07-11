@@ -141,6 +141,8 @@ The 0030F hardening pass expands recipe-session regression coverage with equipme
 
 0030K adds a small PowerShell `.env` loader for the live smoke and live eval wrappers. The loader keeps normal validation offline, loads ignored local config only when `-EnvFile` is supplied, preserves comments and existing values, redacts secret-like names in summaries, and lets the smoke wrapper append safe missing defaults without turning on live mode. Live evals still require explicit `OPENAI_ENABLE_LIVE_TESTS=true` and `AI_PROVIDER=openai`.
 
+0030L updates the live eval path with an importer-only output cap and sanitized provider diagnostics. The importer workflow can use a separate 900-token default with a 1200-token ceiling so RAG-informed drafts are not constrained by the 300-token non-importer live-eval guard, and importer failures now surface safe `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields when available.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:

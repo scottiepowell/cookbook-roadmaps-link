@@ -8,6 +8,8 @@ from pathlib import Path
 
 from app.dataset_retrieval import search_dataset_recipes
 from app.demo_data import seed_demo_data
+from app.importer import RecipeImportProviderError
+from app.providers.errors import ProviderCallError
 from evals.ai_cookbook.expected_checks import (
     COST_SOURCE_DEFAULT_MODEL_RATE,
     COST_SOURCE_ENV_OVERRIDE,
@@ -447,6 +449,115 @@ def test_run_case_records_default_cost_source_metadata(monkeypatch):
 
         assert record["estimated_cost_usd"] == 0.000825
         assert record["cost_source"] == COST_SOURCE_DEFAULT_MODEL_RATE
+    finally:
+        shutil.rmtree(Path(".tmp-ai-demo"), ignore_errors=True)
+
+
+def test_importer_case_uses_workflow_specific_output_cap_and_restores_env(monkeypatch):
+    live_evals = load_live_eval_module()
+    monkeypatch.setenv("AI_MAX_OUTPUT_TOKENS", "300")
+    monkeypatch.setenv("AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL", "300")
+    seen: dict[str, str | None] = {}
+
+    def fake_import_recipe_text(request, provider=None):
+        seen["AI_MAX_OUTPUT_TOKENS"] = os.environ.get("AI_MAX_OUTPUT_TOKENS")
+        seen["AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL"] = os.environ.get("AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL")
+        return {
+            "provider": "openai",
+            "model": "gpt-5.4-nano",
+            "draft": {"title": "Cap Test", "ingredients": [], "instructions": []},
+            "retrieval": {"retrieved_count": 1},
+            "citations": [],
+            "warnings": [],
+            "usage": {"input_tokens": 1, "output_tokens": 2, "total_tokens": 3},
+            "input_quality": {"status": "ready"},
+        }
+
+    import app.importer as importer_module
+
+    monkeypatch.setattr(importer_module, "import_recipe_text", fake_import_recipe_text)
+
+    result = live_evals._run_importer_case(
+        {"request": {"text": "rice and beans", "source": "manual"}},
+        provider=object(),
+        max_output_tokens=900,
+    )
+
+    assert seen["AI_MAX_OUTPUT_TOKENS"] == "900"
+    assert seen["AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL"] == "900"
+    assert os.environ["AI_MAX_OUTPUT_TOKENS"] == "300"
+    assert os.environ["AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL"] == "300"
+    assert result["draft"]["title"] == "Cap Test"
+
+
+def test_run_case_records_safe_provider_diagnostics_for_importer_failures(monkeypatch):
+    live_evals = load_live_eval_module()
+    responses_dir = Path(".tmp-ai-demo") / "live-evals" / "provider-failure-test" / "responses"
+    shutil.rmtree(responses_dir.parent, ignore_errors=True)
+    responses_dir.mkdir(parents=True, exist_ok=True)
+
+    provider_error = ProviderCallError(
+        "provider response could not be decoded",
+        failure_category="output_cap_or_incomplete_response",
+        exception_type="JSONDecodeError",
+        safe_summary="provider response was truncated before JSON parsing completed",
+    )
+
+    def runner(_case):
+        raise RecipeImportProviderError("Recipe importer provider failed.") from provider_error
+
+    def scorer(_workflow, _payload, _expected_model):
+        return [CheckResult("offline pass", True, "passed")]
+
+    try:
+        record = live_evals.run_case(
+            {"workflow": "importer", "endpoint": "POST /ai/import-recipe", "input_summary": "offline", "expected_checks": []},
+            runner,
+            responses_dir,
+            "gpt-5.4-nano",
+            scorer,
+        )
+
+        assert record["failure_category"] == "provider_call_failure"
+        assert record["provider_error_category"] == "output_cap_or_incomplete_response"
+        assert record["provider_error_type"] == "JSONDecodeError"
+        assert "provider response was truncated" in record["safe_error_summary"]
+        assert record["error_type"] == "RecipeImportProviderError"
+    finally:
+        shutil.rmtree(Path(".tmp-ai-demo"), ignore_errors=True)
+
+
+def test_run_case_records_budget_block_before_invocation_failure(monkeypatch):
+    live_evals = load_live_eval_module()
+    responses_dir = Path(".tmp-ai-demo") / "live-evals" / "budget-block-test" / "responses"
+    shutil.rmtree(responses_dir.parent, ignore_errors=True)
+    responses_dir.mkdir(parents=True, exist_ok=True)
+
+    def runner(_case):
+        return {
+            "provider": "none",
+            "model": "none",
+            "warnings": ["Provider calls are disabled for this local demo."],
+            "usage": None,
+        }
+
+    def scorer(_workflow, _payload, _expected_model):
+        return [CheckResult("offline pass", True, "passed")]
+
+    try:
+        record = live_evals.run_case(
+            {"workflow": "importer", "endpoint": "POST /ai/import-recipe", "input_summary": "offline", "expected_checks": []},
+            runner,
+            responses_dir,
+            "gpt-5.4-nano",
+            scorer,
+        )
+
+        assert record["failure_category"] == "budget_block_before_invocation"
+        assert record["provider_error_category"] == "budget_block_before_invocation"
+        assert record["provider_error_type"] == "BudgetBlocked"
+        assert record["provider_called"] is False
+        assert record["error_type"] == "BudgetBlocked"
     finally:
         shutil.rmtree(Path(".tmp-ai-demo"), ignore_errors=True)
 
