@@ -64,6 +64,7 @@ const workflows = {
 let activeRecipeSessionId = null;
 
 document.getElementById("refresh-readiness").addEventListener("click", refreshReadiness);
+document.getElementById("refresh-usage-report").addEventListener("click", refreshUsageReport);
 document.querySelector(workflows.importer.button).addEventListener("click", runImporter);
 document.querySelector('[data-action="session-start"]').addEventListener("click", startRecipeSession);
 document.querySelector('[data-action="session-message"]').addEventListener("click", sendRecipeSessionMessage);
@@ -79,6 +80,7 @@ for (const workflow of Object.values(workflows)) {
 }
 
 refreshReadiness();
+refreshUsageReport();
 
 async function refreshReadiness() {
   const grid = document.getElementById("readiness-grid");
@@ -107,6 +109,41 @@ async function refreshReadiness() {
   } catch (error) {
     grid.innerHTML = "";
     grid.append(readinessCard("Readiness", false, "Unable to check", error.message));
+  }
+}
+
+async function refreshUsageReport() {
+  const grid = document.getElementById("usage-report-grid");
+  grid.innerHTML = usageReportSkeleton();
+  try {
+    const data = await requestJson("/ai/admin/usage-report", {}, "usage-report");
+    grid.innerHTML = "";
+    grid.append(
+      readinessCard("Report", true, "Available", "Safe local/operator usage summary."),
+      readinessCard(
+        "Sessions",
+        true,
+        `${data.summary?.active_session_count ?? 0} active`,
+        `${data.summary?.expired_session_count ?? 0} expired, ${data.summary?.revoked_session_count ?? 0} revoked, ${data.summary?.completed_session_count ?? 0} completed.`,
+      ),
+      readinessCard(
+        "Provider calls",
+        true,
+        `Allowed ${data.summary?.provider_calls_allowed ?? 0}`,
+        `Blocked ${data.summary?.provider_calls_blocked ?? 0}, skipped ${data.summary?.provider_calls_skipped ?? 0}, failed ${data.summary?.provider_calls_failed ?? 0}.`,
+      ),
+      readinessCard(
+        "Budget",
+        true,
+        formatUsd(data.summary?.estimated_cost_usd_total),
+        `Remaining ${formatUsd(data.summary?.remaining_estimated_cost_usd_total)}; threshold warnings ${data.summary?.threshold_warning_count ?? 0}.`,
+      ),
+    );
+    document.getElementById("usage-report-updated").textContent = "Checked just now";
+  } catch (error) {
+    grid.innerHTML = "";
+    grid.append(readinessCard("Usage report", false, "Locked", error.message));
+    document.getElementById("usage-report-updated").textContent = "Blocked";
   }
 }
 
@@ -653,6 +690,10 @@ function readinessSkeleton() {
   return '<div class="readiness-card"><h3>Checking readiness</h3><span class="status-pill warn">Loading</span><p>Contacting the sidecar.</p></div>';
 }
 
+function usageReportSkeleton() {
+  return '<div class="readiness-card"><h3>Checking usage report</h3><span class="status-pill warn">Loading</span><p>Contacting the local operator report endpoint.</p></div>';
+}
+
 function resetWorkflow(workflow) {
   const input = document.getElementById(workflow.input);
   input.value = workflow.sample;
@@ -702,6 +743,17 @@ function cacheMetadata(cache) {
   return {
     cache: cacheSummary(cache),
   };
+}
+
+function formatUsd(value) {
+  if (value === null || value === undefined) {
+    return "$0.00";
+  }
+  const numeric = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numeric)) {
+    return "$0.00";
+  }
+  return `$${numeric.toFixed(2)}`;
 }
 
 function cacheSummary(cache) {

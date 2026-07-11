@@ -39,11 +39,13 @@ class AiProviderBudgetTracker:
             raise ValueError("max_sessions must be at least 1")
         self.max_sessions = max_sessions
         self._sessions: OrderedDict[str, _TrackerEntry] = OrderedDict()
+        self._meter_events: OrderedDict[str, AiProviderMeterEvent] = OrderedDict()
         self._lock = threading.Lock()
 
     def reset(self) -> None:
         with self._lock:
             self._sessions.clear()
+            self._meter_events.clear()
 
     def record_allowed_call(self, session_key: str, meter_event: AiProviderMeterEvent) -> None:
         with self._lock:
@@ -58,11 +60,12 @@ class AiProviderBudgetTracker:
                 updated_at=time.monotonic(),
             )
             self._sessions.move_to_end(session_key)
+            self._record_meter_event(meter_event)
             self._evict_if_needed()
 
     def record_blocked_call(self, session_key: str, meter_event: AiProviderMeterEvent) -> None:
-        del meter_event
         with self._lock:
+            self._record_meter_event(meter_event)
             if session_key in self._sessions:
                 current = self._sessions[session_key]
                 self._sessions[session_key] = _TrackerEntry(
@@ -75,6 +78,22 @@ class AiProviderBudgetTracker:
                 self._sessions[session_key] = _TrackerEntry(updated_at=time.monotonic())
                 self._sessions.move_to_end(session_key)
                 self._evict_if_needed()
+
+    def record_skipped_call(self, session_key: str, meter_event: AiProviderMeterEvent) -> None:
+        with self._lock:
+            self._record_meter_event(meter_event)
+            if session_key not in self._sessions:
+                self._sessions[session_key] = _TrackerEntry(updated_at=time.monotonic())
+            self._sessions.move_to_end(session_key)
+            self._evict_if_needed()
+
+    def record_failed_call(self, session_key: str, meter_event: AiProviderMeterEvent) -> None:
+        with self._lock:
+            self._record_meter_event(meter_event)
+            if session_key not in self._sessions:
+                self._sessions[session_key] = _TrackerEntry(updated_at=time.monotonic())
+            self._sessions.move_to_end(session_key)
+            self._evict_if_needed()
 
     def snapshot(
         self,
@@ -97,9 +116,19 @@ class AiProviderBudgetTracker:
             max_estimated_cost_usd=max_estimated_cost_usd,
         )
 
+    def list_meter_events(self) -> list[AiProviderMeterEvent]:
+        with self._lock:
+            return list(self._meter_events.values())
+
     def _evict_if_needed(self) -> None:
         while len(self._sessions) > self.max_sessions:
             self._sessions.popitem(last=False)
+
+    def _record_meter_event(self, meter_event: AiProviderMeterEvent) -> None:
+        self._meter_events[meter_event.event_id] = meter_event
+        self._meter_events.move_to_end(meter_event.event_id)
+        while len(self._meter_events) > self.max_sessions:
+            self._meter_events.popitem(last=False)
 
 
 default_provider_budget_tracker = AiProviderBudgetTracker()
@@ -154,6 +183,7 @@ def check_provider_budget(
             estimated_cost_usd=Decimal("0.00"),
             safe_metadata=_safe_budget_metadata(active_settings, provider_name, session_key, "skipped"),
         )
+        active_tracker.record_skipped_call(session_key, event)
         return AiProviderBudgetDecision(
             allowed=True,
             status=AiProviderBudgetStatus.SKIPPED,
@@ -194,7 +224,7 @@ def check_provider_budget(
             estimated_cost_usd=call_estimated_cost,
             safe_metadata=_safe_budget_metadata(active_settings, provider_name, session_key, "misconfigured"),
         )
-        active_tracker.record_blocked_call(session_key, event)
+        active_tracker.record_failed_call(session_key, event)
         return _decision(
             allowed=False,
             status=AiProviderBudgetStatus.MISCONFIGURED,

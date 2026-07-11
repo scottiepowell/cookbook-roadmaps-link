@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.ai_access_models import AiAccessWorkflow
 from app.ai_invite_sessions import invite_router, require_demo_workflow_access
 from app.ai_operator_gate import check_operator_gate
+from app.ai_usage_report import AiUsageReport, build_ai_usage_report
 from app.config import get_ai_settings, get_invite_session_settings, get_operator_gate_settings, get_provider_config, get_recipe_dataset_dir
 from app.dataset_rag import DatasetAskProviderError, ask_dataset_recipes
 from app.dataset_retrieval import search_dataset_recipes
@@ -97,6 +98,20 @@ def demo_readiness() -> dict[str, object]:
             "local_operator_create_enabled": invite_settings.local_operator_create_enabled,
         },
     }
+
+
+@app.get("/ai/admin/usage-report", response_model=AiUsageReport, include_in_schema=False)
+def ai_usage_report(request: Request) -> AiUsageReport:
+    decision = check_operator_gate(
+        "importer",
+        request.headers,
+        get_operator_gate_settings(),
+        client_host=request.client.host if request.client else None,
+    )
+    log_ai_workflow("admin.usage_report", request, provider="operator", status=decision.status.value, warning_count=0)
+    if not decision.allowed:
+        raise HTTPException(status_code=503 if decision.status.value == "misconfigured" else 403, detail=decision.safe_view())
+    return build_ai_usage_report()
 
 
 @app.get("/health", response_model=HealthResponse)

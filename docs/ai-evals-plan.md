@@ -104,6 +104,15 @@ The tests verify:
 - safe meter events and budget snapshots serialize without secrets or local paths;
 - importer, dataset ask, recipe-session, and meal-plan routes still behave normally in mock/offline mode and report safe budget messages when live calls are blocked.
 
+0029G adds deterministic usage-report tests that remain offline and safe. The checks verify:
+
+- an empty usage report returns stable zero/default summary values;
+- active, expired, revoked, used, and completed grants/sessions are counted correctly;
+- provider meter events are counted by status and serialized safely;
+- estimated spend and remaining budget reflect safe session/grant snapshots;
+- threshold warnings fire for near-exhaustion, blocked provider decisions, quality failures, and misconfiguration patterns;
+- the `/ai/admin/usage-report` endpoint remains protected by the operator gate when enabled and does not expose raw invite/session tokens.
+
 The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
 
 The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.

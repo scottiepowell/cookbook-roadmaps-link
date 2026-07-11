@@ -15,6 +15,8 @@ def test_demo_ui_route_returns_html():
     assert "process-only requirements flow" in response.text
     assert "Sessions expire" in response.text
     assert "Invite sessions, when enabled, use the X-AI-Demo-Session-Token header." in response.text
+    assert "Local usage report" in response.text
+    assert "Refresh usage report" in response.text
     assert "Start session" in response.text
     assert "Send follow-up" in response.text
     assert "Finalize for demo" in response.text
@@ -67,6 +69,9 @@ def test_demo_static_assets_load():
     assert "Invite sessions" in js_response.text
     assert "support_level" in js_response.text
     assert "support_message" in js_response.text
+    assert "usage-report-grid" in js_response.text
+    assert "/ai/admin/usage-report" in js_response.text
+    assert "formatUsd" in js_response.text
     assert "cache" in js_response.text
     assert "index_cache_hit" in js_response.text
     assert "entries" in js_response.text

@@ -31,6 +31,7 @@ from app.ai_access_models import (
 )
 from app.ai_budget_guard import check_provider_budget
 from app.ai_operator_gate import check_operator_gate, operator_gate_http_exception
+from app.ai_usage_report import record_usage_report_audit_event
 from app.config import (
     InviteSessionSettings,
     ProviderBudgetSettings,
@@ -107,25 +108,36 @@ class AiInviteSessionStore:
         expired = 0
         with self._lock:
             for grant_id, grant in list(self._grants.items()):
-                if grant.expires_at and grant.expires_at <= current_time:
+                if grant.status not in {AiAccessGrantStatus.REVOKED, AiAccessGrantStatus.EXPIRED} and grant.expires_at and grant.expires_at <= current_time:
                     self._grants[grant_id] = grant.model_copy(update={"status": AiAccessGrantStatus.EXPIRED, "revoked_at": grant.revoked_at})
-                    self._grants.pop(grant_id, None)
                     expired += 1
             for session_id, session in list(self._sessions.items()):
-                if session.expires_at <= current_time:
-                    self._sessions.pop(session_id, None)
+                if session.status not in {AiDemoSessionStatus.REVOKED, AiDemoSessionStatus.EXPIRED, AiDemoSessionStatus.COMPLETED} and session.expires_at <= current_time:
+                    self._sessions[session_id] = session.model_copy(update={"status": AiDemoSessionStatus.EXPIRED})
                     expired += 1
         return expired
 
     def count_grants(self, *, now: datetime | None = None) -> int:
         self.expire(now)
         with self._lock:
-            return len(self._grants)
+            return sum(1 for grant in self._grants.values() if grant.status == AiAccessGrantStatus.ACTIVE)
 
     def count_sessions(self, *, now: datetime | None = None) -> int:
         self.expire(now)
         with self._lock:
-            return len(self._sessions)
+            return sum(1 for session in self._sessions.values() if session.status == AiDemoSessionStatus.ACTIVE)
+
+    def list_grants(self, *, now: datetime | None = None) -> list[AiAccessGrant]:
+        self.expire(now)
+        current_time = now or utc_now()
+        with self._lock:
+            return [self._refresh_grant_state(grant, current_time) for grant in self._grants.values()]
+
+    def list_sessions(self, *, now: datetime | None = None) -> list[AiDemoSession]:
+        self.expire(now)
+        current_time = now or utc_now()
+        with self._lock:
+            return [self._refresh_session_state(session, current_time) for session in self._sessions.values()]
 
     def count_sessions_for_grant(self, grant_id: str, *, now: datetime | None = None) -> int:
         self.expire(now)
@@ -202,6 +214,7 @@ class AiInviteSessionStore:
                 "allowed_workflows": ",".join(workflow.value for workflow in allowed_workflows),
             },
         )
+        record_usage_report_audit_event(audit_event)
         return InviteGrantResult(grant=grant, invite_token=invite_token, audit_event=audit_event)
 
     def redeem_invite_token(
@@ -286,6 +299,7 @@ class AiInviteSessionStore:
                 "session_token_fingerprint": session_token_fingerprint[:12],
             },
         )
+        record_usage_report_audit_event(audit_event)
         return InviteSessionResult(
             grant=grant,
             session=session,
@@ -302,7 +316,10 @@ class AiInviteSessionStore:
             if grant is None:
                 return None
             self._grants.move_to_end(grant_id)
-            return self._refresh_grant_state(grant, now or utc_now())
+            refreshed = self._refresh_grant_state(grant, now or utc_now())
+            if refreshed.status == AiAccessGrantStatus.EXPIRED:
+                return None
+            return refreshed
 
     def get_session(self, session_id: str, *, now: datetime | None = None) -> AiDemoSession | None:
         self.expire(now)
@@ -311,7 +328,10 @@ class AiInviteSessionStore:
             if session is None:
                 return None
             self._sessions.move_to_end(session_id)
-            return self._refresh_session_state(session, now or utc_now())
+            refreshed = self._refresh_session_state(session, now or utc_now())
+            if refreshed.status == AiDemoSessionStatus.EXPIRED:
+                return None
+            return refreshed
 
     def revoke_grant(self, grant_id: str, *, reason: str | None = None, now: datetime | None = None) -> AiAccessGrant | None:
         current_time = now or utc_now()
@@ -343,6 +363,24 @@ class AiInviteSessionStore:
                     "status": AiDemoSessionStatus.REVOKED,
                     "revoked_at": current_time,
                     "revoked_reason": reason or "Local operator revoked the invite session.",
+                }
+            )
+            self._sessions[session_id] = updated
+            self._sessions.move_to_end(session_id)
+            return updated
+
+    def complete_session(self, session_id: str, *, reason: str | None = None, now: datetime | None = None) -> AiDemoSession | None:
+        current_time = now or utc_now()
+        self.expire(current_time)
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None:
+                return None
+            updated = session.model_copy(
+                update={
+                    "status": AiDemoSessionStatus.COMPLETED,
+                    "revoked_at": session.revoked_at,
+                    "revoked_reason": reason or session.revoked_reason,
                 }
             )
             self._sessions[session_id] = updated
@@ -594,7 +632,7 @@ def revoke_invite_grant(grant_id: str, request: Request) -> AiInviteGrantRespons
         invite_token=None,
         session_count=default_invite_session_store.count_sessions_for_grant(grant.grant_id),
         active_session_count=default_invite_session_store.count_active_sessions_for_grant(grant.grant_id),
-        audit_event=_audit_event("grant_revoked", "invite_grant", grant_id, "Local operator revoked the invite grant."),
+        audit_event=_recorded_audit_event("grant_revoked", "invite_grant", grant_id, "Local operator revoked the invite grant."),
     )
 
 
@@ -622,7 +660,7 @@ def revoke_invite_session(session_id: str, request: Request) -> AiInviteSessionR
         session=session,
         session_token=None,
         budget_snapshot=budget_snapshot,
-        audit_event=_audit_event("session_revoked", "invite_session", session_id, "Local operator revoked the invite session."),
+        audit_event=_recorded_audit_event("session_revoked", "invite_session", session_id, "Local operator revoked the invite session."),
     )
 
 
@@ -738,8 +776,8 @@ def _parse_allowed_workflows(values: list[str]) -> list[AiAccessWorkflow]:
     return workflows
 
 
-def _audit_event(action: str, target_type: str, target_id: str, reason: str) -> AiAdminAuditEvent:
-    return AiAdminAuditEvent(
+def _recorded_audit_event(action: str, target_type: str, target_id: str, reason: str) -> AiAdminAuditEvent:
+    event = AiAdminAuditEvent(
         event_id=f"ga_{uuid4().hex[:12]}",
         actor_label="local-operator",
         action=AiAdminAuditAction(action),
@@ -748,3 +786,5 @@ def _audit_event(action: str, target_type: str, target_id: str, reason: str) -> 
         reason=reason,
         safe_metadata={"target_id_hint": hashlib.sha256(target_id.encode("utf-8")).hexdigest()[:12]},
     )
+    record_usage_report_audit_event(event)
+    return event

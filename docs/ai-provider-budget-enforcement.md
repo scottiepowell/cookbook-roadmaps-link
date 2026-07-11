@@ -18,6 +18,8 @@ The goal is simple: allow offline/mock flows by default, but stop live provider 
 
 `0029F` reuses the same guard for invite-only demo sessions. When an invite session is present, the guard can use the short-lived demo-session id and per-grant limits before allowing a provider-backed call.
 
+`0029G` reads the same safe tracker snapshots and meter events when building the local/operator usage report, so the report can summarize allowed, blocked, skipped, and failed decisions without exposing raw prompts or provider responses.
+
 ## Relationship To The Operator Gate
 
 `0029D` adds the local/private operator gate. That gate decides whether the workflow may enter the protected demo surface at all.

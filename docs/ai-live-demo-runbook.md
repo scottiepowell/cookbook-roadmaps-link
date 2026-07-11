@@ -82,6 +82,8 @@ The demo UI also includes a local `Recipe Session Alpha` panel. Use it to start 
 
 Invite-only demo sessions are documented in [AI Invite-Only Demo Session Flow](ai-invite-only-demo-session-flow.md). They are disabled by default, use `X-AI-Demo-Session-Token` for short-lived demo access when enabled, and keep only safe fingerprints after creation. The optional invite smoke path in `scripts/demo-ai-mock.ps1` stays off unless `AI_INVITE_SMOKE_ENABLED=true` is set in the local shell.
 
+The local/operator usage report prototype is documented in [AI Admin Usage Report Prototype](ai-admin-usage-report-prototype.md). The demo UI shows a compact report card with active session counts, provider-call status counts, estimated spend, and threshold warnings. The JSON endpoint is local/operator-only when the operator gate is enabled.
+
 ## Importer-Only Diagnostic
 
 Prefer the dedicated live importer smoke script:

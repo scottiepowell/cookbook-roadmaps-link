@@ -1704,9 +1704,11 @@ Completed behavior:
 
 ## 0029G: Admin Usage Report Prototype
 
-Status: planned.
+Status: complete.
 
 Goal: Prototype an operator report for active sessions, provider calls, estimated spend, quality failures, and threshold warnings.
+
+Implemented as a safe local/operator usage report in `ai-api/app/ai_usage_report.py`, `GET /ai/admin/usage-report`, and the compact `/demo` operator card.
 
 ## 0029H: Public Route Exposure Review
 

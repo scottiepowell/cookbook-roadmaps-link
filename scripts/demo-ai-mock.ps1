@@ -100,6 +100,7 @@ try:
     checks = [
         ("health", client.get("/health")),
         ("config", client.get("/ai/config")),
+        ("usage_report", client.get("/ai/admin/usage-report")),
         ("importer", client.post("/ai/import-recipe", json={"text": "Lemon beans: warm beans with lemon.", "source": "demo"})),
         ("ask_my_cookbook", client.post("/ai/ask", json={"question": "What uses lemon?", "limit": 1})),
         ("dataset_search", client.get("/dataset/search", params={"q": "tomato pasta", "limit": 1, "dataset_limit": 3})),

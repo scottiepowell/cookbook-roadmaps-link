@@ -44,6 +44,8 @@ The decision object is safe to serialize and does not include raw tokens, API ke
 
 `0029E` applies the centralized provider budget guard after this gate. That guard can still block a request that was allowed by the operator gate if the provider is globally disabled, the call count is exhausted, or the requested token/cost budget is too large.
 
+`0029G` protects the local/operator usage-report endpoint with the same gate when the gate is enabled, so the report stays local/private and does not become a production admin surface.
+
 `0029F` adds invite-only demo sessions as a separate local/private boundary. When invite sessions are enabled, protected workflows can also accept a short-lived `X-AI-Demo-Session-Token` header for a redeemed invite session. Invite sessions are still not production auth, and they continue to sit behind the same local/private demo boundary.
 
 ## Verification Rules

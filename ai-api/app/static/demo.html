@@ -62,6 +62,22 @@
         </p>
       </section>
 
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Operator</p>
+            <h2>Local usage report</h2>
+          </div>
+          <span id="usage-report-updated" class="meta-pill">Not checked</span>
+        </div>
+        <div id="usage-report-grid" class="readiness-grid" aria-live="polite"></div>
+        <div class="button-row">
+          <button id="refresh-usage-report" type="button">Refresh usage report</button>
+          <a class="button secondary" href="/ai/admin/usage-report" target="_blank" rel="noreferrer">Open JSON</a>
+        </div>
+        <p class="hint">Safe local/operator summary only. The report stays process-local and does not expose raw tokens or prompts.</p>
+      </section>
+
       <section class="workflow" data-workflow-card="importer">
         <div class="workflow-copy">
           <p class="step">Step 1</p>

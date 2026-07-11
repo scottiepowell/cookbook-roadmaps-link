@@ -10,6 +10,8 @@ This is schema-only work. It does not add production storage, auth, billing, pub
 
 `0029E` builds the runtime provider budget guard on top of these models. That task keeps the guard deterministic and process-local while using the schema shapes below for safe snapshots, meter events, and operator views.
 
+`0029G` uses the same safe models to build a local/operator usage report prototype with session, grant, meter, budget, quality, and audit summaries.
+
 ## Model Module
 
 The draft models live in:
