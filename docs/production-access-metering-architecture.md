@@ -287,7 +287,7 @@ Planned numbering:
 - `0029F`: Invite-Only Demo Session Flow
 - `0029G`: Admin Usage Report Prototype
 - `0029H`: Public Route Exposure Review
-- `0029I`: Paid Access Integration ADR
+- `0029I`: Monetization And Entitlement Boundary ADR
 
 ## Non-Goals
 

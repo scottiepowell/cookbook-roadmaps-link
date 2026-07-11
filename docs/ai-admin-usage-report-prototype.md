@@ -13,6 +13,7 @@ It is a safe, process-local reporting surface for demo operators who need to ans
 - whether any thresholds are close to exhaustion.
 
 The report is intentionally local/private only. It does not add production admin auth, a production dashboard, user accounts, billing, or public route exposure.
+It also does not enforce monetization or entitlements.
 
 ## Relationship To Earlier Tasks
 

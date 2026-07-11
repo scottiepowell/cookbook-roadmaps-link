@@ -120,6 +120,13 @@ The tests verify:
 - the OpenAPI schema and route inventory remain free of raw token, prompt, response, local path, and credential-like strings;
 - invite-only workflows stay disabled by default while protected routes continue to be gate and budget aware.
 
+0029I adds deterministic monetization-boundary documentation tests that remain offline and safe. The checks verify:
+
+- the ADR says ads, sponsorships, partner placements, and clearly disclosed affiliate links are the near-term revenue path;
+- the ADR says paid access, checkout, subscriptions, invoices, refunds, and premium enforcement are not implemented now;
+- the ADR keeps future paid advanced features as separate, explicitly approved possibilities rather than committed runtime behavior;
+- the ADR and surrounding docs keep monetization separate from access control, budgets, invite sessions, and route exposure.
+
 The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
 
 The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.

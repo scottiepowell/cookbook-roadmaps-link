@@ -27,7 +27,7 @@ This roadmap breaks production access, metering, and paid-access readiness into 
 | `0029F` | Invite-Only Demo Session Flow | Add short-lived invite sessions with expiry, revocation, and per-session budgets. |
 | `0029G` | Admin Usage Report Prototype | Build an operator report for sessions, provider calls, estimated spend, warnings, failures, and revocations. |
 | `0029H` | Public Route Exposure Review | Review Cloudflare, reverse proxy, CORS, and route exposure before any public live AI access. |
-| `0029I` | Paid Access Integration ADR | Choose and bound the future payment/entitlement integration without implementing payment in earlier tasks. |
+| `0029I` | Monetization And Entitlement Boundary ADR | Define the near-term monetization model and future entitlement boundary without implementing payment or premium enforcement now. |
 
 ## Phase 1: Private Operator Mode
 

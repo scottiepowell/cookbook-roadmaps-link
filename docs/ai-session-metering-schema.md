@@ -250,7 +250,9 @@ Later tasks can use these models for:
 - `0029F` invite-only demo session flow (implemented as a local/private alpha on top of these models);
 - `0029G` admin usage report prototype;
 - `0029H` public route exposure review;
-- `0029I` paid access integration ADR.
+- `0029I` monetization and entitlement boundary ADR.
+
+`0029I` keeps monetization concepts separate from access control, budget enforcement, invite sessions, and route exposure. It is documentation-only and does not add payment runtime behavior.
 
 ## Non-Goals
 

@@ -22,6 +22,8 @@ The goal is simple: allow offline/mock flows by default, but stop live provider 
 
 `0029H` does not change the guard. It documents which routes may ever be public and keeps provider-backed routes behind the proxy, CORS, gate, and budget review boundary.
 
+`0029I` defines the monetization and entitlement boundary separately from this budget guard. Revenue models such as ads or sponsorships do not grant provider budget and do not alter budget decisions.
+
 ## Relationship To The Operator Gate
 
 `0029D` adds the local/private operator gate. That gate decides whether the workflow may enter the protected demo surface at all.

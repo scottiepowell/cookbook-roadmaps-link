@@ -18,6 +18,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Invite-only demo sessions | Complete, local/private | `ai-api/app/ai_invite_sessions.py`, `POST /ai/invite/grants`, `POST /ai/invite/redeem`, invite status/get/revoke routes | pytest, offline route tests | Creates short-lived invite grants and demo sessions with one-time raw tokens, stores only safe fingerprints, enforces allowed-workflow limits, and lets protected demo routes accept invite session tokens when invite sessions are enabled. |
 | Local usage report prototype | Complete, local/private | `ai-api/app/ai_usage_report.py`, `GET /ai/admin/usage-report`, local demo card | pytest, offline route tests | Summarizes safe process-local sessions, grants, meter events, budget snapshots, quality events, audit events, and threshold warnings without exposing raw tokens, prompts, responses, or local paths. |
 | Public route exposure review | Complete, local/private | [AI Public Route Exposure Review](ai-public-route-exposure-review.md) | pytest, offline route tests | Inventories the AI route surface, classifies public/local/invite/operator/never-public exposure, and documents proxy and CORS boundaries before any public AI route exposure. |
+| Monetization and entitlement boundary ADR | Complete, docs-only | [AI Monetization And Entitlement Boundary ADR](ai-monetization-and-entitlement-boundary-adr.md) | docs-only tests, repository validation | Defines the near-term ads/sponsors/partner-placement revenue path, keeps paid access out of scope for now, and preserves future entitlement seams without runtime enforcement. |
 | Bounded input quality | Complete | importer, Ask, dataset search/RAG, meal planning | pytest, offline evals | Rejects unusable input before provider calls, asks at most one clarification question for recoverable vague input, and lets weak usable input proceed with warnings. |
 | Offline eval harness | Complete | `evals/ai_cookbook/run_evals.py` | repository validation | Checks citations, no-match behavior, schema validity, and secret-like leakage. |
 | Retrieval relevance eval harness | Complete | `evals/ai_cookbook/run_evals.py` | offline eval tests | Deterministically scores importer retrieval relevance against generated distractor fixtures, including top-1 dish match, top-k material relevance, anchor coverage, and weak-match warnings. |
@@ -53,7 +54,7 @@ status=passed
 | Production AI storage | Not implemented | Kept out of scope until a dedicated architecture task. |
 | Production AI access layer | Proposed, not implemented | Public live provider-backed AI requires auth/session/metering work first. |
 | Public unauthenticated live AI endpoint | Not allowed | Provider-backed endpoints must be protected before public exposure. |
-| Payment integration | Deferred | Paid access requires a later ADR and entitlement design. |
+| Payment integration | Deferred | Paid access requires a later ADR and implementation task after the monetization/entitlement boundary ADR. |
 | Embeddings/vector DB | Not implemented | Deterministic retrieval is enough for the current demo and eval scope. |
 | Qdrant/Postgres/pgvector | Not implemented | Avoids unnecessary infrastructure for this feature slice. |
 | Persistent generated indexes | Not implemented | Dataset indexes are request-time/in-memory only. |

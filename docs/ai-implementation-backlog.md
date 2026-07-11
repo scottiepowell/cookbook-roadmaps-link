@@ -1722,8 +1722,15 @@ Completed behavior:
 - the admin usage-report route remains hidden from OpenAPI and is treated as never-public;
 - the review documents proxy and CORS staging requirements, go/no-go checklist items, and abuse/rate-limit placeholders without changing deployment config.
 
-## 0029I: Paid Access Integration ADR
+## 0029I: Monetization And Entitlement Boundary ADR
 
-Status: planned.
+Status: complete.
 
-Goal: Decide the future payment/entitlement integration boundary without implementing payment in earlier tasks.
+Goal: Define the near-term monetization model and future entitlement boundary without implementing payment or premium enforcement now.
+
+Completed behavior:
+
+- the ADR states that near-term revenue should focus on ads, sponsorships, partner placements, and clearly disclosed affiliate links;
+- the ADR states that paid access, checkout, subscriptions, billing, invoices, taxes, refunds, and premium enforcement are not implemented now;
+- the ADR keeps future paid advanced features as separate, explicitly approved possibilities rather than runtime behavior;
+- surrounding docs now separate monetization from access control, budget enforcement, invite sessions, and route exposure.

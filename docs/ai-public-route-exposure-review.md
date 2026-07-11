@@ -12,6 +12,7 @@ This review answers the route-exposure questions for the AI sidecar:
 - what should remain private forever.
 
 The review is documentation-only. It does not change deployment behavior, Cloudflare config, DNS, auth, billing, or storage.
+Monetization decisions are separate from route exposure; ads, sponsors, and affiliate disclosures do not make a route public.
 
 ## Current Boundary Summary
 
