@@ -33,3 +33,14 @@ if (-not (Test-Path $Python)) {
 }
 
 & $Python "scripts\smoke-openai-live.py"
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
+
+if ($env:AI_29_30_REGRESSION_LIVE -eq "true") {
+    Write-Host "Running optional 29/30 regression live boundary..."
+    & $Python "scripts\e2e-ai-29-30-regression.py" --live-smoke
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+}

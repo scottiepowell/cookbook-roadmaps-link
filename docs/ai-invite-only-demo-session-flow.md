@@ -24,6 +24,7 @@ The main use case is local acceptance and review:
 - `0029G` adds a local/operator usage report that can safely summarize invite grants, sessions, meter events, budget snapshots, and threshold warnings from the same process-local state.
 - `0029H` keeps the invite surface under review and recommends that invite redemption, invite grants, and recipe-session routes stay private until a future exposure task explicitly stages them.
 - `0029I` keeps monetization and entitlement separate from invite access. Ads, sponsorships, and future premium feature ideas do not automatically change invite-session access or budget limits.
+- The 29/30 integrated regression harness reuses invite flows as part of the locked baseline, but it still keeps invite sessions disabled by default unless a test context explicitly enables them.
 
 Invite-only demo sessions do not replace the operator gate. They are a separate local/private access path that can be used when the operator wants short-lived, workflow-limited demo access.
 

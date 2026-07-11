@@ -23,6 +23,7 @@ The goal is simple: allow offline/mock flows by default, but stop live provider 
 `0029H` does not change the guard. It documents which routes may ever be public and keeps provider-backed routes behind the proxy, CORS, gate, and budget review boundary.
 
 `0029I` defines the monetization and entitlement boundary separately from this budget guard. Revenue models such as ads or sponsorships do not grant provider budget and do not alter budget decisions.
+The 29/30 integrated regression harness exercises the mock/offline allow-skip path and the blocked-before-invocation path so budget drift is caught before any future GLM offload work is attempted.
 
 ## Relationship To The Operator Gate
 

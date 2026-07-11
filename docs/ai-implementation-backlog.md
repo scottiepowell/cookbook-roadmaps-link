@@ -1734,3 +1734,23 @@ Completed behavior:
 - the ADR states that paid access, checkout, subscriptions, billing, invoices, taxes, refunds, and premium enforcement are not implemented now;
 - the ADR keeps future paid advanced features as separate, explicitly approved possibilities rather than runtime behavior;
 - surrounding docs now separate monetization from access control, budget enforcement, invite sessions, and route exposure.
+
+## 0030J: 29/30 Integrated Regression And E2E Harness
+
+Status: complete.
+
+Goal: Add a deterministic integrated regression harness that exercises the combined 0029/0030 local AI demo baseline offline by default and only allows live-smoke checks when explicitly opted in.
+
+Completed behavior:
+
+- `scripts/e2e-ai-29-30-regression.py` runs the combined mock/offline flow end to end and keeps live checks behind an explicit opt-in flag;
+- `scripts/run-ai-29-30-regression.ps1` sets safe defaults for offline validation and prints a concise pass/fail summary;
+- the harness covers operator gate, invite sessions, protected importer and recipe-session flows, dataset ask, saved-recipe ask, meal plan, provider budget allow/skip/block behavior, and usage-report visibility;
+- the harness verifies admin usage-report OpenAPI hiding, route exposure assumptions, and the monetization boundary docs without introducing GLM or payment/runtime behavior;
+- docs and tests now anchor the next follow-on, `0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness`, as a separate, disabled-by-default task.
+
+## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
+
+Status: planned.
+
+Goal: Evaluate a future GLM secondary-provider offload path only after the 29/30 baseline is locked, with explicit opt-in and disabled-by-default behavior.

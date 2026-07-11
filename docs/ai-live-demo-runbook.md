@@ -300,6 +300,8 @@ Future paid or time-limited application work should be split into separate tasks
 
 The monetization and entitlement boundary itself is documented in [AI Monetization And Entitlement Boundary ADR](ai-monetization-and-entitlement-boundary-adr.md). That ADR keeps the near-term ads/sponsors model separate from access control and provider budgets.
 
+The locked 29/30 regression baseline is documented in [29/30 Integrated Regression And E2E Harness](ai-29-30-regression-e2e-harness.md). Run `scripts\run-ai-29-30-regression.ps1` to exercise the combined offline baseline; it only performs its optional live-smoke boundary when `AI_29_30_REGRESSION_LIVE=true` and the OpenAI live-test environment is explicitly configured.
+
 The first schema-only step for that future layer is documented in [AI Session Metering Schema](ai-session-metering-schema.md). It defines safe local models for demo sessions, access grants, meter events, quality events, audit events, and budget snapshots. It does not enable runtime auth, public access, production storage, paid access, invite flows, budget enforcement, or live provider calls.
 
 Future recipe-creation interaction work should also remain separately scoped. The 0030A architecture covers alpha requirements extraction, clarification, session memory, and RAG refresh decisions, but does not implement production storage, persistent user memory, auth, paid access, public route exposure, embeddings, vector databases, or a full chat UI.

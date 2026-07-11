@@ -137,6 +137,8 @@ The 0030E session eval harness adds `evals/ai_cookbook/session_cases.yaml` and `
 
 The 0030F hardening pass expands recipe-session regression coverage with equipment-change refresh, excluded-ingredient refresh, finalize-without-draft, missing finalize, repeated finalize, repeated no-refresh, and safe pre-draft follow-up checks. The offline eval baseline now includes 39 cases.
 
+0030J adds an integrated 29/30 regression harness that exercises the combined local AI demo baseline in mock/offline mode by default, with an explicit opt-in live-smoke boundary. It ties together operator gate, invite sessions, protected importer and recipe-session routes, dataset ask, saved-recipe ask, meal plan, provider budget allow/skip/block behavior, usage reporting, route exposure assumptions, and monetization-boundary docs. The next follow-on, `0031A GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness`, must compare against this locked baseline and stay disabled by default until explicitly approved.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:

@@ -19,6 +19,8 @@ The alpha does not include production storage, persistent user memory, auth, pai
 
 If any future task wants to expose a recipe-session path publicly, it must first pass [AI Public Route Exposure Review](ai-public-route-exposure-review.md) and a new proxy/CORS/rate-limit review.
 
+The locked combined 29/30 baseline is covered by [29/30 Integrated Regression And E2E Harness](ai-29-30-regression-e2e-harness.md) and `scripts\run-ai-29-30-regression.ps1`. That harness keeps the baseline offline by default and checks the recipe-session alpha together with operator gate, invite sessions, budget controls, usage reporting, route exposure assumptions, and monetization boundaries before any future secondary-provider offload work.
+
 ## Start The Mock Demo
 
 Run the canonical offline smoke command:

@@ -13,6 +13,7 @@ This review answers the route-exposure questions for the AI sidecar:
 
 The review is documentation-only. It does not change deployment behavior, Cloudflare config, DNS, auth, billing, or storage.
 Monetization decisions are separate from route exposure; ads, sponsors, and affiliate disclosures do not make a route public.
+The 29/30 integrated regression harness reuses this review as a baseline and asserts that the admin usage-report route stays hidden while the rest of the route inventory keeps its recommended exposure category.
 
 ## Current Boundary Summary
 

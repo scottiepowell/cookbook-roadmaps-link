@@ -151,6 +151,8 @@ This ADR is validated by documentation-only tests that check:
 - the ADR does not include payment secrets or live payment-provider implementation instructions;
 - the repo references this ADR title in backlog/status docs.
 
+The 29/30 integrated regression harness also treats this ADR as a locked docs-only boundary and checks that the combined local AI demo baseline does not add payment, ad, sponsor, or affiliate runtime code.
+
 No runtime payment, ad, sponsor, affiliate, or entitlement enforcement code is added by this ADR.
 
 ## Non-Goals

@@ -21,6 +21,7 @@ It also does not enforce monetization or entitlements.
 - `0029D` added the local/private operator gate.
 - `0029E` added the centralized provider budget guard and safe meter events.
 - `0029F` added invite-only demo sessions and safe invite/session views.
+- `0030J` adds the integrated 29/30 regression harness that keeps this report in the offline baseline and checks that it stays safe, hidden from OpenAPI, and separate from monetization or entitlement behavior.
 
 `0029G` reads those process-local models and snapshots and turns them into an operator-friendly summary.
 
