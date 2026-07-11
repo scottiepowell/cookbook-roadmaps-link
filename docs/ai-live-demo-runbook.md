@@ -46,7 +46,7 @@ Live OpenAI browser demo mode with explicit limits:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 900 -LiveTestBudgetCents 25 -Port 8001
 ```
 
-If you prefer explicit local config loading, the live smoke wrapper also accepts `-EnvFile .\.env`. Live mode still stays off unless the file or process environment explicitly sets `OPENAI_ENABLE_LIVE_TESTS=true` and `AI_PROVIDER=openai`.
+If you prefer explicit local config loading, the live smoke wrapper also accepts `-EnvFile .\.env`. Live mode still stays off unless the file or process environment explicitly sets `OPENAI_ENABLE_LIVE_TESTS=true` and `AI_PROVIDER=openai`. The underlying Python live helpers do not auto-read `repo_root/.env`, so passing `-EnvFile` or exporting the variables yourself is required for live mode.
 
 Full local RAG browser demo mode with local provider diagnostics:
 
@@ -135,6 +135,8 @@ Expected live-path signals for the current manual acceptance target:
 If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields. Those diagnostics must not include API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings. The live importer eval wrapper now records the same safe failure categories in its summary output.
 
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was fine for smaller smoke tests, but not for RAG-informed structured drafts like cheesecake. If the provider budget guard is enabled and the budget is too tight, the importer returns a safe budget message instead of a provider call. The live eval harness uses a separate importer-only cap with a 900-token default and a 1200-token ceiling, controlled by `OPENAI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS` or `AI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS`, so importer evals stay distinct from the 300-token non-importer live-eval cap.
+
+The importer scorer is also calibrated separately from short-answer workflows. Valid imperative recipe verbs and short labeled steps such as `Brighten with lemon: Stir in lemon juice and zest.` should pass, while placeholder, rambling, or non-action steps still fail. Importer token thresholds are also separate because structured drafts include recipe JSON plus retrieval metadata.
 
 The local operator gate is opt-in, disabled by default, and documented in [AI Local Operator Access Gate](ai-local-operator-access-gate.md). When enabled, the protected AI workflows require a matching safe fingerprint on `X-AI-Operator-Token` or `Authorization: Bearer ...`, unless the explicit local bypass is turned on for local/TestClient requests. The mock smoke script pins the gate off so its checks stay stable in a dirty shell.
 

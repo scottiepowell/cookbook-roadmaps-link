@@ -1796,6 +1796,19 @@ Completed behavior:
 - the regression harness and live-eval docs continue to treat live checks as explicit opt-in and keep normal validation offline/mock-only;
 - the docs and status pages now describe the importer-specific cap and the safe failure classifications without exposing raw prompts, responses, keys, or local paths.
 
+## 0030M: Live Importer Eval Scoring Calibration
+
+Status: complete.
+
+Goal: Calibrate the importer live eval so good structured recipe drafts pass while the eval still rejects generic, rambling, unsupported, or unsafe importer output.
+
+Completed behavior:
+
+- importer instruction scoring now accepts a broader set of common cooking imperatives and short colon-labeled steps instead of requiring a narrow first-word verb match;
+- importer token thresholds are now workflow-specific, with separate warning and failure limits for structured importer JSON plus retrieval metadata;
+- short-answer workflows still keep the stricter generic token failure threshold by default;
+- safe provider diagnostics from `0030L` remain intact, and the live eval summary still distinguishes provider failures from threshold failures.
+
 ## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
 
 Status: planned.

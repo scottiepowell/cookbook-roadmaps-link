@@ -226,6 +226,78 @@ def test_importer_expected_checks_accept_alias_evidence():
     assert all(check.passed for check in results)
 
 
+def test_importer_expected_checks_accept_sanitized_live_output_shape():
+    payload = {
+        "draft": {
+            "title": "Lemon Herb White Beans with Toast",
+            "description": "Creamy white beans brightened with lemon and served over toast.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "white beans", "quantity": "2", "unit": "cups"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "garlic", "quantity": "2", "unit": "cloves"},
+                {"name": "lemon juice", "quantity": "2", "unit": "tablespoons"},
+                {"name": "lemon zest", "quantity": "1", "unit": "teaspoon"},
+                {"name": "parsley", "quantity": "0.25", "unit": "cup"},
+                {"name": "salt", "quantity": "1", "unit": "teaspoon"},
+                {"name": "pepper", "quantity": "0.5", "unit": "teaspoon"},
+                {"name": "toast", "quantity": "4", "unit": "slices"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "Warm the beans with olive oil until heated through."},
+                {"step": 2, "text": "Saute the garlic until fragrant but not browned."},
+                {"step": 3, "text": "Brighten with lemon: Stir in lemon juice and zest."},
+                {"step": 4, "text": "Finish with herbs and season with salt and pepper."},
+                {"step": 5, "text": "Prepare the toast until the slices are crisp."},
+                {"step": 6, "text": "Serve the beans over toast right away."},
+            ],
+            "notes": "Quantities are estimated for 4 servings because the source notes did not specify exact amounts.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 3},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
+        "warnings": [],
+        "usage": {"input_tokens": 830, "output_tokens": 598, "total_tokens": 1428},
+    }
+
+    results = score_importer(payload, "gpt-5.4-nano")
+    assert all(check.passed for check in results)
+
+
+def test_importer_expected_checks_accept_saute_and_labeled_steps():
+    payload = {
+        "draft": {
+            "title": "Lemon Bean Toasts",
+            "description": "Beans and herbs over toast.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "white beans", "quantity": "2", "unit": "cups"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "garlic", "quantity": "2", "unit": "cloves"},
+                {"name": "lemon juice", "quantity": "1", "unit": "tablespoon"},
+                {"name": "parsley", "quantity": "0.25", "unit": "cup"},
+                {"name": "toast", "quantity": "4", "unit": "slices"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "Saute the garlic in olive oil."},
+                {"step": 2, "text": "Sauté the beans until warm."},
+                {"step": 3, "text": "Brighten with lemon: Stir in the juice and parsley."},
+            ],
+            "notes": "Quantities are estimated for 4 servings.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
+        "warnings": [],
+    }
+
+    results = score_importer(payload, "gpt-5.4-nano")
+    action_check = next(check for check in results if check.name == "instructions should be concise and action-oriented")
+    assert action_check.passed is True
+
+
 def test_importer_expected_checks_reject_generic_and_ungrounded_outputs():
     generic = {
         "draft": {
@@ -259,6 +331,61 @@ def test_importer_expected_checks_reject_generic_and_ungrounded_outputs():
     assert any(
         check.name == "draft should preserve at least two input ingredients across structured fields" and not check.passed
         for check in ungrounded_results
+    )
+
+
+def test_importer_expected_checks_reject_non_action_and_rambling_instructions():
+    non_action = {
+        "draft": {
+            "title": "Lemon Bean Toasts",
+            "description": "Beans over toast.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "white beans", "quantity": "2", "unit": "cups"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "garlic", "quantity": "2", "unit": "cloves"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "The beans are very nice and there is lemon nearby."},
+                {"step": 2, "text": "The garlic and oil are in the pan and everything is descriptive."},
+                {"step": 3, "text": "The toast is on the plate and the dish is ready in theory."},
+            ],
+            "notes": "Quantities are estimated for 4 servings.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
+        "warnings": [],
+    }
+    non_action_results = score_importer(non_action, "gpt-5.4-nano")
+    assert any(
+        check.name == "instructions should be concise and action-oriented" and not check.passed
+        for check in non_action_results
+    )
+
+    rambling = {
+        **non_action,
+        "draft": {
+            **non_action["draft"],
+            "instructions": [
+                {
+                    "step": 1,
+                    "text": (
+                        "Warm the beans slowly while thinking through every possible garnish option, texture adjustment, "
+                        "serving idea, presentation detail, backup seasoning choice, plating variation, and extra texture "
+                        "consideration before deciding how to continue."
+                    ),
+                },
+                {"step": 2, "text": "Stir in the garlic and oil."},
+                {"step": 3, "text": "Serve on toast."},
+            ],
+        },
+    }
+    rambling_results = score_importer(rambling, "gpt-5.4-nano")
+    assert any(
+        check.name == "instructions should be concise and action-oriented" and not check.passed
+        for check in rambling_results
     )
 
 
@@ -569,7 +696,7 @@ def test_threshold_warnings_and_failures_are_generated():
             "overall_passed": True,
             "checks": [],
             "latency_ms": 8000,
-            "total_tokens": 950,
+            "total_tokens": 1600,
         },
         {
             "workflow": "dataset_ask",
@@ -585,12 +712,92 @@ def test_threshold_warnings_and_failures_are_generated():
     assert any("importer tokens" in warning for warning in thresholds["warnings"])
     assert any("dataset_ask latency" in failure for failure in thresholds["failures"])
     assert any("dataset_ask tokens" in failure for failure in thresholds["failures"])
+    assert not any("importer tokens" in failure for failure in thresholds["failures"])
 
     updated = apply_threshold_checks(records)
     assert updated[0]["overall_passed"] is True
     assert updated[0]["threshold_warnings"]
     assert updated[1]["overall_passed"] is False
     assert any(not check["passed"] for check in updated[1]["checks"])
+
+
+def test_importer_thresholds_allow_observed_live_token_usage_by_default():
+    records = [
+        {
+            "workflow": "importer",
+            "overall_passed": True,
+            "checks": [],
+            "latency_ms": 1000,
+            "total_tokens": 1428,
+        }
+    ]
+
+    thresholds = evaluate_thresholds(records)
+    assert thresholds["failures"] == []
+
+    updated = apply_threshold_checks(records)
+    assert updated[0]["overall_passed"] is True
+    assert updated[0]["threshold_warnings"] == []
+
+
+def test_importer_thresholds_fail_above_importer_specific_limit():
+    records = [
+        {
+            "workflow": "importer",
+            "overall_passed": True,
+            "checks": [],
+            "latency_ms": 1000,
+            "total_tokens": 1801,
+        }
+    ]
+
+    thresholds = evaluate_thresholds(records)
+    assert any("importer tokens 1801 exceed failure threshold 1800" in failure for failure in thresholds["failures"])
+
+    updated = apply_threshold_checks(records)
+    assert updated[0]["overall_passed"] is False
+    assert any(check["name"] == "workflow token usage below failure threshold" and not check["passed"] for check in updated[0]["checks"])
+
+
+def test_importer_and_generic_token_thresholds_respect_env_overrides():
+    records = [
+        {
+            "workflow": "importer",
+            "overall_passed": True,
+            "checks": [],
+            "latency_ms": 1000,
+            "total_tokens": 1501,
+        },
+        {
+            "workflow": "dataset_ask",
+            "overall_passed": True,
+            "checks": [],
+            "latency_ms": 1000,
+            "total_tokens": 1201,
+        },
+    ]
+
+    thresholds = evaluate_thresholds(
+        records,
+        env={
+            "IMPORTER_TOKENS_WARN": "1400",
+            "IMPORTER_TOKENS_FAIL": "1500",
+            "WORKFLOW_TOKENS_FAIL": "1300",
+        },
+    )
+    assert any("importer tokens 1501 exceed failure threshold 1500" in failure for failure in thresholds["failures"])
+    assert not any("dataset_ask tokens 1201 exceed failure threshold" in failure for failure in thresholds["failures"])
+
+    updated = apply_threshold_checks(
+        records,
+        env={
+            "IMPORTER_TOKENS_WARN": "1400",
+            "IMPORTER_TOKENS_FAIL": "1500",
+            "WORKFLOW_TOKENS_FAIL": "1300",
+        },
+    )
+    assert updated[0]["overall_passed"] is False
+    assert updated[1]["overall_passed"] is True
 
 
 def test_generated_demo_dataset_suppresses_optional_file_warnings(monkeypatch):

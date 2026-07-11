@@ -91,6 +91,7 @@ Skip/fail behavior:
 - missing API key: exits `0` with a skip message and no live calls;
 - `OPENAI_ENABLE_LIVE_TESTS=false` in `.env`: exits `0` with the same skip behavior;
 - `AI_PROVIDER=mock` in `.env`: exits `0` with a skip message until the file is edited to `AI_PROVIDER=openai`;
+- the Python smoke helpers do not auto-read `repo_root/.env`; use `-EnvFile` or export variables explicitly so live mode stays opt-in;
 - missing, invalid, or greater-than-25-cent budget: exits non-zero before live calls;
 - `AI_MAX_OUTPUT_TOKENS` above `300`: exits non-zero before live calls;
 - unavailable model, rate limit, quota, or provider error: exits non-zero with a clear provider failure.

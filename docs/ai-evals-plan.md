@@ -143,6 +143,8 @@ The 0030F hardening pass expands recipe-session regression coverage with equipme
 
 0030L updates the live eval path with an importer-only output cap and sanitized provider diagnostics. The importer workflow can use a separate 900-token default with a 1200-token ceiling so RAG-informed drafts are not constrained by the 300-token non-importer live-eval guard, and importer failures now surface safe `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields when available.
 
+0030M calibrates importer live-eval scoring so good structured drafts do not false-fail. The importer instruction scorer now accepts a broader set of cooking imperatives and short colon-labeled steps, while rambling or non-action instructions still fail. Importer token thresholds are now workflow-specific because structured recipe JSON plus retrieval metadata is naturally larger than short-answer workflows, but Ask My Cookbook, dataset Ask/RAG, and meal-plan checks stay on the stricter generic threshold by default.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:

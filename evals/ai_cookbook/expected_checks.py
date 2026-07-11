@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
@@ -10,7 +11,8 @@ TOTAL_LATENCY_MS_WARN = 15000
 IMPORTER_LATENCY_MS_WARN = 7000
 WORKFLOW_LATENCY_MS_FAIL = 10000
 TOTAL_TOKENS_WARN = 2500
-IMPORTER_TOKENS_WARN = 900
+IMPORTER_TOKENS_WARN = 1500
+IMPORTER_TOKENS_FAIL = 1800
 WORKFLOW_TOKENS_FAIL = 1200
 COST_SOURCE_ENV_OVERRIDE = "env_override"
 COST_SOURCE_DEFAULT_MODEL_RATE = "default_model_rate"
@@ -58,21 +60,37 @@ GENERIC_TITLES = ("mock-value", "recipe", "untitled", "dish", "meal")
 GENERIC_FIELD_VALUES = (*GENERIC_TITLES, "mock value", "n/a", "none")
 ACTION_VERBS = (
     "add",
+    "adjust",
     "bake",
     "boil",
+    "brighten",
     "combine",
     "cook",
+    "cover",
+    "drizzle",
     "finish",
+    "fold",
+    "garnish",
     "heat",
+    "mash",
     "mix",
+    "prepare",
+    "remove",
+    "rest",
+    "saute",
+    "sauté",
+    "season",
     "serve",
     "simmer",
     "spoon",
+    "sprinkle",
     "stir",
     "toast",
     "toss",
+    "turn",
     "warm",
 )
+IMPORTER_MAX_INSTRUCTION_WORDS = 24
 
 
 @dataclass(frozen=True)
@@ -174,8 +192,8 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
         _check(
             "instructions should be concise and action-oriented",
             bool(instructions)
-            and all(len(instruction.split()) <= 24 for instruction in instructions)
-            and all(_starts_with_action_verb(instruction) for instruction in instructions),
+            and all(_instruction_word_count(instruction) <= IMPORTER_MAX_INSTRUCTION_WORDS for instruction in instructions)
+            and all(_instruction_is_action_oriented(instruction) for instruction in instructions),
         ),
         _check("instructions should have enough step depth", len(instructions) >= 3),
         _check(
@@ -363,12 +381,13 @@ def apply_threshold_checks(records: list[dict[str, Any]], env: dict[str, str] | 
                     f"{latency}ms > {thresholds['WORKFLOW_LATENCY_MS_FAIL']}ms",
                 ).to_dict()
             )
-        if tokens > thresholds["WORKFLOW_TOKENS_FAIL"]:
+        token_failure_threshold = _workflow_token_failure_threshold(workflow, thresholds)
+        if tokens > token_failure_threshold:
             checks.append(
                 CheckResult(
                     "workflow token usage below failure threshold",
                     False,
-                    f"{tokens} > {thresholds['WORKFLOW_TOKENS_FAIL']}",
+                    f"{tokens} > {token_failure_threshold}",
                 ).to_dict()
             )
         copy["checks"] = checks
@@ -395,8 +414,9 @@ def evaluate_thresholds(records: list[dict[str, Any]], env: dict[str, str] | Non
         warnings.extend(_workflow_threshold_warnings(workflow, latency, tokens, thresholds))
         if latency > thresholds["WORKFLOW_LATENCY_MS_FAIL"]:
             failures.append(f"{workflow} latency {latency}ms exceeds failure threshold {thresholds['WORKFLOW_LATENCY_MS_FAIL']}ms")
-        if tokens > thresholds["WORKFLOW_TOKENS_FAIL"]:
-            failures.append(f"{workflow} tokens {tokens} exceed failure threshold {thresholds['WORKFLOW_TOKENS_FAIL']}")
+        token_failure_threshold = _workflow_token_failure_threshold(workflow, thresholds)
+        if tokens > token_failure_threshold:
+            failures.append(f"{workflow} tokens {tokens} exceed failure threshold {token_failure_threshold}")
     return {"warnings": warnings, "failures": failures}
 
 
@@ -530,9 +550,43 @@ def _instruction_texts(instructions: list[Any]) -> list[str]:
     return [text for text in texts if text]
 
 
-def _starts_with_action_verb(text: str) -> bool:
-    first_word = text.strip().split(" ", 1)[0].lower().strip(".,:;!")
-    return first_word in ACTION_VERBS
+def _instruction_is_action_oriented(text: str) -> bool:
+    if not text.strip():
+        return False
+    for segment in _instruction_segments(text):
+        words = _normalized_words(segment)
+        if words and words[0] in _normalized_action_verbs():
+            return True
+    return False
+
+
+def _instruction_segments(text: str) -> list[str]:
+    parts = [text.strip()]
+    if ":" in text:
+        label, remainder = text.split(":", 1)
+        parts.append(label.strip())
+        parts.append(remainder.strip())
+    return [part for part in parts if part]
+
+
+def _instruction_word_count(text: str) -> int:
+    candidates = _instruction_segments(text)
+    return max((_word_count(candidate) for candidate in candidates), default=0)
+
+
+def _normalized_words(text: str) -> list[str]:
+    normalized = unicodedata.normalize("NFKD", text)
+    without_marks = "".join(char for char in normalized if not unicodedata.combining(char))
+    return re.findall(r"[a-z]+", without_marks.lower())
+
+
+def _normalized_action_verbs() -> set[str]:
+    return {_normalize_word(verb) for verb in ACTION_VERBS}
+
+
+def _normalize_word(word: str) -> str:
+    normalized = unicodedata.normalize("NFKD", word)
+    return "".join(char for char in normalized if not unicodedata.combining(char)).lower()
 
 
 def _contains_any(text: str, terms: tuple[str, ...]) -> bool:
@@ -551,6 +605,7 @@ def _threshold_values(env: dict[str, str] | None = None) -> dict[str, int]:
         "WORKFLOW_LATENCY_MS_FAIL": WORKFLOW_LATENCY_MS_FAIL,
         "TOTAL_TOKENS_WARN": TOTAL_TOKENS_WARN,
         "IMPORTER_TOKENS_WARN": IMPORTER_TOKENS_WARN,
+        "IMPORTER_TOKENS_FAIL": IMPORTER_TOKENS_FAIL,
         "WORKFLOW_TOKENS_FAIL": WORKFLOW_TOKENS_FAIL,
     }
     return {name: _int_setting(source, name, default) for name, default in defaults.items()}
@@ -570,3 +625,9 @@ def _workflow_threshold_warnings(workflow: str, latency: int, tokens: int, thres
     if workflow == "importer" and tokens > thresholds["IMPORTER_TOKENS_WARN"]:
         warnings.append(f"importer tokens {tokens} exceed warning threshold {thresholds['IMPORTER_TOKENS_WARN']}")
     return warnings
+
+
+def _workflow_token_failure_threshold(workflow: str, thresholds: dict[str, int]) -> int:
+    if workflow == "importer":
+        return thresholds["IMPORTER_TOKENS_FAIL"]
+    return thresholds["WORKFLOW_TOKENS_FAIL"]

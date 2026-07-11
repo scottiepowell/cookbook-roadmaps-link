@@ -57,7 +57,8 @@ if ($env:AI_PROVIDER -ne "openai") {
 
 if ([string]::IsNullOrWhiteSpace($env:OPENAI_API_KEY)) {
     Write-Host "Live smoke skipped: OPENAI_API_KEY is not present in the process environment."
-    Write-Host "The Python smoke script can also read an ignored local .env file."
+    Write-Host "Use -EnvFile .\\.env or set the process environment explicitly."
+    exit 0
 }
 
 if ([string]::IsNullOrWhiteSpace($env:OPENAI_LIVE_TEST_BUDGET_CENTS)) {

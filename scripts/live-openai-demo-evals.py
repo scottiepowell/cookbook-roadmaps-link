@@ -35,7 +35,6 @@ class GuardResult:
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
-    _load_dotenv(repo_root / ".env")
     sys.path.insert(0, str(repo_root / "ai-api"))
     sys.path.insert(0, str(repo_root))
     os.chdir(repo_root)
@@ -533,20 +532,6 @@ def _classify_live_eval_failure(
         "provider_error_type": None,
         "safe_error_summary": None,
     }
-
-
-def _load_dotenv(path: Path) -> None:
-    if not path.exists():
-        return
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        if key and key not in os.environ:
-            os.environ[key] = value.strip().strip('"').strip("'")
-
 
 def _safe_error(exc: BaseException) -> str:
     text = str(exc)

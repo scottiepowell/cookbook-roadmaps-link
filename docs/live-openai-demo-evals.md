@@ -63,7 +63,7 @@ The wrapper can also load an ignored local `.env` file explicitly:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-evals.ps1 -EnvFile .\.env
 ```
 
-Process environment values still win over `.env` values. If `OPENAI_ENABLE_LIVE_TESTS=false` remains in the file, the wrapper still skips cleanly and prints the required-settings message instead of making live calls. If `AI_PROVIDER=mock` remains in the file, the wrapper also skips until the file is edited to `AI_PROVIDER=openai`.
+Process environment values still win over `.env` values. If `OPENAI_ENABLE_LIVE_TESTS=false` remains in the file, the wrapper still skips cleanly and prints the required-settings message instead of making live calls. If `AI_PROVIDER=mock` remains in the file, the wrapper also skips until the file is edited to `AI_PROVIDER=openai`. The Python live-eval helper does not auto-read `repo_root/.env`, so live mode stays explicit unless you pass `-EnvFile` or export the variables yourself.
 
 Budget must be between 1 and 25 cents. `AI_MAX_OUTPUT_TOKENS` must be between 1 and 300 for eval runs.
 
@@ -113,6 +113,8 @@ The default rates are intentionally kept in one source-code table in `evals/ai_c
 
 Importer checks include schema shape, non-empty title, ingredients, instructions, provider/model, warning count, non-placeholder title, at least two preserved input ingredients across structured fields, ingredient-grounded descriptions when descriptions are present, missing-quantity or unspecified-detail notes, concise action-oriented instructions, generic-placeholder avoidance, and unrelated-food avoidance. Ingredient evidence uses canonical alias groups, so useful outputs can pass when ingredients are preserved in the title, ingredient list, or instructions even if the description is absent or worded differently.
 
+The instruction scorer is calibrated for structured recipe drafts rather than short answer text. Common imperative cooking verbs such as `saute`, `sauté`, `prepare`, `brighten`, `season`, `drizzle`, `mash`, `fold`, and `garnish` are accepted, and short step labels before a colon can still pass when either the label or the post-colon phrase is action-oriented. Empty, placeholder, rambling, or non-action instructions still fail.
+
 Importer failures now also carry sanitized provider diagnostics when available. The summary and result records can include a failure category plus `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields, but they never expose raw prompts, raw responses, API keys, auth headers, or `.env` values.
 
 Ask My Cookbook checks that the answer or citations include `Lemon Herb White Beans`, citations are present, retrieved count is positive, the answer is concise, cited recipe titles appear in the answer, and no known saved-recipe title outside retrieved citations is mentioned.
@@ -131,8 +133,11 @@ The harness applies initial quality thresholds after workflow checks. Warning th
 | `IMPORTER_LATENCY_MS_WARN` | 7000 | warning |
 | `WORKFLOW_LATENCY_MS_FAIL` | 10000 | failed check |
 | `TOTAL_TOKENS_WARN` | 2500 | warning |
-| `IMPORTER_TOKENS_WARN` | 900 | warning |
+| `IMPORTER_TOKENS_WARN` | 1500 | warning |
+| `IMPORTER_TOKENS_FAIL` | 1800 | failed check |
 | `WORKFLOW_TOKENS_FAIL` | 1200 | failed check |
+
+Importer token thresholds are workflow-specific because the importer returns structured recipe JSON plus retrieval metadata, which is naturally larger than short answer workflows. Ask My Cookbook, dataset Ask/RAG, and meal-plan workflows still use the stricter generic `WORKFLOW_TOKENS_FAIL` limit unless explicitly overridden.
 
 Override these with environment variables when tuning live eval strictness.
 

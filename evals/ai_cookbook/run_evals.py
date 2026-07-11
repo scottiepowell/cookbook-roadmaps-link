@@ -99,6 +99,7 @@ def _init_debug_log(repo_root: Path) -> Path:
 def _log_progress(path: Path, message: str) -> None:
     line = f"{time.strftime('%Y-%m-%dT%H:%M:%S')} {message}"
     print(f"EVAL: {message}", flush=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(line + "\n")
 

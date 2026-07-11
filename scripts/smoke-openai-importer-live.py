@@ -26,7 +26,6 @@ class GuardResult:
 
 def main(argv: list[str] | None = None) -> int:
     repo_root = Path(__file__).resolve().parents[1]
-    _load_dotenv(repo_root / ".env")
     sys.path.insert(0, str(repo_root / "ai-api"))
     sys.path.insert(0, str(repo_root))
     os.chdir(repo_root)
@@ -201,20 +200,6 @@ def _fail_safely(message: str) -> int:
     _assert_no_secret_leaks(message)
     print(f"FAIL: {message}", file=sys.stderr)
     return 1
-
-
-def _load_dotenv(path: Path) -> None:
-    if not path.exists():
-        return
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        if key and key not in os.environ:
-            os.environ[key] = value.strip().strip('"').strip("'")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
