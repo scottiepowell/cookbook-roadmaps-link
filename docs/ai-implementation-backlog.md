@@ -1809,6 +1809,20 @@ Completed behavior:
 - short-answer workflows still keep the stricter generic token failure threshold by default;
 - safe provider diagnostics from `0030L` remain intact, and the live eval summary still distinguishes provider failures from threshold failures.
 
+## 0030N: Importer Instruction Conciseness Scorer Refinement
+
+Status: complete.
+
+Goal: Remove the remaining brittle importer instruction-length rule so realistic labeled recipe steps pass without weakening the live eval into a no-op.
+
+Completed behavior:
+
+- importer instruction scoring no longer requires every step to be 24 words or fewer;
+- the scorer now uses a high single-step cap plus average-length and compact-step coverage checks;
+- short colon-labeled steps remain fair, but labels are not a loophole for rambling instructions;
+- failure details now report safe metrics such as `max_words`, `average_words`, `compact_steps`, and `action_oriented`;
+- importer token thresholds remain unchanged from `0030M`.
+
 ## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
 
 Status: planned.

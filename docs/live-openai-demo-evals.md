@@ -123,6 +123,8 @@ Dataset Ask/RAG checks that the answer or citations include `Tomato Pasta Skille
 
 Meal Planner checks that the plan has at least one meal, selected recipe IDs come from retrieved candidates, the selected meal title matches the cited recipe title, the reason refers to the user preference, citations are present, no invented recipe IDs are used, and no invented extra meals are added.
 
+For realistic labeled recipe steps, importer conciseness is now judged with aggregate bounds rather than a brittle per-step 24-word cap. Any one step above 45 words fails, the average step length must stay reasonable, and most steps still need to be compact. Failure details report only safe metrics such as `max_words`, `average_words`, `compact_steps`, and `action_oriented`.
+
 ## Thresholds
 
 The harness applies initial quality thresholds after workflow checks. Warning thresholds do not fail the run; failure thresholds add failed checks to affected workflow records.

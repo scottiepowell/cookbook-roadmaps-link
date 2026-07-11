@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 import re
 import unicodedata
@@ -90,7 +91,20 @@ ACTION_VERBS = (
     "turn",
     "warm",
 )
-IMPORTER_MAX_INSTRUCTION_WORDS = 24
+IMPORTER_MAX_STEP_WORDS_FAIL = 45
+IMPORTER_AVERAGE_STEP_WORDS_MAX = 28
+IMPORTER_COMPACT_STEP_WORDS_MAX = 32
+IMPORTER_MIN_COMPACT_STEP_RATIO = 0.7
+IMPORTER_COMPACT_LONG_STEP_ALLOWANCE = 2
+IMPORTER_PLACEHOLDER_INSTRUCTION_KEYS = (
+    "cook until done",
+    "serve and enjoy",
+    "mix everything together",
+    "prepare as desired",
+    "follow package directions",
+    "add ingredients and cook",
+    "combine ingredients and serve",
+)
 
 
 @dataclass(frozen=True)
@@ -151,7 +165,8 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
     servings = draft.get("servings")
     raw_ingredients = draft.get("ingredients") or []
     ingredients = _ingredient_names(draft.get("ingredients") or [])
-    instructions = _instruction_texts(draft.get("instructions") or [])
+    instruction_entries = _instruction_entries(draft.get("instructions") or [])
+    instructions = [instruction for instruction in instruction_entries if instruction]
     citations = payload.get("citations") or []
     retrieval = payload.get("retrieval") if isinstance(payload.get("retrieval"), dict) else {}
     field_texts = [title, description, *ingredients, *instructions]
@@ -161,6 +176,7 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
     generic_values = _generic_field_values([title, *ingredients, *instructions])
     quantity_count = _ingredient_quantity_count(raw_ingredients)
     all_text = " ".join(field_texts + [notes]).lower()
+    instruction_quality = _evaluate_importer_instruction_quality(instruction_entries)
     return [
         _check("response parses as expected schema", bool(draft)),
         _check("title is non-empty", bool(title)),
@@ -191,9 +207,8 @@ def score_importer(payload: dict[str, Any], expected_model: str) -> list[CheckRe
         ),
         _check(
             "instructions should be concise and action-oriented",
-            bool(instructions)
-            and all(_instruction_word_count(instruction) <= IMPORTER_MAX_INSTRUCTION_WORDS for instruction in instructions)
-            and all(_instruction_is_action_oriented(instruction) for instruction in instructions),
+            instruction_quality.passed,
+            instruction_quality.detail,
         ),
         _check("instructions should have enough step depth", len(instructions) >= 3),
         _check(
@@ -541,13 +556,17 @@ def _ingredient_quantity_count(ingredients: list[Any]) -> int:
 
 
 def _instruction_texts(instructions: list[Any]) -> list[str]:
+    return [text for text in _instruction_entries(instructions) if text]
+
+
+def _instruction_entries(instructions: list[Any]) -> list[str]:
     texts = []
     for instruction in instructions:
         if isinstance(instruction, dict):
             texts.append(str(instruction.get("text") or "").strip())
         else:
             texts.append(str(instruction).strip())
-    return [text for text in texts if text]
+    return texts
 
 
 def _instruction_is_action_oriented(text: str) -> bool:
@@ -570,8 +589,7 @@ def _instruction_segments(text: str) -> list[str]:
 
 
 def _instruction_word_count(text: str) -> int:
-    candidates = _instruction_segments(text)
-    return max((_word_count(candidate) for candidate in candidates), default=0)
+    return _word_count(text)
 
 
 def _normalized_words(text: str) -> list[str]:
@@ -587,6 +605,72 @@ def _normalized_action_verbs() -> set[str]:
 def _normalize_word(word: str) -> str:
     normalized = unicodedata.normalize("NFKD", word)
     return "".join(char for char in normalized if not unicodedata.combining(char)).lower()
+
+
+def _evaluate_importer_instruction_quality(instructions: list[str]) -> CheckResult:
+    total_steps = len(instructions)
+    non_empty_steps = [instruction for instruction in instructions if instruction.strip()]
+    empty_steps = total_steps - len(non_empty_steps)
+    word_counts = [_instruction_word_count(instruction) for instruction in non_empty_steps]
+    max_words = max(word_counts, default=0)
+    average_words = (sum(word_counts) / len(word_counts)) if word_counts else 0.0
+    compact_steps = sum(1 for count in word_counts if count <= IMPORTER_COMPACT_STEP_WORDS_MAX)
+    action_oriented_steps = sum(1 for instruction in non_empty_steps if _instruction_is_action_oriented(instruction))
+    placeholder_steps = sum(1 for instruction in non_empty_steps if _instruction_is_placeholder(instruction))
+    compact_goal = math.ceil(len(non_empty_steps) * IMPORTER_MIN_COMPACT_STEP_RATIO) if non_empty_steps else 0
+    compact_ok = (
+        bool(non_empty_steps)
+        and (
+            compact_steps >= compact_goal
+            or (
+                len(non_empty_steps) >= 5
+                and compact_steps >= len(non_empty_steps) - IMPORTER_COMPACT_LONG_STEP_ALLOWANCE
+            )
+        )
+    )
+    passed = (
+        bool(non_empty_steps)
+        and empty_steps == 0
+        and placeholder_steps == 0
+        and action_oriented_steps == len(non_empty_steps)
+        and max_words <= IMPORTER_MAX_STEP_WORDS_FAIL
+        and average_words <= IMPORTER_AVERAGE_STEP_WORDS_MAX
+        and compact_ok
+    )
+    detail_parts = [
+        f"max_words={max_words}",
+        f"average_words={_format_metric_number(average_words)}",
+        f"compact_steps={compact_steps}/{len(non_empty_steps)}",
+        f"action_oriented={action_oriented_steps}/{len(non_empty_steps)}",
+    ]
+    if empty_steps:
+        detail_parts.append(f"empty_steps={empty_steps}")
+    if placeholder_steps:
+        detail_parts.append(f"placeholder_steps={placeholder_steps}")
+    return CheckResult(
+        name="instructions should be concise and action-oriented",
+        passed=passed,
+        detail=" ".join(detail_parts),
+    )
+
+
+def _instruction_is_placeholder(text: str) -> bool:
+    normalized = _normalized_instruction_key(text)
+    return normalized in IMPORTER_PLACEHOLDER_INSTRUCTION_KEYS
+
+
+def _normalized_instruction_key(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text)
+    without_marks = "".join(char for char in normalized if not unicodedata.combining(char))
+    collapsed = re.sub(r"[^a-z0-9]+", " ", without_marks.lower())
+    return " ".join(collapsed.split())
+
+
+def _format_metric_number(value: float) -> str:
+    rounded = round(value, 1)
+    if rounded.is_integer():
+        return str(int(rounded))
+    return f"{rounded:.1f}"
 
 
 def _contains_any(text: str, terms: tuple[str, ...]) -> bool:

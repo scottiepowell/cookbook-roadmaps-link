@@ -145,6 +145,8 @@ The 0030F hardening pass expands recipe-session regression coverage with equipme
 
 0030M calibrates importer live-eval scoring so good structured drafts do not false-fail. The importer instruction scorer now accepts a broader set of cooking imperatives and short colon-labeled steps, while rambling or non-action instructions still fail. Importer token thresholds are now workflow-specific because structured recipe JSON plus retrieval metadata is naturally larger than short-answer workflows, but Ask My Cookbook, dataset Ask/RAG, and meal-plan checks stay on the stricter generic threshold by default.
 
+0030N refines the importer instruction conciseness rule again so realistic labeled recipe steps do not false-fail. The scorer now uses a high per-step cap plus average-length and compact-step coverage checks, and its failure detail reports safe metrics such as max words, average words, compact-step counts, and action-oriented step counts without exposing raw provider content.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:

@@ -138,6 +138,8 @@ The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 
 
 The importer scorer is also calibrated separately from short-answer workflows. Valid imperative recipe verbs and short labeled steps such as `Brighten with lemon: Stir in lemon juice and zest.` should pass, while placeholder, rambling, or non-action steps still fail. Importer token thresholds are also separate because structured drafts include recipe JSON plus retrieval metadata.
 
+The conciseness rule no longer requires every importer step to be extremely short. Instead it uses a high single-step cap plus average-length and compact-step coverage checks so realistic labeled steps can pass without letting rambling instructions through.
+
 The local operator gate is opt-in, disabled by default, and documented in [AI Local Operator Access Gate](ai-local-operator-access-gate.md). When enabled, the protected AI workflows require a matching safe fingerprint on `X-AI-Operator-Token` or `Authorization: Bearer ...`, unless the explicit local bypass is turned on for local/TestClient requests. The mock smoke script pins the gate off so its checks stay stable in a dirty shell.
 
 ## Manual Live RAG Capture Matrix
