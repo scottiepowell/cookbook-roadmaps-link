@@ -69,7 +69,11 @@ The endpoint is protected by the local operator gate when the gate is enabled. W
 
 The endpoint returns safe JSON only. It does not expose raw invite/session tokens, prompts, provider responses, request bodies, API keys, stack traces, or local paths.
 
+The route is hidden from OpenAPI and should remain private forever unless the app gains a separate, intentionally public admin design. That is not part of this prototype.
+
 The demo UI also shows a compact local usage-report card at `/demo`.
+
+Route exposure review for future public access lives in [AI Public Route Exposure Review](ai-public-route-exposure-review.md).
 
 ## Threshold Logic
 

@@ -84,6 +84,8 @@ Invite-only demo sessions are documented in [AI Invite-Only Demo Session Flow](a
 
 The local/operator usage report prototype is documented in [AI Admin Usage Report Prototype](ai-admin-usage-report-prototype.md). The demo UI shows a compact report card with active session counts, provider-call status counts, estimated spend, and threshold warnings. The JSON endpoint is local/operator-only when the operator gate is enabled.
 
+Future public exposure should follow [AI Public Route Exposure Review](ai-public-route-exposure-review.md) before any `/ai/*` path is routed at the edge.
+
 ## Importer-Only Diagnostic
 
 Prefer the dedicated live importer smoke script:

@@ -17,6 +17,8 @@ Normal validation uses:
 
 The alpha does not include production storage, persistent user memory, auth, paid access, public route exposure, Cloudflare changes, Redis, Postgres, SQLite session persistence, vector databases, embeddings, invite flows, provider budget enforcement, or a full chat UI.
 
+If any future task wants to expose a recipe-session path publicly, it must first pass [AI Public Route Exposure Review](ai-public-route-exposure-review.md) and a new proxy/CORS/rate-limit review.
+
 ## Start The Mock Demo
 
 Run the canonical offline smoke command:

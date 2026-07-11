@@ -113,6 +113,13 @@ The tests verify:
 - threshold warnings fire for near-exhaustion, blocked provider decisions, quality failures, and misconfiguration patterns;
 - the `/ai/admin/usage-report` endpoint remains protected by the operator gate when enabled and does not expose raw invite/session tokens.
 
+0029H adds deterministic route-exposure review tests that remain offline and safe. The checks verify:
+
+- the admin usage-report route stays hidden from OpenAPI;
+- the route inventory classifies public, local, invite, operator, internal, and never-public routes consistently;
+- the OpenAPI schema and route inventory remain free of raw token, prompt, response, local path, and credential-like strings;
+- invite-only workflows stay disabled by default while protected routes continue to be gate and budget aware.
+
 The first 0030B scaffold covers these as deterministic unit tests in `ai-api/tests/test_recipe_requirements.py` and `ai-api/tests/test_recipe_session.py`. Future API and E2E cases should build on those helpers rather than replacing the existing single-request importer tests.
 
 The 0030C alpha API layer adds `ai-api/tests/test_recipe_session_api.py`, which exercises the local recipe-session start/message/get/finalize endpoints with generated dataset fixtures and the mock provider. These tests remain offline and should not require live OpenAI, real `recipe-dataset/`, browser automation, or production storage.

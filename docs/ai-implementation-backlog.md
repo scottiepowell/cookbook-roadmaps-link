@@ -1712,9 +1712,15 @@ Implemented as a safe local/operator usage report in `ai-api/app/ai_usage_report
 
 ## 0029H: Public Route Exposure Review
 
-Status: planned.
+Status: complete.
 
 Goal: Review Cloudflare, reverse proxy, CORS, and route exposure before any public live provider-backed AI access.
+
+Completed behavior:
+
+- the AI route surface is inventoried with current exposure, OpenAPI visibility, provider-call risk, gate/invite/budget controls, and recommended exposure category;
+- the admin usage-report route remains hidden from OpenAPI and is treated as never-public;
+- the review documents proxy and CORS staging requirements, go/no-go checklist items, and abuse/rate-limit placeholders without changing deployment config.
 
 ## 0029I: Paid Access Integration ADR
 

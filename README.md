@@ -138,6 +138,8 @@ Production access architecture is proposed, not implemented. Before any public l
 
 The first local/private access guardrail now exists in [AI Local Operator Access Gate](docs/ai-local-operator-access-gate.md). It is disabled by default, protects importer/dataset ask/recipe-session/meal-plan workflows when enabled, and compares safe fingerprints on `X-AI-Operator-Token` or `Authorization: Bearer ...` without echoing raw tokens or local paths. The provider budget guard in [AI Provider Budget Enforcement](docs/ai-provider-budget-enforcement.md) runs after the gate and blocks live provider calls when the demo is globally disabled, caps are exceeded, or the live budget configuration is invalid.
 
+The route exposure boundary is reviewed in [AI Public Route Exposure Review](docs/ai-public-route-exposure-review.md). It documents which routes can ever be public, which must stay private, and which proxy and CORS controls are required before any public exposure work.
+
 ## Architecture
 
 GitHub Actions assumes a repository-scoped AWS role through OIDC and deploys Docker Compose through Systems Manager. Vanilla Cookbook listens only on EC2 loopback; `cloudflared` creates the outbound public route.

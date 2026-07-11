@@ -46,6 +46,8 @@ The decision object is safe to serialize and does not include raw tokens, API ke
 
 `0029G` protects the local/operator usage-report endpoint with the same gate when the gate is enabled, so the report stays local/private and does not become a production admin surface.
 
+`0029H` reviews the route surface before any public exposure and recommends keeping `/ai/admin/*`, `/ai/invite/*`, and `/ai/recipe-session/*` private unless a future task explicitly stages them behind proxy and CORS controls.
+
 `0029F` adds invite-only demo sessions as a separate local/private boundary. When invite sessions are enabled, protected workflows can also accept a short-lived `X-AI-Demo-Session-Token` header for a redeemed invite session. Invite sessions are still not production auth, and they continue to sit behind the same local/private demo boundary.
 
 ## Verification Rules

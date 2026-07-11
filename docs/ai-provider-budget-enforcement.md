@@ -20,6 +20,8 @@ The goal is simple: allow offline/mock flows by default, but stop live provider 
 
 `0029G` reads the same safe tracker snapshots and meter events when building the local/operator usage report, so the report can summarize allowed, blocked, skipped, and failed decisions without exposing raw prompts or provider responses.
 
+`0029H` does not change the guard. It documents which routes may ever be public and keeps provider-backed routes behind the proxy, CORS, gate, and budget review boundary.
+
 ## Relationship To The Operator Gate
 
 `0029D` adds the local/private operator gate. That gate decides whether the workflow may enter the protected demo surface at all.

@@ -22,6 +22,7 @@ The main use case is local acceptance and review:
 - `0029D` adds the local operator gate. When it is enabled, grant/session creation and revocation can be protected by the same operator token flow.
 - `0029E` adds provider-call budget enforcement. Invite demo sessions reuse that guard so a demo session can carry its own workflow and cost limits.
 - `0029G` adds a local/operator usage report that can safely summarize invite grants, sessions, meter events, budget snapshots, and threshold warnings from the same process-local state.
+- `0029H` keeps the invite surface under review and recommends that invite redemption, invite grants, and recipe-session routes stay private until a future exposure task explicitly stages them.
 
 Invite-only demo sessions do not replace the operator gate. They are a separate local/private access path that can be used when the operator wants short-lived, workflow-limited demo access.
 
