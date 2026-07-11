@@ -46,6 +46,8 @@ Live OpenAI browser demo mode with explicit limits:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 900 -LiveTestBudgetCents 25 -Port 8001
 ```
 
+If you prefer explicit local config loading, the live smoke wrapper also accepts `-EnvFile .\.env`. Live mode still stays off unless the file or process environment explicitly sets `OPENAI_ENABLE_LIVE_TESTS=true` and `AI_PROVIDER=openai`.
+
 Full local RAG browser demo mode with local provider diagnostics:
 
 ```powershell
@@ -62,6 +64,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 ```
 
 `OPENAI_API_KEY` must already exist in the environment for `-Provider openai`. The start script does not prompt for it and does not print it. OpenAI mode defaults to `OPENAI_MODEL=gpt-5.4-nano`, `OPENAI_LIVE_TEST_BUDGET_CENTS=25`, `AI_MAX_OUTPUT_TOKENS=900` for the manual recipe-creator path, a generated `.tmp-ai-demo` fixture dataset, `AI_TIMEOUT_SECONDS=20`, and `AI_PROVIDER_DEBUG=false` unless environment variables or explicit parameters override those values. The 500-token cap used by tiny smoke tests can truncate RAG-informed structured recipe drafts.
+
+For live smoke and live eval wrappers, you can keep the live settings in an ignored local `.env` file and load it explicitly:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-live-smoke.ps1 -EnvFile .\.env -WriteMissingEnvDefaults
+
+# Then manually edit the ignored local .env only if you intend live calls:
+# AI_PROVIDER=openai
+# OPENAI_ENABLE_LIVE_TESTS=true
+# OPENAI_API_KEY=<set locally, never commit or paste>
+
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-live-smoke.ps1 -EnvFile .\.env
+```
+
+`-WriteMissingEnvDefaults` appends safe missing defaults only. It does not write `OPENAI_API_KEY`, does not enable live mode by itself, and preserves existing comments and values. Existing process environment values still take precedence over the file.
 
 The startup summary now prints only safe values: provider, model, live-test enabled state, budget cents, max output tokens, AI timeout seconds, provider-debug enabled state, local URL, cookbook DB path, dataset path, and dataset index limit. The provider budget guard uses `AI_PROVIDER_CALLS_ENABLED`, `AI_PROVIDER_GLOBAL_DISABLE`, and the per-call/session token and cost caps described in [AI Provider Budget Enforcement](ai-provider-budget-enforcement.md).
 
@@ -144,7 +161,7 @@ $env:AI_MAX_OUTPUT_TOKENS="200"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-live-smoke.ps1
 ```
 
-`OPENAI_API_KEY` must come from a local ignored environment source. Never show the key or environment file contents during the demo.
+`OPENAI_API_KEY` must come from a local ignored environment source. Never show the key or environment file contents during the demo. If the ignored `.env` still says `OPENAI_ENABLE_LIVE_TESTS=false` or `AI_PROVIDER=mock`, the wrappers skip cleanly until you edit the local file or export explicit process values.
 
 ## Optional Live OpenAI Demo Evals
 
@@ -162,6 +179,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-eval
 The command seeds generated demo data, runs readiness, importer, Ask My Cookbook, dataset search, dataset Ask/RAG, and meal planning, then writes ignored results under `.tmp-ai-demo/live-evals/<timestamp>/`.
 
 See [Live OpenAI Demo Evals](live-openai-demo-evals.md).
+
+The live eval wrapper also accepts `-EnvFile .\.env` so you can keep the live settings in a local ignored file rather than in the shell. It still skips cleanly if the file leaves `OPENAI_ENABLE_LIVE_TESTS=false` or `AI_PROVIDER=mock`.
 
 ## Open The UI
 

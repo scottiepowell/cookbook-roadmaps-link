@@ -35,6 +35,7 @@ For the final phase-close acceptance matrix, see [AI Feature Completion Review](
 | Structured sidecar logging | Complete | stdout JSON logs | TestClient logging tests | Logs safe request/workflow metadata, including UI workflow labels. Optional `AI_PROVIDER_DEBUG=true` adds sanitized local provider error category/type/summary without logging secrets, raw prompts, or raw provider responses. |
 | Production access and metering architecture | Proposed | docs only | `docs/production-access-metering-architecture.md` | Designs gated access, time-limited sessions, metering, cost controls, threat model, and paid-access boundary. No runtime auth, billing, public live AI exposure, migrations, or route changes are implemented. |
 | Session and metering schema scaffold | Complete, schema-only | `ai-api/app/ai_access_models.py`, [AI Session Metering Schema](ai-session-metering-schema.md) | `test_ai_access_models.py` | Defines safe offline models for demo sessions, access grants, provider meter events, quality events, admin audit events, and budget snapshots. No runtime auth, storage, budget enforcement, invite flow, billing, or public access is implemented. |
+| Live script env-file loader | Complete, manual-only | `scripts/lib/ai-env-file.ps1`, `scripts/test-ai-env-file-loader.ps1` | PowerShell script test, pytest docs check | Loads ignored local `.env` files explicitly through the wrappers, preserves comments and existing values, appends only safe missing defaults, and redacts secret-like names in summaries. |
 
 ## Recorded Live Smoke
 

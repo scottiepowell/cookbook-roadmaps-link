@@ -57,6 +57,14 @@ $env:OPENAI_MODEL="gpt-5.4-nano"
 
 `OPENAI_API_KEY` must be present in the process environment or ignored local environment. The script must not print or persist the key, key fragments, auth headers, raw environment files, or provider secrets.
 
+The wrapper can also load an ignored local `.env` file explicitly:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-evals.ps1 -EnvFile .\.env
+```
+
+Process environment values still win over `.env` values. If `OPENAI_ENABLE_LIVE_TESTS=false` remains in the file, the wrapper still skips cleanly and prints the required-settings message instead of making live calls. If `AI_PROVIDER=mock` remains in the file, the wrapper also skips until the file is edited to `AI_PROVIDER=openai`.
+
 Budget must be between 1 and 25 cents. `AI_MAX_OUTPUT_TOKENS` must be between 1 and 300 for eval runs.
 
 ## Run

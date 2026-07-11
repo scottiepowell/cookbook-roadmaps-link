@@ -139,6 +139,8 @@ The 0030F hardening pass expands recipe-session regression coverage with equipme
 
 0030J adds an integrated 29/30 regression harness that exercises the combined local AI demo baseline in mock/offline mode by default, with an explicit opt-in live-smoke boundary. It ties together operator gate, invite sessions, protected importer and recipe-session routes, dataset ask, saved-recipe ask, meal plan, provider budget allow/skip/block behavior, usage reporting, route exposure assumptions, and monetization-boundary docs. The next follow-on, `0031A GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness`, must compare against this locked baseline and stay disabled by default until explicitly approved.
 
+0030K adds a small PowerShell `.env` loader for the live smoke and live eval wrappers. The loader keeps normal validation offline, loads ignored local config only when `-EnvFile` is supplied, preserves comments and existing values, redacts secret-like names in summaries, and lets the smoke wrapper append safe missing defaults without turning on live mode. Live evals still require explicit `OPENAI_ENABLE_LIVE_TESTS=true` and `AI_PROVIDER=openai`.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:

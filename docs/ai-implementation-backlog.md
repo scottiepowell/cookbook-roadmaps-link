@@ -1749,6 +1749,40 @@ Completed behavior:
 - the harness verifies admin usage-report OpenAPI hiding, route exposure assumptions, and the monetization boundary docs without introducing GLM or payment/runtime behavior;
 - docs and tests now anchor the next follow-on, `0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness`, as a separate, disabled-by-default task.
 
+## 0030K: Env File Live Script Config Loader
+
+Status: complete.
+
+Goal: Make the manual live smoke and eval wrappers easier to run locally by loading configuration from an ignored `.env` file path and writing only safe missing defaults when requested.
+
+Files likely touched:
+
+- `scripts/lib/ai-env-file.ps1`
+- `scripts/test-ai-env-file-loader.ps1`
+- `scripts/demo-ai-live-smoke.ps1`
+- `scripts/run-openai-demo-evals.ps1`
+- `scripts/run-ai-29-30-regression.ps1`
+- `docs/live-openai-smoke-tests.md`
+- `docs/live-openai-demo-evals.md`
+- `docs/ai-live-demo-runbook.md`
+- `docs/ai-feature-status.md`
+- `docs/ai-evals-plan.md`
+- `README.md`
+
+Validation:
+
+- PowerShell loader tests;
+- pytest docs/script checks;
+- repository validation.
+
+Done criteria:
+
+- live wrappers accept `-EnvFile .\.env` without printing secret values;
+- the smoke wrapper can append only safe missing defaults with `-WriteMissingEnvDefaults`;
+- existing process environment values still win over file values;
+- `OPENAI_ENABLE_LIVE_TESTS=false` still skips live calls cleanly;
+- `.env` remains uncommitted and ignored.
+
 ## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
 
 Status: planned.

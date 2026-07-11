@@ -116,6 +116,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-openai-demo-eval
 
 Without opt-in settings, it skips cleanly and performs no live calls.
 
+If you prefer local ignored config files, the live smoke and live eval wrappers also accept `-EnvFile .\.env`. The live smoke wrapper can seed safe missing defaults with `-WriteMissingEnvDefaults`, but it does not write `OPENAI_API_KEY`, does not enable live mode by itself, and still skips cleanly when `OPENAI_ENABLE_LIVE_TESTS=false` or `AI_PROVIDER=mock`.
+
 The first successful GPT-nano live eval baseline is recorded in [Live OpenAI Demo Baseline: 2026-07-07](docs/live-openai-demo-baseline-2026-07-07.md). The current acceptance baseline is the post-`0028B` 6/6 run recorded in [Live OpenAI Demo Regression Notes: 2026-07-08](docs/live-openai-demo-regression-notes-2026-07-08.md), after the post-`0028A` importer evaluator false failure was fixed. Future live eval runs should compare correctness, usefulness, importer ingredient preservation, latency, token use, cost visibility, and input-quality/provider-call-avoidance metrics against that acceptance history. `gpt-5.4-nano` evals use maintained default cost rates unless operator pricing env vars override them.
 
 Normal validation is mock/offline and safe. No provider keys, raw dataset files, generated indexes, private environment files, or private recipe data are committed.

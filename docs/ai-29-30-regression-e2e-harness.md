@@ -58,6 +58,7 @@ It is only intended for manual verification after the offline baseline passes, a
 - the `--live-smoke` flag on `scripts/e2e-ai-29-30-regression.py` or the matching wrapper path.
 
 The live path should remain minimal and budget-gated. It is not part of normal validation.
+The wrapper can also read `-EnvFile .\.env`, but the optional live boundary still stays off unless `AI_29_30_REGRESSION_LIVE=true`, `OPENAI_ENABLE_LIVE_TESTS=true`, and `AI_PROVIDER=openai` are set explicitly in the file or process environment.
 
 ## Relationship To 0031A
 
