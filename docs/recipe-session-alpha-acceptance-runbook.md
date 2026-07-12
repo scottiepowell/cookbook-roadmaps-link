@@ -85,7 +85,10 @@ Expected:
 
 - requirements update with cheesecake and no-bake method;
 - RAG runs because the clarification changes retrieval intent;
-- a draft is generated when the input is specific enough.
+- a draft is generated when the input is specific enough;
+- retrieval query keeps the no-bake method signal;
+- draft instructions stay in chill/refrigerate/serve-cold style behavior;
+- draft instructions do not mention `preheat`, `oven`, `bake`, or `center is just set`.
 
 ## RAG Refresh Path
 
@@ -101,7 +104,8 @@ Expected:
 - `rag_refreshed=true`;
 - changed fields include `cooking_method`;
 - refresh reason explains the material method change;
-- current citations/support info remains safe and visible.
+- current citations/support info remains safe and visible;
+- the revised draft preserves the no-bake constraint through retrieval query building, importer draft shaping, and finalize/demo display.
 
 Equipment and exclusion follow-ups should also refresh when they affect retrieval intent:
 

@@ -190,6 +190,8 @@ def test_message_no_bake_refreshes_rag_and_revises_draft(session_client):
     assert data["draft"] is not None
     assert data["retrieval"] is not None
     assert data["revision_count"] == 1
+    _assert_no_bake_cheesecake_draft(data)
+    assert any(term in (data["retrieval"]["query"] or "").lower() for term in ("no-bake", "no bake"))
 
 
 def test_message_chatter_and_formatting_do_not_refresh(session_client):
@@ -310,6 +312,29 @@ def test_clarification_answer_updates_session_and_generates(session_client):
     assert data["draft"] is not None
 
 
+def test_clarification_answer_no_bake_cheesecake_preserves_method_in_draft(session_client):
+    client, dataset_dir = session_client
+    started = client.post("/ai/recipe-session/start", json={"text": "make dessert"}).json()
+
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "cheesecake, no-bake, for 4 people"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    _assert_safe_response(response.text, dataset_dir)
+    assert data["response_state"] in {"rag_refreshed", "draft_revised"}
+    assert data["requirements"]["dish_intent"]["value"] == "cheesecake"
+    assert data["requirements"]["cooking_method"]["value"] == "no-bake"
+    assert data["requirements"]["resolved_questions"]
+    assert data["requirements"]["open_questions"] == []
+    assert data["draft"] is not None
+    assert any(field in data["changed_fields"] for field in ("dish_intent", "cooking_method"))
+    assert any(term in (data["retrieval"]["query"] or "").lower() for term in ("no-bake", "no bake"))
+    _assert_no_bake_cheesecake_draft(data)
+
+
 def test_finalize_session_with_draft_is_demo_safe(session_client):
     client, dataset_dir = session_client
     started = client.post(
@@ -415,3 +440,10 @@ def _assert_safe_response(text, dataset_dir):
     assert str(dataset_dir) not in text
     for forbidden in FORBIDDEN_RESPONSE_TEXT:
         assert forbidden not in text
+
+
+def _assert_no_bake_cheesecake_draft(data):
+    instructions = " ".join(item["text"].lower() for item in data["draft"]["instructions"])
+    assert any(term in instructions for term in ("chill", "refrigerate", "serve cold"))
+    for forbidden in ("preheat", "oven", "bake", "center is just set"):
+        assert forbidden not in instructions

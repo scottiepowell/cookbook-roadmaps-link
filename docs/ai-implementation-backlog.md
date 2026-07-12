@@ -1836,6 +1836,20 @@ Completed behavior:
 - non-action instructions and rambling paragraphs with only a late action verb still fail;
 - the aggregate conciseness policy from `0030N` and the importer token thresholds from `0030M` remain unchanged.
 
+## 0030P: No-Bake Cheesecake Importer Session Regression Fix
+
+Status: complete.
+
+Goal: Fix the recipe-session clarification path so `cheesecake, no-bake, for 4 people` no longer produces baked-cheesecake instructions in the generated draft.
+
+Completed behavior:
+
+- the importer now distinguishes no-bake cheesecake requests from baked cheesecake requests instead of forcing every cheesecake draft through the baked template;
+- explicit no-bake phrases such as `no-bake`, `no bake`, `no oven`, `without baking`, `do not bake`, `chilled cheesecake`, and `refrigerator cheesecake` trigger chill/refrigerate/serve-cold draft shaping;
+- explicit baked cheesecake requests still keep the baked `preheat`/`oven`/`bake` path;
+- recipe-session API tests and offline session evals now cover the exact clarification flow `make dessert -> cheesecake, no-bake, for 4 people`;
+- the regression checks assert that the retrieval query preserves the no-bake method signal and that the final draft does not leak baked-only instructions into the no-bake path.
+
 ## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
 
 Status: complete.

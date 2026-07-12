@@ -164,7 +164,77 @@ def test_importer_prompt_includes_servings_and_recipe_specific_guidance():
 
     assert "Use 4 servings unless the user states a different serving size." in prompt
     assert "Estimate missing quantities" in prompt
-    assert "Cheesecake: include crust, filling, bake, cool, and chill" in prompt
+    assert "Cheesecake: preserve the requested method." in prompt
+
+
+def test_importer_shapes_no_bake_cheesecake_without_baked_terms(monkeypatch):
+    clear_provider_env(monkeypatch)
+    provider = CapturingProvider(
+        {
+            "title": "No-Bake Cheesecake",
+            "description": "A chilled cheesecake.",
+            "servings": None,
+            "ingredients": [
+                {"name": "cream cheese", "quantity": None, "unit": None, "note": None},
+                {"name": "sugar", "quantity": None, "unit": None, "note": None},
+                {"name": "vanilla", "quantity": None, "unit": None, "note": None},
+                {"name": "graham cracker crust", "quantity": None, "unit": None, "note": None},
+            ],
+            "instructions": [{"step": 1, "text": "Make cheesecake."}],
+            "tags": ["dessert"],
+            "source": None,
+            "notes": None,
+        }
+    )
+
+    response = import_recipe_text(
+        RecipeImportRequest(text="cheesecake, no-bake, for 4 people"),
+        provider=provider,
+    )
+
+    assert response.draft is not None
+    assert response.draft.servings == 4
+    instruction_text = _joined_instruction_text(response.draft.instructions)
+    assert any(term in instruction_text for term in ("chill", "refrigerate", "serve cold"))
+    for forbidden in ("preheat", "oven", "bake", "center is just set"):
+        assert forbidden not in instruction_text
+    assert "OPENAI_API_KEY" not in response.model_dump_json()
+
+
+def test_importer_keeps_baked_cheesecake_when_explicitly_requested(monkeypatch):
+    clear_provider_env(monkeypatch)
+    provider = CapturingProvider(
+        {
+            "title": "Classic Baked Cheesecake",
+            "description": "A baked cheesecake.",
+            "servings": None,
+            "ingredients": [
+                {"name": "cream cheese", "quantity": None, "unit": None, "note": None},
+                {"name": "sugar", "quantity": None, "unit": None, "note": None},
+                {"name": "eggs", "quantity": None, "unit": None, "note": None},
+                {"name": "vanilla", "quantity": None, "unit": None, "note": None},
+                {"name": "graham cracker crust", "quantity": None, "unit": None, "note": None},
+            ],
+            "instructions": [{"step": 1, "text": "Make cheesecake."}],
+            "tags": ["dessert"],
+            "source": None,
+            "notes": None,
+        }
+    )
+
+    response = import_recipe_text(
+        RecipeImportRequest(
+            text="classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight"
+        ),
+        provider=provider,
+    )
+
+    assert response.draft is not None
+    instruction_text = _joined_instruction_text(response.draft.instructions)
+    assert "preheat" in instruction_text
+    assert "oven" in instruction_text
+    assert "bake" in instruction_text
+    assert "chill" in instruction_text
 
 
 def test_importer_service_validates_provider_output():
@@ -247,3 +317,7 @@ class CapturingProvider(LLMProvider):
     def generate_structured(self, request: StructuredLLMRequest) -> StructuredLLMResponse:
         self.last_request = request
         return StructuredLLMResponse(data=self.data, provider=self.name, model=self.model)
+
+
+def _joined_instruction_text(instructions) -> str:
+    return " ".join(instruction.text.lower() for instruction in instructions)

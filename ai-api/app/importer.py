@@ -37,7 +37,7 @@ IMPORTER_SYSTEM_PROMPT = (
     "Use 4 to 8 concise, action-oriented steps for normal multi-step recipes. "
     "Omelets should beat or scramble eggs before cooking and folding. "
     "Carbonara should not require heavy cream unless the user supplied it. "
-    "Cheesecake should cover crust, filling, bake, cool, and chill. "
+    "Cheesecake should preserve the requested method: baked cheesecake should cover crust, filling, bake, cool, and chill, while no-bake cheesecake should use chill or refrigerate steps and should not use oven or bake steps. "
     "Chicken dishes should include safe doneness or temperature guidance when relevant."
 )
 
@@ -266,7 +266,7 @@ def _build_prompt(
         "- Prefer 4 to 8 action-oriented steps for multi-step dishes.\n"
         "- Omelet: beat/scramble eggs before cooking and folding.\n"
         "- Carbonara: avoid heavy cream unless supplied by the user.\n"
-        "- Cheesecake: include crust, filling, bake, cool, and chill style steps.\n"
+        "- Cheesecake: preserve the requested method. No-bake cheesecake should use chill or refrigerate steps and should not use oven or bake steps. Baked cheesecake should include crust, filling, bake, cool, and chill style steps.\n"
         "- Chicken casserole: include preheat, combine, bake, and doneness or safe chicken guidance.\n"
         f"{retrieval_note}"
         f"{example_context}"
@@ -347,6 +347,17 @@ def _improve_draft(draft: RecipeImportDraft, user_text: str) -> RecipeImportDraf
                 "Add cheese and onions if using, then fold the omelet and serve warm.",
             ]
         )
+    elif "cheesecake" in text and _requests_no_bake(text):
+        instructions = _instruction_set(
+            [
+                "Press the graham cracker crust into the pan and chill it while preparing the filling.",
+                "Beat cream cheese, sugar, and vanilla until smooth.",
+                "Fold in whipped cream or whipped topping if included, or keep the filling smooth if it is not specified.",
+                "Spread the filling evenly into the chilled crust.",
+                "Cover and refrigerate until firm.",
+                "Slice and serve cold.",
+            ]
+        )
     elif "cheesecake" in text:
         instructions = _instruction_set(
             [
@@ -374,6 +385,19 @@ def _improve_draft(draft: RecipeImportDraft, user_text: str) -> RecipeImportDraf
         notes = (notes + " " if notes else "") + f"Ingredient quantities are estimated for {servings} servings because the source notes did not specify exact amounts."
     updates["notes"] = notes or None
     return draft.model_copy(update=updates)
+
+
+def _requests_no_bake(text: str) -> bool:
+    patterns = (
+        r"\bno[-\s]+bake\b",
+        r"\bno\s+oven\b",
+        r"\bwithout\s+baking\b",
+        r"\bdo\s+not\s+bake\b",
+        r"\bdon't\s+bake\b",
+        r"\bchilled\s+cheesecake\b",
+        r"\brefrigerator\s+cheesecake\b",
+    )
+    return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in patterns)
 
 
 def _estimate_input_tokens(

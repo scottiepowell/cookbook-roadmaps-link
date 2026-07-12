@@ -29,7 +29,12 @@
     "expect_rag_refreshed": true,
     "expected_changed_fields": ["cooking_method"],
     "expected_requirement_contains": {"cooking_method": "no-bake"},
-    "expect_draft": true
+    "expect_draft": true,
+    "expected_retrieval_query_contains": ["no-bake", "no bake"],
+    "expected_resolved_questions": false,
+    "expected_open_questions_count": 0,
+    "required_draft_terms": ["chill"],
+    "forbidden_draft_terms": ["preheat", "oven", "bake", "center is just set"]
   },
   {
     "id": "carbonara_chatter_no_refresh",
@@ -62,7 +67,12 @@
     "expected_delta_labels": ["clarification_answer", "relevant_requirement_update"],
     "expected_requirement_contains": {"dish_intent": "cheesecake", "cooking_method": "no-bake"},
     "expect_draft": true,
-    "expect_no_start_draft": true
+    "expect_no_start_draft": true,
+    "expected_retrieval_query_contains": ["no-bake", "no bake"],
+    "expected_resolved_questions": true,
+    "expected_open_questions_count": 0,
+    "required_draft_terms": ["chill"],
+    "forbidden_draft_terms": ["preheat", "oven", "bake", "center is just set"]
   },
   {
     "id": "air_fryer_followup_refreshes_rag",

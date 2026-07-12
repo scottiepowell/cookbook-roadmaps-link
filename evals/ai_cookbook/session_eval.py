@@ -245,7 +245,26 @@ def _assert_message_expectations(case: dict[str, Any], payload: dict[str, Any]) 
     for field, expected in (case.get("expected_requirement_contains") or {}).items():
         value = (payload.get("requirements") or {}).get(field)
         assert _requirement_contains(value, expected), f"{case['id']}: requirements.{field}={value!r} missing {expected!r}"
+    expected_query_terms = case.get("expected_retrieval_query_contains") or []
+    if expected_query_terms:
+        query = str((payload.get("retrieval") or {}).get("query") or "").lower()
+        assert any(term.lower() in query for term in expected_query_terms), (
+            f"{case['id']}: retrieval.query={query!r} missing one of {expected_query_terms!r}"
+        )
+    if "expected_resolved_questions" in case:
+        resolved_questions = (payload.get("requirements") or {}).get("resolved_questions") or []
+        should_have_resolved = bool(case["expected_resolved_questions"])
+        if should_have_resolved:
+            assert resolved_questions, f"{case['id']}: expected resolved_questions"
+        else:
+            assert resolved_questions == [], f"{case['id']}: unexpected resolved_questions={resolved_questions!r}"
+    if "expected_open_questions_count" in case:
+        open_questions = (payload.get("requirements") or {}).get("open_questions") or []
+        assert len(open_questions) == int(case["expected_open_questions_count"]), (
+            f"{case['id']}: open_questions={len(open_questions)} expected {case['expected_open_questions_count']}"
+        )
     _assert_draft_expectation(case, payload)
+    _assert_draft_terms(case, payload)
 
 
 def _assert_draft_expectation(case: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -254,6 +273,21 @@ def _assert_draft_expectation(case: dict[str, Any], payload: dict[str, Any]) -> 
         assert payload.get("draft_summary"), f"{case['id']}: missing draft_summary"
     elif case.get("expect_draft") is False:
         assert payload.get("draft") is None, f"{case['id']}: unexpected draft"
+
+
+def _assert_draft_terms(case: dict[str, Any], payload: dict[str, Any]) -> None:
+    required_terms = [str(term).lower() for term in (case.get("required_draft_terms") or [])]
+    forbidden_terms = [str(term).lower() for term in (case.get("forbidden_draft_terms") or [])]
+    if not required_terms and not forbidden_terms:
+        return
+    draft = payload.get("draft") or {}
+    instructions = draft.get("instructions") or []
+    joined = " ".join(str(item.get("text") or "").lower() for item in instructions if isinstance(item, dict))
+    assert joined, f"{case['id']}: missing draft instruction text"
+    for term in required_terms:
+        assert term in joined, f"{case['id']}: draft instructions missing required term {term!r}"
+    for term in forbidden_terms:
+        assert term not in joined, f"{case['id']}: draft instructions leaked forbidden term {term!r}"
 
 
 def _assert_citation_expectation(case: dict[str, Any], payload: dict[str, Any]) -> None:
