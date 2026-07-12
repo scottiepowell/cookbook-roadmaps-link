@@ -1,0 +1,159 @@
+[
+  {
+    "id": "good_query_expansion",
+    "task_class": "query_expansion",
+    "mode": "allow",
+    "input_summary": "How do I find lemon white bean toast recipes?",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "use original retrieval query only"
+    },
+    "output": {
+      "expansions": ["lemon white bean toast", "white beans on toast", "lemon herb beans toast"],
+      "notes": "Use these only as retrieval expansions."
+    }
+  },
+  {
+    "id": "bad_query_expansion_unrelated_terms",
+    "task_class": "query_expansion",
+    "mode": "reject",
+    "input_summary": "How do I find lemon white bean toast recipes?",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "use original retrieval query only"
+    },
+    "output": {
+      "expansions": ["lemon white bean toast", "bitcoin portfolio", "chocolate cake"],
+      "notes": "These suggestions drift away from the user request."
+    }
+  },
+  {
+    "id": "good_context_compression_preserves_citation_ids",
+    "task_class": "context_compression",
+    "mode": "allow",
+    "required_citation_ids": ["cit-101", "cit-202"],
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "use primary uncompressed context packer"
+    },
+    "output": {
+      "compressed_text": "cit-101 covers bean warming and toast serving. cit-202 covers lemon and herb finishing.",
+      "citation_ids": ["cit-101", "cit-202"]
+    }
+  },
+  {
+    "id": "bad_context_compression_invents_or_drops_citation_ids",
+    "task_class": "context_compression",
+    "mode": "reject",
+    "required_citation_ids": ["cit-101", "cit-202"],
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "use primary uncompressed context packer"
+    },
+    "output": {
+      "compressed_text": "cit-101 covers bean warming. cit-999 adds an unsupported serving idea.",
+      "citation_ids": ["cit-101", "cit-999"]
+    }
+  },
+  {
+    "id": "good_title_slug_suggestions_grounded",
+    "task_class": "title_or_slug_suggestions",
+    "mode": "allow",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "keep the existing grounded title"
+    },
+    "output": {
+      "title": "Lemon Herb White Beans on Toast",
+      "slug": "lemon-herb-white-beans-on-toast"
+    }
+  },
+  {
+    "id": "bad_title_slug_suggestions_unsupported_claims",
+    "task_class": "title_or_slug_suggestions",
+    "mode": "reject",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "keep the existing grounded title"
+    },
+    "output": {
+      "title": "Doctor-Approved Immune-Boosting White Bean Detox Toast",
+      "slug": "doctor-approved-immune-boosting-white-bean-detox-toast"
+    }
+  },
+  {
+    "id": "good_clarification_candidates_useful",
+    "task_class": "non_final_clarification_candidate_generation",
+    "mode": "allow",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "use existing deterministic clarification logic"
+    },
+    "output": {
+      "question": "Do you want this served on toast or over rice?"
+    }
+  },
+  {
+    "id": "bad_clarification_candidates_private_data_request",
+    "task_class": "non_final_clarification_candidate_generation",
+    "mode": "reject",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "use existing deterministic clarification logic"
+    },
+    "output": {
+      "question": "What is your full name, home address, and exact medical history?"
+    }
+  },
+  {
+    "id": "good_draft_critique_catches_quality_issue",
+    "task_class": "draft_critique_against_quality_checklist",
+    "mode": "allow",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "ignore critique and continue with primary evaluation only"
+    },
+    "output": {
+      "checklist_findings": [
+        "servings note is missing",
+        "step 3 does not mention when to add lemon zest"
+      ],
+      "summary": "Advisory critique only. Do not publish this as the final answer."
+    }
+  },
+  {
+    "id": "bad_draft_critique_becomes_final_answer",
+    "task_class": "draft_critique_against_quality_checklist",
+    "mode": "reject",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "ignore critique and continue with primary evaluation only"
+    },
+    "output": {
+      "summary": "Here is the final recipe you should show the user right now, with my rewritten instructions and claims."
+    }
+  },
+  {
+    "id": "blocked_final_answer_generation_rejected",
+    "task_class": "final_user_answer_generation",
+    "mode": "reject",
+    "required_behavior": {
+      "advisory_only": true,
+      "final_answer_provider": "openai",
+      "fallback": "use the existing primary answer path"
+    },
+    "output": {
+      "answer": "The final answer is ready for the user."
+    }
+  }
+]

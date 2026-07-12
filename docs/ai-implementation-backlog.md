@@ -1838,6 +1838,15 @@ Completed behavior:
 
 ## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
 
-Status: planned.
+Status: complete.
 
 Goal: Evaluate a future GLM secondary-provider offload path only after the 29/30 baseline is locked, with explicit opt-in and disabled-by-default behavior.
+
+Completed behavior:
+
+- added a docs-first ADR for a possible future secondary/offload provider path while keeping runtime behavior unchanged;
+- treats `GLM-4.7 Flash` as a candidate provider name only and does not claim verified pricing, API compatibility, limits, quality, privacy policy, or availability;
+- keeps the current OpenAI `gpt-5.4-nano` path as the final-answer baseline and limits future offload ideas to advisory low-risk task classes only;
+- adds a deterministic offline eval harness for simulated query expansion, context compression, title/slug suggestions, clarification candidates, and draft critique outputs;
+- rejects blocked task classes, invented citation IDs, unsupported claims, private-data requests, and critique outputs that try to become final answers;
+- adds no runtime provider integration, GLM SDK, provider routing, fallback behavior, public exposure, auth, storage, or live calls during normal validation.

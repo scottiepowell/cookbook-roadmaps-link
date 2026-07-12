@@ -149,6 +149,8 @@ The 0030F hardening pass expands recipe-session regression coverage with equipme
 
 0030O refines importer action-oriented scoring again so short setup or context phrases before an early imperative verb do not false-fail. Steps such as `In a small bowl, mix...` or `If the mixture seems thick, add...` now pass when the action verb appears early, while non-action instructions and late-verb rambling paragraphs still fail.
 
+0031A adds a separate offline-only secondary-provider offload harness in `evals/ai_cookbook/secondary_provider_offload_eval.py` for advisory task classes such as query expansion, context compression, title suggestions, clarification candidates, and checklist critique. It does not add runtime provider routing, fallback, or live GLM behavior. The harness treats `GLM-4.7 Flash` as a candidate name only, keeps the current OpenAI `gpt-5.4-nano` path as the final-answer baseline, and rejects simulated offload outputs that invent citation IDs, request private data, introduce unsupported claims, or try to become final user answers.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:
