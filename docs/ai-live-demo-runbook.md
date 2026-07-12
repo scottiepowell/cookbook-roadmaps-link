@@ -140,6 +140,8 @@ The importer scorer is also calibrated separately from short-answer workflows. V
 
 The conciseness rule no longer requires every importer step to be extremely short. Instead it uses a high single-step cap plus average-length and compact-step coverage checks so realistic labeled steps can pass without letting rambling instructions through.
 
+Action-oriented scoring also accepts a short setup phrase before an early imperative verb, so steps like `In a small bowl, mix olive oil with minced garlic...` or `After the beans are warm, stir in lemon juice and parsley.` pass when they remain concise and clearly procedural.
+
 The local operator gate is opt-in, disabled by default, and documented in [AI Local Operator Access Gate](ai-local-operator-access-gate.md). When enabled, the protected AI workflows require a matching safe fingerprint on `X-AI-Operator-Token` or `Authorization: Bearer ...`, unless the explicit local bypass is turned on for local/TestClient requests. The mock smoke script pins the gate off so its checks stay stable in a dirty shell.
 
 ## Manual Live RAG Capture Matrix

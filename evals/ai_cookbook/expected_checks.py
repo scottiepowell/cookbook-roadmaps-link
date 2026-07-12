@@ -62,6 +62,7 @@ GENERIC_FIELD_VALUES = (*GENERIC_TITLES, "mock value", "n/a", "none")
 ACTION_VERBS = (
     "add",
     "adjust",
+    "arrange",
     "bake",
     "boil",
     "brighten",
@@ -91,6 +92,21 @@ ACTION_VERBS = (
     "turn",
     "warm",
 )
+CONTEXT_PREFIX_WORDS = (
+    "after",
+    "before",
+    "if",
+    "in",
+    "on",
+    "over",
+    "under",
+    "when",
+    "while",
+    "with",
+)
+CONTEXT_PREFIX_MAX_WORDS = 6
+EARLY_ACTION_VERB_MAX_INDEX = 7
+POST_COMMA_ACTION_VERB_MAX_INDEX = 2
 IMPORTER_MAX_STEP_WORDS_FAIL = 45
 IMPORTER_AVERAGE_STEP_WORDS_MAX = 28
 IMPORTER_COMPACT_STEP_WORDS_MAX = 32
@@ -573,8 +589,7 @@ def _instruction_is_action_oriented(text: str) -> bool:
     if not text.strip():
         return False
     for segment in _instruction_segments(text):
-        words = _normalized_words(segment)
-        if words and words[0] in _normalized_action_verbs():
+        if _segment_is_action_oriented(segment):
             return True
     return False
 
@@ -607,6 +622,48 @@ def _normalize_word(word: str) -> str:
     return "".join(char for char in normalized if not unicodedata.combining(char)).lower()
 
 
+def _segment_is_action_oriented(segment: str) -> bool:
+    words = _normalized_words(segment)
+    if not words:
+        return False
+
+    action_verbs = _normalized_action_verbs()
+    if words[0] in action_verbs:
+        return True
+
+    first_action_index = _first_action_verb_index(words)
+    if first_action_index is None:
+        return False
+
+    if _starts_with_context_prefix(words) and first_action_index <= EARLY_ACTION_VERB_MAX_INDEX:
+        return True
+
+    if "," not in segment:
+        return False
+
+    prefix, remainder = segment.split(",", 1)
+    prefix_words = _normalized_words(prefix)
+    remainder_words = _normalized_words(remainder)
+    if not prefix_words or not remainder_words:
+        return False
+    if len(prefix_words) > CONTEXT_PREFIX_MAX_WORDS or prefix_words[0] not in CONTEXT_PREFIX_WORDS:
+        return False
+
+    post_comma_index = _first_action_verb_index(remainder_words)
+    return post_comma_index is not None and post_comma_index <= POST_COMMA_ACTION_VERB_MAX_INDEX
+
+
+def _first_action_verb_index(words: list[str]) -> int | None:
+    for index, word in enumerate(words):
+        if word in _normalized_action_verbs():
+            return index
+    return None
+
+
+def _starts_with_context_prefix(words: list[str]) -> bool:
+    return bool(words) and words[0] in CONTEXT_PREFIX_WORDS
+
+
 def _evaluate_importer_instruction_quality(instructions: list[str]) -> CheckResult:
     total_steps = len(instructions)
     non_empty_steps = [instruction for instruction in instructions if instruction.strip()]
@@ -615,7 +672,10 @@ def _evaluate_importer_instruction_quality(instructions: list[str]) -> CheckResu
     max_words = max(word_counts, default=0)
     average_words = (sum(word_counts) / len(word_counts)) if word_counts else 0.0
     compact_steps = sum(1 for count in word_counts if count <= IMPORTER_COMPACT_STEP_WORDS_MAX)
-    action_oriented_steps = sum(1 for instruction in non_empty_steps if _instruction_is_action_oriented(instruction))
+    action_failed_indexes = [
+        index + 1 for index, instruction in enumerate(non_empty_steps) if not _instruction_is_action_oriented(instruction)
+    ]
+    action_oriented_steps = len(non_empty_steps) - len(action_failed_indexes)
     placeholder_steps = sum(1 for instruction in non_empty_steps if _instruction_is_placeholder(instruction))
     compact_goal = math.ceil(len(non_empty_steps) * IMPORTER_MIN_COMPACT_STEP_RATIO) if non_empty_steps else 0
     compact_ok = (
@@ -647,6 +707,8 @@ def _evaluate_importer_instruction_quality(instructions: list[str]) -> CheckResu
         detail_parts.append(f"empty_steps={empty_steps}")
     if placeholder_steps:
         detail_parts.append(f"placeholder_steps={placeholder_steps}")
+    if action_failed_indexes:
+        detail_parts.append(f"action_failed_steps={','.join(str(index) for index in action_failed_indexes)}")
     return CheckResult(
         name="instructions should be concise and action-oriented",
         passed=passed,

@@ -147,6 +147,8 @@ The 0030F hardening pass expands recipe-session regression coverage with equipme
 
 0030N refines the importer instruction conciseness rule again so realistic labeled recipe steps do not false-fail. The scorer now uses a high per-step cap plus average-length and compact-step coverage checks, and its failure detail reports safe metrics such as max words, average words, compact-step counts, and action-oriented step counts without exposing raw provider content.
 
+0030O refines importer action-oriented scoring again so short setup or context phrases before an early imperative verb do not false-fail. Steps such as `In a small bowl, mix...` or `If the mixture seems thick, add...` now pass when the action verb appears early, while non-action instructions and late-verb rambling paragraphs still fail.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:

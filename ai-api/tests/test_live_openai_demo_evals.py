@@ -360,6 +360,111 @@ def test_importer_expected_checks_accept_actual_unicode_saute():
     assert action_check.passed is True
 
 
+def test_importer_expected_checks_accept_observed_live_context_phrase_instructions():
+    payload = {
+        "draft": {
+            "title": "Lemon Herb White Beans with Toast",
+            "description": "Creamy white beans brightened with lemon and served over toast.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "white beans", "quantity": "2", "unit": "cups"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "garlic", "quantity": "2", "unit": "cloves"},
+                {"name": "lemon juice", "quantity": "2", "unit": "tablespoons"},
+                {"name": "lemon zest", "quantity": "1", "unit": "teaspoon"},
+                {"name": "parsley", "quantity": "0.25", "unit": "cup"},
+                {"name": "salt", "quantity": "1", "unit": "teaspoon"},
+                {"name": "pepper", "quantity": "0.5", "unit": "teaspoon"},
+                {"name": "toast", "quantity": "4", "unit": "slices"},
+            ],
+            "instructions": [
+                {
+                    "step": 1,
+                    "text": (
+                        "Warm the white beans in a saucepan over medium heat, with a splash of water if needed to loosen "
+                        "them (about 3-5 minutes)."
+                    ),
+                },
+                {
+                    "step": 2,
+                    "text": (
+                        "In a small bowl, mix olive oil with minced garlic, then stir into the warm beans. "
+                        "Cook 1-2 minutes, just until fragrant."
+                    ),
+                },
+                {"step": 3, "text": "Stir in lemon juice and lemon zest. Season with salt and black pepper to taste."},
+                {
+                    "step": 4,
+                    "text": (
+                        "Simmer very briefly (about 1 minute) until the beans are hot and glossy; if the mixture "
+                        "seems thick, add a tablespoon or two of water."
+                    ),
+                },
+                {"step": 5, "text": "Turn off the heat and fold in the chopped parsley."},
+                {"step": 6, "text": "Toast the bread until crisp."},
+                {
+                    "step": 7,
+                    "text": (
+                        "Spoon the warm lemon-herb beans over toast. Drizzle with a little extra olive oil if you "
+                        "like and serve right away."
+                    ),
+                },
+            ],
+            "notes": "Quantities are estimated for 4 servings because the source notes did not specify exact amounts.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 3},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
+        "warnings": [],
+        "usage": {"input_tokens": 805, "output_tokens": 592, "total_tokens": 1397},
+    }
+
+    results = score_importer(payload, "gpt-5.4-nano")
+    action_check = next(check for check in results if check.name == "instructions should be concise and action-oriented")
+    assert action_check.passed is True
+    assert "max_words=25" in action_check.detail
+    assert "average_words=17.3" in action_check.detail
+    assert "compact_steps=7/7" in action_check.detail
+    assert "action_oriented=7/7" in action_check.detail
+
+
+def test_importer_expected_checks_accept_short_context_phrase_before_early_action_verb():
+    payload = {
+        "draft": {
+            "title": "Lemon Bean Toasts",
+            "description": "Beans and herbs over toast.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "white beans", "quantity": "2", "unit": "cups"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "garlic", "quantity": "2", "unit": "cloves"},
+                {"name": "lemon juice", "quantity": "1", "unit": "tablespoon"},
+                {"name": "parsley", "quantity": "0.25", "unit": "cup"},
+                {"name": "toast", "quantity": "4", "unit": "slices"},
+            ],
+            "instructions": [
+                {"step": 1, "text": "In a medium saucepan, warm the beans over medium heat."},
+                {"step": 2, "text": "On a baking sheet, arrange the bread and toast until crisp."},
+                {"step": 3, "text": "With a spoon, mash a few beans against the side of the pan."},
+                {"step": 4, "text": "If the mixture seems thick, add a tablespoon or two of water."},
+                {"step": 5, "text": "After the beans are warm, stir in lemon juice and parsley."},
+            ],
+            "notes": "Quantities are estimated for 4 servings.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
+        "warnings": [],
+    }
+
+    results = score_importer(payload, "gpt-5.4-nano")
+    action_check = next(check for check in results if check.name == "instructions should be concise and action-oriented")
+    assert action_check.passed is True
+    assert "action_oriented=5/5" in action_check.detail
+
+
 def test_importer_expected_checks_reject_generic_and_ungrounded_outputs():
     generic = {
         "draft": {
@@ -474,6 +579,7 @@ def test_importer_expected_checks_reject_non_action_and_rambling_instructions():
     non_action_check = next(check for check in non_action_results if check.name == "instructions should be concise and action-oriented")
     assert non_action_check.passed is False
     assert "action_oriented=0/3" in non_action_check.detail
+    assert "action_failed_steps=1,2,3" in non_action_check.detail
 
     rambling = {
         **non_action,
@@ -548,6 +654,43 @@ def test_importer_expected_checks_reject_many_rambling_steps():
     assert action_check.passed is False
     assert "average_words=" in action_check.detail
     assert "compact_steps=" in action_check.detail
+
+
+def test_importer_expected_checks_reject_late_action_verb_in_rambling_paragraph():
+    payload = {
+        "draft": {
+            "title": "Lemon Bean Toasts",
+            "description": "Beans over toast.",
+            "servings": 4,
+            "ingredients": [
+                {"name": "white beans", "quantity": "2", "unit": "cups"},
+                {"name": "olive oil", "quantity": "2", "unit": "tablespoons"},
+                {"name": "garlic", "quantity": "2", "unit": "cloves"},
+            ],
+            "instructions": [
+                {
+                    "step": 1,
+                    "text": (
+                        "The beans should feel cozy and comforting in the pan, and after you think through texture, "
+                        "presentation, garnish choices, and serving ideas for a while, maybe stir them if it still seems useful."
+                    ),
+                },
+                {"step": 2, "text": "Warm the toast."},
+                {"step": 3, "text": "Serve right away."},
+            ],
+            "notes": "Quantities are estimated for 4 servings.",
+        },
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "retrieval": {"retrieved_count": 1},
+        "citations": [{"source_id": "demo-dataset-2", "title": "Lemon White Bean Toasts"}],
+        "warnings": [],
+    }
+
+    results = score_importer(payload, "gpt-5.4-nano")
+    action_check = next(check for check in results if check.name == "instructions should be concise and action-oriented")
+    assert action_check.passed is False
+    assert "action_failed_steps=1" in action_check.detail
 
 
 def test_importer_expected_checks_reject_empty_and_placeholder_steps():

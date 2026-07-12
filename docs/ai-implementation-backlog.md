@@ -1823,6 +1823,19 @@ Completed behavior:
 - failure details now report safe metrics such as `max_words`, `average_words`, `compact_steps`, and `action_oriented`;
 - importer token thresholds remain unchanged from `0030M`.
 
+## 0030O: Importer Action-Oriented Context Phrase Scorer Refinement
+
+Status: complete.
+
+Goal: Remove the remaining importer false failure where a realistic recipe step starts with a short context phrase before the imperative verb.
+
+Completed behavior:
+
+- action-oriented scoring now accepts a short setup phrase before an early imperative cooking verb;
+- comma-delimited contexts such as `In a small bowl, mix...`, `With a spoon, mash...`, and `If the mixture seems thick, add...` now pass when the action verb appears early;
+- non-action instructions and rambling paragraphs with only a late action verb still fail;
+- the aggregate conciseness policy from `0030N` and the importer token thresholds from `0030M` remain unchanged.
+
 ## 0031A: GLM-4.7 Flash Secondary Provider Offload ADR And Eval Harness
 
 Status: planned.

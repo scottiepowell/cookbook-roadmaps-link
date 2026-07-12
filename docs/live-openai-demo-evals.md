@@ -125,6 +125,8 @@ Meal Planner checks that the plan has at least one meal, selected recipe IDs com
 
 For realistic labeled recipe steps, importer conciseness is now judged with aggregate bounds rather than a brittle per-step 24-word cap. Any one step above 45 words fails, the average step length must stay reasonable, and most steps still need to be compact. Failure details report only safe metrics such as `max_words`, `average_words`, `compact_steps`, and `action_oriented`.
 
+Action-oriented scoring also accepts a short setup phrase before an early imperative verb. Instructions such as `In a small bowl, mix...`, `With a spoon, mash...`, or `If the mixture seems thick, add...` pass when the action verb appears early, while non-action or rambling paragraphs with only a late action verb still fail.
+
 ## Thresholds
 
 The harness applies initial quality thresholds after workflow checks. Warning thresholds do not fail the run; failure thresholds add failed checks to affected workflow records.
