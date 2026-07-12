@@ -151,6 +151,8 @@ The 0030F hardening pass expands recipe-session regression coverage with equipme
 
 0031A adds a separate offline-only secondary-provider offload harness in `evals/ai_cookbook/secondary_provider_offload_eval.py` for advisory task classes such as query expansion, context compression, title suggestions, clarification candidates, and checklist critique. It does not add runtime provider routing, fallback, or live GLM behavior. The harness treats `GLM-4.7 Flash` as a candidate name only, keeps the current OpenAI `gpt-5.4-nano` path as the final-answer baseline, and rejects simulated offload outputs that invent citation IDs, request private data, introduce unsupported claims, or try to become final user answers.
 
+0031B adds provider fact verification and implementation gating in `docs/ai-secondary-provider-fact-register.md`, `docs/ai-secondary-provider-implementation-gate.md`, `evals/ai_cookbook/secondary_provider_fact_gate.yaml`, and `evals/ai_cookbook/secondary_provider_fact_gate_eval.py`. Runtime adapter work remains blocked until primary documentation verifies API, pricing, privacy, retention, quota, and failure-mode facts. The corrected 0030 baseline, including the `0030P` no-bake cheesecake clarification behavior, remains part of the regression floor for any future secondary-provider experiment.
+
 ## Meal-Plan Checks
 
 Meal-plan evals should verify:

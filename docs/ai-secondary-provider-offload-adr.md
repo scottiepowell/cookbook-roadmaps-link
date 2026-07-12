@@ -14,9 +14,13 @@ Current comparison baseline:
 status=passed workflows=6/6 tokens=2227 estimated_cost_usd=0.00125495
 ```
 
+The corrected 0030 baseline also includes the `0030P` no-bake cheesecake clarification fix. Any future secondary/offload comparison must preserve that recipe-session behavior.
+
 The next possible cost-control question is whether a future secondary provider could help with bounded, low-risk sub-tasks without changing the current final-answer path.
 
 `GLM-4.7 Flash` is only a candidate provider name in this task. This ADR does not claim verified pricing, API compatibility, context window, rate limits, quality, privacy policy, retention policy, or availability. Those facts must be verified before any later implementation task.
+
+`0031B` adds the provider fact register and implementation gate. Runtime adapter work remains blocked until those fact-verification gates are passed from primary documentation.
 
 The existing local/operator controls from `0029C` through `0029I` and the locked `0029/0030` regression baseline remain the guardrails for any future provider experiment:
 

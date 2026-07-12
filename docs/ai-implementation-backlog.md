@@ -1864,3 +1864,17 @@ Completed behavior:
 - adds a deterministic offline eval harness for simulated query expansion, context compression, title/slug suggestions, clarification candidates, and draft critique outputs;
 - rejects blocked task classes, invented citation IDs, unsupported claims, private-data requests, and critique outputs that try to become final answers;
 - adds no runtime provider integration, GLM SDK, provider routing, fallback behavior, public exposure, auth, storage, or live calls during normal validation.
+
+## 0031B: Secondary Provider Fact Verification And Implementation Gate
+
+Status: complete.
+
+Goal: Add a docs-first provider-fact register and implementation gate so future secondary/offload provider runtime work cannot start on guessed pricing, API, privacy, retention, quota, or failure-mode assumptions.
+
+Completed behavior:
+
+- added [AI Secondary Provider Fact Register](ai-secondary-provider-fact-register.md) with `GLM-4.7 Flash` recorded as a candidate name only;
+- kept the current GLM candidate `unverified` and `blocked` because primary provider documentation was not available in this task;
+- added [AI Secondary Provider Implementation Gate](ai-secondary-provider-implementation-gate.md) with explicit go/no-go criteria and a separate future mailbox-task requirement for any runtime adapter work;
+- added `evals/ai_cookbook/secondary_provider_fact_gate.yaml` and `evals/ai_cookbook/secondary_provider_fact_gate_eval.py` so offline validation proves unverified candidates stay blocked and only a fully verified synthetic fixture can pass;
+- updated surrounding docs to state that `0031A` defined the advisory offload ADR, `0031B` adds fact verification and implementation gating, and future work must preserve the corrected 0030 baseline including `0030P` no-bake cheesecake behavior.
