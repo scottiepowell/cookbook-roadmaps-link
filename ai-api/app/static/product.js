@@ -11,6 +11,9 @@ async function loadProductReadiness() {
       status.textContent = selected === "mock" ? "Mock offline selected: free, deterministic local demo mode." : liveAvailable ? "Live OpenAI selected and available using gpt-5.4-nano." : "Live OpenAI selected but unavailable: start the sidecar with explicit live opt-in and approved budget configuration. Current runtime remains unchanged.";
     };
     document.querySelectorAll('input[name="ai-mode"]').forEach((input) => input.addEventListener("change", updateMode));
+    document.querySelectorAll('input[name="ai-mode"]').forEach((input) => input.addEventListener("change", () => localStorage.setItem("cookbook-ai-mode", input.value)));
+    const saved = localStorage.getItem("cookbook-ai-mode");
+    if (saved) document.querySelector(`input[name="ai-mode"][value="${saved}"]`)?.click();
     updateMode();
     target.className = "result";
     const mode = data.provider?.mode || "unknown";

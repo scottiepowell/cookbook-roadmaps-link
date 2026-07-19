@@ -1,4 +1,6 @@
 import re
+import os
+from dataclasses import replace
 
 from pydantic import ValidationError
 
@@ -62,6 +64,16 @@ def import_recipe_text(
     session_state: object | None = None,
 ) -> RecipeImportResponse:
     settings = get_ai_settings()
+    if request.provider_mode:
+        requested = request.provider_mode.lower()
+        if requested not in {"mock", "offline", "openai", "live"}:
+            raise RecipeImportProviderError("Unsupported provider mode.")
+        if requested in {"openai", "live"}:
+            if request.model not in {None, "gpt-5.4-nano"} or not settings.openai_live_tests_enabled or not os.getenv("OPENAI_API_KEY"):
+                raise RecipeImportProviderError("Live provider is unavailable.")
+            settings = replace(settings, provider="openai", openai_model="gpt-5.4-nano")
+        else:
+            settings = replace(settings, provider="mock", model="mock-basic")
     input_quality = classify_recipe_import_input(request.text)
     if input_quality.status in {NEEDS_CLARIFICATION, REJECTED}:
         return RecipeImportResponse(
@@ -112,7 +124,7 @@ def import_recipe_text(
             usage=None,
             input_quality=input_quality.to_dict(),
         )
-    active_provider = provider or _get_configured_provider()
+    active_provider = provider or get_provider(settings)
     schema = RecipeImportDraft.model_json_schema()
     try:
         provider_response = active_provider.generate_structured(

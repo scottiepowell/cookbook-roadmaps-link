@@ -71,6 +71,11 @@ document.querySelector('[data-action="session-message"]').addEventListener("clic
 document.querySelector('[data-action="session-get"]').addEventListener("click", getRecipeSession);
 document.querySelector('[data-action="session-finalize"]').addEventListener("click", finalizeRecipeSession);
 document.querySelector(workflows.cookbook.button).addEventListener("click", runCookbookQuery);
+
+function providerPreference() {
+  const mode = localStorage.getItem("cookbook-ai-mode") || "openai";
+  return { provider_mode: mode, model: mode === "openai" ? "gpt-5.4-nano" : "mock-basic" };
+}
 document.querySelector(workflows.datasetSearch.button).addEventListener("click", runDatasetSearch);
 document.querySelector(workflows.datasetRag.button).addEventListener("click", runDatasetRag);
 document.querySelector(workflows.mealPlan.button).addEventListener("click", runMealPlan);

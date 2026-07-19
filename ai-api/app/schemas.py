@@ -141,6 +141,8 @@ class DatasetAskResponse(BaseModel):
 class RecipeImportRequest(BaseModel):
     text: str
     source: str | None = None
+    provider_mode: str | None = None
+    model: str | None = None
 
 
 class RecipeIngredientDraft(BaseModel):
