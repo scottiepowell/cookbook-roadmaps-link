@@ -17,6 +17,8 @@
 
 - Readiness shows provider mode/model, saved-recipe fixture status, dataset
   fixture status, and the mock/offline default.
+- At normal desktop width, readiness, action cards, and guidance are clearly
+  separated; action buttons remain inside their cards with no horizontal scroll.
 - If a fixture is missing, restart `start-ai-demo-local.ps1`; do not add raw
   datasets to the repository.
 - **Open Cookbook** redirects to the local upstream app on port 3000.

@@ -56,12 +56,16 @@ def test_demo_static_assets_load():
     css_response = client.get("/static/demo.css")
     js_response = client.get("/static/demo.js")
     product_js_response = client.get("/static/product.js")
+    product_css_response = client.get("/static/product.css")
 
     assert css_response.status_code == 200
     assert "text/css" in css_response.headers["content-type"]
     assert js_response.status_code == 200
     assert "javascript" in js_response.headers["content-type"]
     assert product_js_response.status_code == 200
+    assert product_css_response.status_code == 200
+    for marker in ("box-sizing", "max-width", "grid-template-columns", "@media"):
+        assert marker in product_css_response.text
     assert "Mock/offline default is active." in product_js_response.text
     assert "Fixtures are missing" in product_js_response.text
     assert "fetch(" in js_response.text
@@ -198,6 +202,7 @@ def test_demo_static_assets_do_not_include_sensitive_value_placeholders():
         client.get("/static/demo.css"),
         client.get("/static/demo.js"),
         client.get("/static/product.js"),
+        client.get("/static/product.css"),
     ]
     forbidden = (
         "OPENAI_API_KEY",
