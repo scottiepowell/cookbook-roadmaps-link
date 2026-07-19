@@ -107,6 +107,8 @@ class DatasetAskRequest(BaseModel):
     question: str
     limit: int = Field(default=3, ge=1, le=10)
     dataset_limit: int | None = Field(default=None, ge=1, le=5000)
+    provider_mode: str | None = None
+    model: str | None = None
 
 
 class DatasetAskCitation(BaseModel):
@@ -231,10 +233,14 @@ class RecipeImportResponse(BaseModel):
 class RecipeSessionStartRequest(BaseModel):
     text: str
     source: str | None = None
+    provider_mode: str | None = None
+    model: str | None = None
 
 
 class RecipeSessionMessageRequest(BaseModel):
     text: str
+    provider_mode: str | None = None
+    model: str | None = None
 
 
 class RecipeSessionFinalizeRequest(BaseModel):
@@ -377,6 +383,8 @@ class AiInviteStatusResponse(BaseModel):
 class AskRequest(BaseModel):
     question: str
     limit: int = Field(default=3, ge=1, le=10)
+    provider_mode: str | None = None
+    model: str | None = None
 
 
 class AskCitation(BaseModel):
@@ -453,6 +461,8 @@ class MealPlanFoundationResponse(BaseModel):
 class MealPlanRequest(MealPlanFoundationRequest):
     preferences: str | None = None
     tags: list[str] = Field(default_factory=list)
+    provider_mode: str | None = None
+    model: str | None = None
 
     @field_validator("preferences")
     @classmethod
