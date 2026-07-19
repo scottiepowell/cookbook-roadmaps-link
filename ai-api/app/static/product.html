@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cookbook AI · Local Product</title>
+    <link rel="stylesheet" href="/static/demo.css">
+  </head>
+  <body>
+    <main class="page-shell product-shell">
+      <header class="hero">
+        <p class="eyebrow">Local integrated product</p>
+        <h1>Cookbook AI</h1>
+        <p class="lede">One local starting point for Vanilla Cookbook and the AI sidecar workflows.</p>
+        <p class="hint">Local/demo-only. The Cookbook app remains an external upstream container; AI stays in this sidecar. No production storage or public route is added.</p>
+      </header>
+      <section class="workflow" aria-labelledby="product-readiness-title">
+        <h2 id="product-readiness-title">Local readiness</h2>
+        <div id="product-readiness" class="result empty">Checking provider and generated demo-data status…</div>
+      </section>
+      <section class="workflow-grid" aria-label="Local product destinations">
+        <article class="workflow">
+          <p class="eyebrow">Upstream app</p>
+          <h2>Vanilla Cookbook</h2>
+          <p>Open the local Cookbook container for saved recipes and normal cookbook use.</p>
+          <a class="button-link" href="/product/cookbook">Open Cookbook</a>
+          <p class="hint">Expected local target: 127.0.0.1:3000. Start Compose if it is unavailable.</p>
+        </article>
+        <article class="workflow">
+          <p class="eyebrow">AI sidecar</p>
+          <h2>Recipe Creator</h2>
+          <p>Create/import recipes, run Recipe Session Alpha, and inspect requirement revisions and citations.</p>
+          <a class="button-link" href="/product/ai">Open AI Recipe Creator</a>
+        </article>
+        <article class="workflow">
+          <p class="eyebrow">Grounded workflows</p>
+          <h2>Ask, Dataset, and Meal Plan</h2>
+          <p>The AI workspace also includes Ask My Cookbook, Dataset Search/Ask, and Meal Planner.</p>
+          <a class="button-link secondary-link" href="/demo#cookbook">Open AI workspace</a>
+        </article>
+      </section>
+      <section class="workflow">
+        <h2>Start and reset guidance</h2>
+        <p>Run <code>scripts\start-ai-demo-local.ps1</code>, then open this page first. It generates local mock fixture data for the sidecar. If readiness reports missing data, stop the sidecar and run the script again; no raw dataset is committed.</p>
+      </section>
+    </main>
+    <script src="/static/product.js"></script>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+# Local Cookbook AI Product Integration
+
+## Decision
+
+The local integration uses a sidecar-served product shell. Open
+`http://127.0.0.1:8000/product` first; it presents Vanilla Cookbook and the AI
+workflows as one local product while preserving their ownership boundary.
+
+| Route | Role |
+| --- | --- |
+| `/product` | Local entry point, safe readiness, and operator guidance. |
+| `/product/cookbook` | Redirect to the local external Vanilla Cookbook container on port 3000. |
+| `/product/ai` | Redirect to the existing sidecar AI workspace at `/demo`. |
+| `/demo` | Existing AI Recipe Creator, Recipe Session, Ask, Dataset, and Meal Plan UI. |
+
+Vanilla Cookbook runs from the `jt196/vanilla-cookbook:stable` external image
+and its editable frontend source is not in this repository. The shell is
+therefore intentionally a link integration rather than an upstream UI rewrite
+or vendored copy.
+
+## Local operation
+
+`scripts\start-ai-demo-local.ps1` generates a temporary local SQLite/database
+fixture and small dataset fixture, starts the sidecar on port 8000, and prints
+the product URL. Start Docker Compose separately when the upstream Cookbook
+container is needed on port 3000. If product readiness reports missing saved
+recipes or dataset data, restart the seed/start script; generated artifacts
+remain ignored.
+
+The shell reads only `/demo/readiness`, exposing provider mode/model and data
+availability. It does not show environment values, paths, prompts, provider
+responses, credentials, or raw dataset content.
+
+## Boundary before platform work
+
+This is a local operator experience only. It is not a reverse proxy for a
+public origin and does not add AWS resources, deployment configuration,
+authentication, payment, provider routing, persistent memory, or storage.
+Before AWS planning resumes, the local product shell, mock startup guidance,
+and offline smoke coverage must remain the validated baseline.

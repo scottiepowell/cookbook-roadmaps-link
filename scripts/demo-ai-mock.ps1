@@ -98,6 +98,7 @@ try:
 
     client = TestClient(app)
     checks = [
+        ("local_product", client.get("/product")),
         ("health", client.get("/health")),
         ("config", client.get("/ai/config")),
         ("usage_report", client.get("/ai/admin/usage-report")),
@@ -116,6 +117,11 @@ try:
             if forbidden in text:
                 raise SystemExit(f"{name} leaked forbidden text: {forbidden}")
         print(f"PASS: {name}")
+
+    product = client.get("/product")
+    for required in ("Vanilla Cookbook", "Recipe Creator", "/product/cookbook", "/product/ai"):
+        if required not in product.text:
+            raise SystemExit(f"local_product missing expected integration marker: {required}")
 
     session_start = client.post(
         "/ai/recipe-session/start",

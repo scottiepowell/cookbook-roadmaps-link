@@ -239,6 +239,10 @@ For the full local browser UI path, run:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
+Open `http://127.0.0.1:8000/product` first. This local product shell links the
+external Vanilla Cookbook container at `127.0.0.1:3000` with the AI workspace
+at `/demo`, without vendoring or rewriting the upstream frontend.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

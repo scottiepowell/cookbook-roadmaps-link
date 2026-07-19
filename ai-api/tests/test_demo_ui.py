@@ -32,16 +32,33 @@ def test_demo_ai_route_returns_same_html():
     assert "Dataset Ask/RAG" in response.text
 
 
+def test_local_product_shell_connects_cookbook_and_ai_workflows():
+    client = TestClient(app)
+    response = client.get("/product")
+
+    assert response.status_code == 200
+    assert "Cookbook AI" in response.text
+    assert "Vanilla Cookbook" in response.text
+    assert "/product/cookbook" in response.text
+    assert "/product/ai" in response.text
+    assert "Recipe Creator" in response.text
+    assert "Local/demo-only" in response.text
+    assert client.get("/product/ai", follow_redirects=False).headers["location"] == "/demo"
+    assert client.get("/product/cookbook", follow_redirects=False).headers["location"] == "http://127.0.0.1:3000/"
+
+
 def test_demo_static_assets_load():
     client = TestClient(app)
 
     css_response = client.get("/static/demo.css")
     js_response = client.get("/static/demo.js")
+    product_js_response = client.get("/static/product.js")
 
     assert css_response.status_code == 200
     assert "text/css" in css_response.headers["content-type"]
     assert js_response.status_code == 200
     assert "javascript" in js_response.headers["content-type"]
+    assert product_js_response.status_code == 200
     assert "fetch(" in js_response.text
     assert "importerAnswer" in js_response.text
     assert "importerEvidenceSection" in js_response.text
@@ -172,8 +189,10 @@ def test_demo_static_assets_do_not_include_sensitive_value_placeholders():
     client = TestClient(app)
     responses = [
         client.get("/demo"),
+        client.get("/product"),
         client.get("/static/demo.css"),
         client.get("/static/demo.js"),
+        client.get("/static/product.js"),
     ]
     forbidden = (
         "OPENAI_API_KEY",

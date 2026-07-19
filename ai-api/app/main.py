@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.ai_access_models import AiAccessWorkflow
@@ -52,6 +52,23 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 @app.get("/demo/ai", include_in_schema=False)
 def ai_demo() -> FileResponse:
     return FileResponse(STATIC_DIR / "demo.html", media_type="text/html")
+
+
+@app.get("/product", include_in_schema=False)
+def local_product_shell() -> FileResponse:
+    """Local-only entry point joining the external Cookbook app and AI sidecar."""
+    return FileResponse(STATIC_DIR / "product.html", media_type="text/html")
+
+
+@app.get("/product/ai", include_in_schema=False)
+def local_product_ai() -> RedirectResponse:
+    return RedirectResponse(url="/demo", status_code=307)
+
+
+@app.get("/product/cookbook", include_in_schema=False)
+def local_product_cookbook() -> RedirectResponse:
+    # Vanilla Cookbook is an external local Docker image, not frontend code in this repository.
+    return RedirectResponse(url="http://127.0.0.1:3000/", status_code=307)
 
 
 @app.get("/demo/readiness", include_in_schema=False)

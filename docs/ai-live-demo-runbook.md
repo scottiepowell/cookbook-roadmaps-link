@@ -19,7 +19,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-mock.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
-- Open the browser UI at `http://127.0.0.1:8000/demo`.
+- Open the local integrated product first at `http://127.0.0.1:8000/product`.
+  It links the external Vanilla Cookbook container and the existing AI workspace.
+  The direct AI browser UI remains at `http://127.0.0.1:8000/demo`.
 - Open a terminal for logs.
 
 ## Mock/Demo Mode Path

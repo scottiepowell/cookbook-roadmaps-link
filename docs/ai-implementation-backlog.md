@@ -1445,6 +1445,21 @@ Done criteria:
 - normal validation remains offline and mock-only;
 - no raw dataset files, disk cache, generated persistent index, live artifacts, screenshots, browser automation artifacts, `.env` files, logs, credentials, or secrets are committed.
 
+## 0030H: Local Cookbook AI Product Integration
+
+Status: complete.
+
+Goal: provide a local product entry point before AWS/platform planning resumes.
+
+Delivered:
+
+- `GET /product` joins links to the external Vanilla Cookbook container and the existing AI sidecar workspace;
+- `GET /product/cookbook` redirects only to the local upstream container, while `GET /product/ai` retains the existing `/demo` workspace;
+- local mock smoke and static-route tests cover the shell and safe readiness display;
+- no upstream frontend vendoring, production proxy, public routing, or cloud work is introduced.
+
+AWS/platform architecture work remains queued until this local product path is the reviewed operator starting point.
+
 ## 0030A: RAG Requirements Interaction And Session Memory Architecture
 
 Status: complete.

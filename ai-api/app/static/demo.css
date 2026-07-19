@@ -151,6 +151,24 @@ pre {
   padding: 16px;
 }
 
+.product-shell .workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.button-link {
+  display: inline-block;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.5rem;
+  background: #1f5d50;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.secondary-link { background: #465a64; }
+
 .intro-panel {
   align-items: center;
   display: grid;
