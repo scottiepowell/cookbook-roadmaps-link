@@ -614,6 +614,19 @@ The alpha UI does not need a full chat surface. It should show a recipe creation
 
 UI language should avoid overstating support. Weak examples should be labeled as broad or structure-only examples, not authoritative sources.
 
+### Operator Revision Summaries
+
+The local alpha should show the current revision number and a compact, safe
+requirement diff after every follow-up. The diff records changed fields, added,
+removed, or updated requirement values, whether the change is retrieval
+relevant, and the refresh/no-refresh reason. The companion revision sentence is
+derived only from that structured state, such as `Revision 2: Changed
+cooking_method; RAG refreshed because the change affects retrieval.` For
+chatter and formatting-only updates it instead explains that no material
+requirements changed, the existing draft and citations were reused, and no new
+provider generation occurred. It must never display raw prompts, provider
+responses, paths, environment values, or hidden retrieval context.
+
 Alpha implementation status: `0030D` implements this as the `Recipe Session Alpha` panel in the existing sidecar demo UI. It is intentionally compact and operator-focused: textareas for initial notes and follow-up messages, buttons for start/message/get/finalize/reset, safe requirement and state metadata, draft summary/citations when present, and recoverable error cards. It does not implement a persistent conversation transcript, browser automation, production save, auth, paid access, or public route exposure.
 
 ## Example Flows

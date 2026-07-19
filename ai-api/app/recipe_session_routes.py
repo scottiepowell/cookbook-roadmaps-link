@@ -24,13 +24,19 @@ from app.recipe_requirements import (
     decide_rag_refresh,
     extract_recipe_requirements,
 )
-from app.recipe_session import RecipeSessionState, default_recipe_session_store
+from app.recipe_session import (
+    RecipeSessionState,
+    build_requirement_diff,
+    build_revision_summary,
+    default_recipe_session_store,
+)
 from app.schemas import (
     RecipeImportRequest,
     RecipeRequirementValueResponse,
     RecipeSessionApiResponse,
     RecipeSessionDecisionResponse,
     RecipeSessionDraftSummary,
+    RecipeSessionRequirementDiffResponse,
     RecipeSessionFinalizeRequest,
     RecipeSessionMessageRequest,
     RecipeSessionRequirementsResponse,
@@ -108,12 +114,12 @@ def message_recipe_session(
     }:
         session = _update_session_metadata(session, response_state=RecipeSessionResponseState.NO_MATERIAL_CHANGE)
         log_ai_workflow("recipe.session.message", request, status="no_material_change", warning_count=0)
-        return _session_response(session, classification=classification)
+        return _session_response(session, classification=classification, previous_requirements=previous_requirements)
 
     if classification.label == RecipeFollowUpLabel.SAVE_OR_FINALIZE_REQUEST:
         session = _update_session_metadata(session, response_state=RecipeSessionResponseState.READY_TO_FINALIZE)
         log_ai_workflow("recipe.session.message", request, status="ready_to_finalize", warning_count=0)
-        return _session_response(session, classification=classification)
+        return _session_response(session, classification=classification, previous_requirements=previous_requirements)
 
     if classification.label == RecipeFollowUpLabel.REGENERATE_WITHOUT_NEW_REQUIREMENTS:
         session = _generate_and_store_draft(
@@ -129,7 +135,13 @@ def message_recipe_session(
             citation_count=len(session.citations),
             warning_count=len(session.warnings),
         )
-        return _session_response(session, classification=classification, rag_refreshed=False)
+        return _session_response(
+            session,
+            classification=classification,
+            rag_refreshed=False,
+            previous_requirements=previous_requirements,
+            provider_generation_occurred=True,
+        )
 
     updated_requirements = _requirements_after_message(previous_requirements, payload.text, classification)
     refresh = decide_rag_refresh(previous_requirements, updated_requirements, follow_up=classification)
@@ -151,7 +163,12 @@ def message_recipe_session(
         if session is None:
             raise _not_found()
         log_ai_workflow("recipe.session.message", request, status="clarification_needed", warning_count=0)
-        return _session_response(session, classification=classification, decision=clarification)
+        return _session_response(
+            session,
+            classification=classification,
+            decision=clarification,
+            previous_requirements=previous_requirements,
+        )
 
     response_state = (
         RecipeSessionResponseState.RAG_REFRESHED
@@ -187,6 +204,8 @@ def message_recipe_session(
         rag_refreshed=refresh.should_refresh_rag,
         rag_refresh_reason=refresh.reason if refresh.should_refresh_rag else None,
         changed_fields=refresh.changed_fields,
+        previous_requirements=previous_requirements,
+        provider_generation_occurred=True,
     )
 
 
@@ -365,6 +384,8 @@ def _session_response(
     rag_refreshed: bool = False,
     rag_refresh_reason: str | None = None,
     changed_fields: list[str] | None = None,
+    previous_requirements: RecipeRequirementsState | None = None,
+    provider_generation_occurred: bool = False,
 ) -> RecipeSessionApiResponse:
     state = session.response_state or RecipeSessionResponseState.NO_MATERIAL_CHANGE.value
     clarification_question = None
@@ -372,6 +393,21 @@ def _session_response(
         clarification_question = session.requirements.open_questions[0].question
     elif decision and decision.question:
         clarification_question = decision.question
+    diff = None
+    revision_summary = None
+    if previous_requirements is not None:
+        diff = build_requirement_diff(
+            previous_requirements,
+            session.requirements,
+            rag_refresh_relevant=rag_refreshed,
+            rag_refresh_reason=rag_refresh_reason,
+        )
+        revision_summary = build_revision_summary(
+            diff,
+            response_state=state,
+            rag_refreshed=rag_refreshed,
+            provider_generation_occurred=provider_generation_occurred,
+        )
     return RecipeSessionApiResponse(
         interaction_id=session.interaction_id,
         response_state=state,
@@ -380,7 +416,9 @@ def _session_response(
         clarification_question=clarification_question,
         rag_refreshed=rag_refreshed,
         rag_refresh_reason=rag_refresh_reason,
-        changed_fields=changed_fields or [],
+        changed_fields=changed_fields if changed_fields is not None else (diff.changed_fields if diff else []),
+        requirement_diff=RecipeSessionRequirementDiffResponse(**diff.model_dump()) if diff else None,
+        revision_summary=revision_summary,
         draft=session.draft.model_dump() if session.draft else None,
         draft_summary=_draft_summary(session.draft),
         citations=[citation.model_dump() for citation in session.citations],

@@ -188,3 +188,13 @@ def test_demo_static_assets_do_not_include_sensitive_value_placeholders():
         assert response.status_code == 200
         for marker in forbidden:
             assert marker not in response.text
+
+
+def test_demo_ui_renders_recipe_session_requirement_diff_and_revision_summary():
+    client = TestClient(app)
+    script = client.get("/static/demo.js")
+
+    assert script.status_code == 200
+    assert "requirement_diff" in script.text
+    assert "revision_summary" in script.text
+    assert "Latest requirement change" in script.text

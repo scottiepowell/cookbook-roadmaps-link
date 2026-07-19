@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 from app.recipe_requirements import extract_recipe_requirements
-from app.recipe_session import RecipeSessionStore
+from app.recipe_session import RecipeSessionStore, build_requirement_diff, build_revision_summary
 
 
 def test_session_store_create_and_get():
@@ -88,3 +88,36 @@ def test_session_store_safe_serialization_has_no_secret_or_prompt_fields():
     assert "C:\\Users" not in dumped
     assert "Authorization" not in dumped
     assert "long_term" not in dumped
+
+
+def test_requirement_diff_and_revision_summary_are_safe_and_deterministic():
+    previous = extract_recipe_requirements("baked cheesecake for 4 with cream cheese bake")
+    current = extract_recipe_requirements("no-bake cheesecake for 4 with cream cheese no nuts use air fryer")
+    current.revision_count = 1
+
+    diff = build_requirement_diff(previous, current, rag_refresh_relevant=True, rag_refresh_reason="method changed")
+
+    assert "cooking_method" in diff.changed_fields
+    assert "equipment_constraints" in diff.changed_fields
+    assert "excluded_ingredients" in diff.changed_fields
+    assert diff.rag_refresh_relevant is True
+    assert diff.previous_revision == 0
+    assert diff.current_revision == 1
+    summary = build_revision_summary(diff, response_state="rag_refreshed", rag_refreshed=True, provider_generation_occurred=True)
+    assert summary.startswith("Revision 1:")
+    assert "RAG refreshed" in summary
+    assert "OPENAI_API_KEY" not in summary
+
+
+def test_requirement_diff_reports_no_material_change():
+    state = extract_recipe_requirements("omelette for 4 with eggs cheddar butter")
+    diff = build_requirement_diff(state, state)
+
+    assert diff.changed_fields == []
+    assert diff.summary_message == "No material recipe requirements changed; existing draft and citations were reused."
+    assert "no new provider generation occurred" in build_revision_summary(
+        diff,
+        response_state="no_material_change",
+        rag_refreshed=False,
+        provider_generation_occurred=False,
+    )

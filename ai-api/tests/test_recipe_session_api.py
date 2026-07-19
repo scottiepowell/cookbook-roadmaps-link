@@ -190,6 +190,10 @@ def test_message_no_bake_refreshes_rag_and_revises_draft(session_client):
     assert data["draft"] is not None
     assert data["retrieval"] is not None
     assert data["revision_count"] == 1
+    assert data["requirement_diff"]["previous_revision"] == 0
+    assert data["requirement_diff"]["current_revision"] == 1
+    assert "cooking_method" in data["requirement_diff"]["changed_fields"]
+    assert "RAG refreshed" in data["revision_summary"]
     _assert_no_bake_cheesecake_draft(data)
     assert any(term in (data["retrieval"]["query"] or "").lower() for term in ("no-bake", "no bake"))
 
@@ -209,6 +213,8 @@ def test_message_chatter_and_formatting_do_not_refresh(session_client):
         assert data["response_state"] == "no_material_change"
         assert data["rag_refreshed"] is False
         assert data["changed_fields"] == []
+        assert data["requirement_diff"]["changed_fields"] == []
+        assert "existing draft and citations were reused" in data["revision_summary"]
 
 
 def test_repeated_no_refresh_messages_keep_existing_draft_without_refresh(session_client):

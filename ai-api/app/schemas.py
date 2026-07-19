@@ -287,6 +287,18 @@ class RecipeSessionDraftSummary(BaseModel):
     instruction_count: int = 0
 
 
+class RecipeSessionRequirementDiffResponse(BaseModel):
+    changed_fields: list[str] = Field(default_factory=list)
+    added_requirements: dict[str, list[str]] = Field(default_factory=dict)
+    removed_requirements: dict[str, list[str]] = Field(default_factory=dict)
+    updated_requirements: dict[str, str] = Field(default_factory=dict)
+    summary_message: str
+    rag_refresh_relevant: bool = False
+    rag_refresh_reason: str | None = None
+    previous_revision: int = 0
+    current_revision: int = 0
+
+
 class RecipeSessionApiResponse(BaseModel):
     interaction_id: str | None = None
     response_state: str
@@ -296,6 +308,8 @@ class RecipeSessionApiResponse(BaseModel):
     rag_refreshed: bool = False
     rag_refresh_reason: str | None = None
     changed_fields: list[str] = Field(default_factory=list)
+    requirement_diff: RecipeSessionRequirementDiffResponse | None = None
+    revision_summary: str | None = None
     draft: RecipeImportDraft | None = None
     draft_summary: RecipeSessionDraftSummary | None = None
     citations: list[RecipeImportCitation] = Field(default_factory=list)

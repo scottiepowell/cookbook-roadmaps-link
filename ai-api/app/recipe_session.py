@@ -25,6 +25,129 @@ class RecipeSessionState(BaseModel):
     finalized_for_demo: bool = False
 
 
+class RecipeRequirementDiffSummary(BaseModel):
+    """Safe, deterministic operator summary of a requirements revision."""
+
+    changed_fields: list[str] = Field(default_factory=list)
+    added_requirements: dict[str, list[str]] = Field(default_factory=dict)
+    removed_requirements: dict[str, list[str]] = Field(default_factory=dict)
+    updated_requirements: dict[str, str] = Field(default_factory=dict)
+    summary_message: str
+    rag_refresh_relevant: bool = False
+    rag_refresh_reason: str | None = None
+    previous_revision: int = 0
+    current_revision: int = 0
+
+
+_DIFF_FIELDS = (
+    "dish_intent",
+    "serving_count",
+    "required_ingredients",
+    "optional_ingredients",
+    "excluded_ingredients",
+    "cooking_method",
+    "equipment_constraints",
+    "time_constraints",
+    "dietary_constraints",
+    "texture_or_style_goals",
+    "assumptions",
+    "open_questions",
+    "resolved_questions",
+)
+_RETRIEVAL_RELEVANT_FIELDS = {
+    "dish_intent",
+    "required_ingredients",
+    "excluded_ingredients",
+    "cooking_method",
+    "equipment_constraints",
+    "time_constraints",
+    "dietary_constraints",
+}
+
+
+def build_requirement_diff(
+    previous: RecipeRequirementsState,
+    current: RecipeRequirementsState,
+    *,
+    rag_refresh_relevant: bool = False,
+    rag_refresh_reason: str | None = None,
+) -> RecipeRequirementDiffSummary:
+    """Compare safe requirement values without retaining or exposing message text."""
+
+    added: dict[str, list[str]] = {}
+    removed: dict[str, list[str]] = {}
+    updated: dict[str, str] = {}
+    changed: list[str] = []
+    for field_name in _DIFF_FIELDS:
+        before = _diff_values(previous, field_name)
+        after = _diff_values(current, field_name)
+        if before == after:
+            continue
+        changed.append(field_name)
+        if len(before) == 1 and len(after) == 1:
+            updated[field_name] = f"{before[0]} -> {after[0]}"
+            continue
+        field_added = [value for value in after if value not in before]
+        field_removed = [value for value in before if value not in after]
+        if field_added:
+            added[field_name] = field_added[:6]
+        if field_removed:
+            removed[field_name] = field_removed[:6]
+
+    relevant = rag_refresh_relevant or any(field in _RETRIEVAL_RELEVANT_FIELDS for field in changed)
+    if not changed:
+        message = "No material recipe requirements changed; existing draft and citations were reused."
+    elif relevant:
+        message = f"Updated {', '.join(changed[:3])}; RAG refreshed because the change affects retrieval."
+    else:
+        message = f"Updated {', '.join(changed[:3])}; existing retrieval was reused."
+    return RecipeRequirementDiffSummary(
+        changed_fields=changed,
+        added_requirements=added,
+        removed_requirements=removed,
+        updated_requirements=updated,
+        summary_message=message,
+        rag_refresh_relevant=relevant,
+        rag_refresh_reason=rag_refresh_reason,
+        previous_revision=previous.revision_count,
+        current_revision=current.revision_count,
+    )
+
+
+def build_revision_summary(
+    diff: RecipeRequirementDiffSummary,
+    *,
+    response_state: str,
+    rag_refreshed: bool,
+    provider_generation_occurred: bool,
+) -> str:
+    """Return one concise operator-facing sentence from safe structured metadata."""
+
+    revision = diff.current_revision
+    if not diff.changed_fields:
+        action = "existing draft and citations were reused"
+        if not provider_generation_occurred:
+            action += "; no new provider generation occurred"
+        return f"Revision {revision}: No material requirements changed; {action}."
+    change = ", ".join(diff.changed_fields[:2])
+    if rag_refreshed:
+        return f"Revision {revision}: Changed {change}; RAG refreshed because the change affects retrieval."
+    return f"Revision {revision}: Changed {change}; existing retrieval was reused."
+
+
+def _diff_values(state: RecipeRequirementsState, field_name: str) -> list[str]:
+    value = getattr(state, field_name)
+    if value is None:
+        return []
+    if field_name == "resolved_questions":
+        return ["resolved question"] * len(value)
+    if field_name == "open_questions":
+        return ["open question"] * len(value)
+    if isinstance(value, list):
+        return [str(item.value) for item in value]
+    return [str(value.value)]
+
+
 class RecipeSessionStore:
     """Small process-local store for alpha tests and local demos only."""
 

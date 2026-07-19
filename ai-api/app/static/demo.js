@@ -403,12 +403,17 @@ function renderRecipeSession(target, data) {
     rag_refreshed: data.rag_refreshed ? "true" : "false",
     rag_refresh_reason: data.rag_refresh_reason || "none",
     changed_fields: (data.changed_fields || []).join(", ") || "none",
+    revision_summary: data.revision_summary || "none",
     support_level: data.support_level || "none",
     last_citation_ids: (data.citations || []).map((citation) => citation.id).filter(Boolean).join(", ") || "none",
     expires_at: data.expires_at || "none",
   }));
 
   target.append(sessionRequirementsSection(data.requirements || {}));
+
+  if (data.requirement_diff || data.revision_summary) {
+    target.append(answerCard("Latest requirement change", data.revision_summary || data.requirement_diff?.summary_message || "No change summary available."));
+  }
 
   if (data.draft) {
     target.append(answerCard(`Draft: ${data.draft.title || "Recipe draft"}`, importerAnswer(data)));
