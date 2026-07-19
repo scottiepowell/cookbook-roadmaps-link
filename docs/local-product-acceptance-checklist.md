@@ -24,6 +24,9 @@
 - **Open Cookbook** redirects to the local upstream app on port 3000.
 - **Open AI Recipe Creator** opens `/demo`, where importer, Ask My Cookbook,
   Dataset, Meal Planner, and Recipe Session Alpha remain available.
+- Confirm the selected AI mode is carried into each generated workflow:
+  mock mode reports `mock/mock-basic`; an unconfigured Live OpenAI selection
+  reports a safe unavailable message instead of a disguised mock response.
 
 ## Recipe Session Alpha checks
 
@@ -38,6 +41,9 @@
 ## Safety and go/no-go
 
 - Mock/offline mode is the normal acceptance path; do not enable live OpenAI.
+- Live OpenAI is available only with explicit opt-in, an approved
+  `gpt-5.4-nano` configuration, and existing budget limits; browser selection
+  alone never enables a live call.
 - Product and readiness content must not expose secrets, prompts, provider
   responses, environment values, or local paths.
 - Direct Windows pytest may fail on the known `pytest-of-scott` Temp ACL issue;

@@ -31,6 +31,12 @@ The shell reads only `/demo/readiness`, exposing provider mode/model and data
 availability. It does not show environment values, paths, prompts, provider
 responses, credentials, or raw dataset content.
 
+The AI workspace carries its browser-selected mode on each provider-backed
+request. `Mock offline` requests `mock/mock-basic`; `Live OpenAI` requests
+only `openai/gpt-5.4-nano` and remains unavailable unless the server has the
+existing explicit live opt-in, key, and budget configuration. This is
+request-scoped routing, not a browser mutation of the process-wide provider.
+
 Use the [Local Product Acceptance Checklist](local-product-acceptance-checklist.md)
 for the go/no-go local demo flow before AWS/platform planning resumes.
 

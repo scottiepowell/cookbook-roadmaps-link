@@ -73,7 +73,8 @@ document.querySelector('[data-action="session-finalize"]').addEventListener("cli
 document.querySelector(workflows.cookbook.button).addEventListener("click", runCookbookQuery);
 
 function providerPreference() {
-  const mode = localStorage.getItem("cookbook-ai-mode") || "openai";
+  const selected = localStorage.getItem("cookbook-ai-mode") || "live";
+  const mode = selected === "live" || selected === "openai" ? "openai" : "mock";
   return { provider_mode: mode, model: mode === "openai" ? "gpt-5.4-nano" : "mock-basic" };
 }
 document.querySelector(workflows.datasetSearch.button).addEventListener("click", runDatasetSearch);
@@ -155,6 +156,7 @@ async function refreshUsageReport() {
 async function runImporter() {
   const workflow = workflows.importer;
   const payload = {
+    ...providerPreference(),
     text: document.getElementById(workflow.input).value,
     source: "sidecar demo",
   };
@@ -176,6 +178,7 @@ async function runImporter() {
 async function startRecipeSession() {
   const workflow = workflows.recipeSession;
   const payload = {
+    ...providerPreference(),
     text: document.getElementById(workflow.input).value,
     source: "sidecar demo recipe session",
   };
@@ -193,6 +196,7 @@ async function sendRecipeSessionMessage() {
     return;
   }
   const payload = {
+    ...providerPreference(),
     text: document.getElementById(workflow.followup).value,
   };
   await runSessionWorkflow(
@@ -231,6 +235,7 @@ async function finalizeRecipeSession() {
 async function runCookbookQuery() {
   const workflow = workflows.cookbook;
   const payload = {
+    ...providerPreference(),
     question: document.getElementById(workflow.input).value,
     limit: 2,
   };
@@ -273,6 +278,7 @@ async function runDatasetSearch() {
 async function runDatasetRag() {
   const workflow = workflows.datasetRag;
   const payload = {
+    ...providerPreference(),
     question: document.getElementById(workflow.input).value,
     limit: 2,
     dataset_limit: 25,
@@ -292,6 +298,7 @@ async function runDatasetRag() {
 async function runMealPlan() {
   const workflow = workflows.mealPlan;
   const payload = {
+    ...providerPreference(),
     days: 1,
     meals_per_day: 1,
     preferences: document.getElementById(workflow.input).value,

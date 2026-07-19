@@ -72,6 +72,10 @@ def test_demo_static_assets_load():
     assert "Mock/offline default is active." in product_js_response.text
     assert "Fixtures are missing" in product_js_response.text
     assert "fetch(" in js_response.text
+    assert "function providerPreference()" in js_response.text
+    assert 'selected === "live" || selected === "openai"' in js_response.text
+    assert 'mode === "openai" ? "gpt-5.4-nano" : "mock-basic"' in js_response.text
+    assert js_response.text.count("...providerPreference()") >= 6
     assert "importerAnswer" in js_response.text
     assert "importerEvidenceSection" in js_response.text
     assert "renderRecipeSession" in js_response.text

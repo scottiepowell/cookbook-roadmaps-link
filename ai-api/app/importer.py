@@ -124,7 +124,9 @@ def import_recipe_text(
             usage=None,
             input_quality=input_quality.to_dict(),
         )
-    active_provider = provider or get_provider(settings)
+    # Explicit request-scoped providers are injected by the HTTP boundary.
+    # Legacy callers retain the no-argument lookup used by existing budget tests.
+    active_provider = provider or _get_configured_provider()
     schema = RecipeImportDraft.model_json_schema()
     try:
         provider_response = active_provider.generate_structured(

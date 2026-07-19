@@ -8,7 +8,7 @@ async function loadProductReadiness() {
     const liveAvailable = data.provider?.mode === "openai" && data.provider?.model === "gpt-5.4-nano";
     const updateMode = () => {
       const selected = document.querySelector('input[name="ai-mode"]:checked')?.value;
-      status.textContent = selected === "mock" ? "Mock offline selected: free, deterministic local demo mode." : liveAvailable ? "Live OpenAI selected and available using gpt-5.4-nano." : "Live OpenAI selected but unavailable: start the sidecar with explicit live opt-in and approved budget configuration. Current runtime remains unchanged.";
+      status.textContent = selected === "mock" ? "Mock offline selected: free, deterministic local demo mode." : liveAvailable ? "Live OpenAI selected and available using gpt-5.4-nano." : "Live mode is selected but unavailable because this local server was started without live OpenAI opt-in/configuration. Switch to Mock offline or restart with explicit live settings.";
     };
     document.querySelectorAll('input[name="ai-mode"]').forEach((input) => input.addEventListener("change", updateMode));
     document.querySelectorAll('input[name="ai-mode"]').forEach((input) => input.addEventListener("change", () => localStorage.setItem("cookbook-ai-mode", input.value)));

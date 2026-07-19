@@ -71,7 +71,8 @@ def _budget_settings(**overrides) -> ProviderBudgetSettings:
 
 
 def _now() -> datetime:
-    return datetime(2026, 7, 10, 12, 0, tzinfo=UTC)
+    # Keep seeded active grants ahead of the current clock used by endpoint tests.
+    return datetime(2030, 7, 10, 12, 0, tzinfo=UTC)
 
 
 def _session(

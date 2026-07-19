@@ -102,11 +102,11 @@ try:
         ("health", client.get("/health")),
         ("config", client.get("/ai/config")),
         ("usage_report", client.get("/ai/admin/usage-report")),
-        ("importer", client.post("/ai/import-recipe", json={"text": "Lemon beans: warm beans with lemon.", "source": "demo"})),
-        ("ask_my_cookbook", client.post("/ai/ask", json={"question": "What uses lemon?", "limit": 1})),
+        ("importer", client.post("/ai/import-recipe", json={"text": "Lemon beans: warm beans with lemon.", "source": "demo", "provider_mode": "mock", "model": "mock-basic"})),
+        ("ask_my_cookbook", client.post("/ai/ask", json={"question": "What uses lemon?", "limit": 1, "provider_mode": "mock", "model": "mock-basic"})),
         ("dataset_search", client.get("/dataset/search", params={"q": "tomato pasta", "limit": 1, "dataset_limit": 3})),
-        ("dataset_ask", client.post("/dataset/ask", json={"question": "What indexed recipe uses tomato pasta?", "limit": 1, "dataset_limit": 3})),
-        ("meal_plan", client.post("/ai/meal-plan", json={"days": 1, "meals_per_day": 1, "preferences": "lemon", "candidate_limit": 2})),
+        ("dataset_ask", client.post("/dataset/ask", json={"question": "What indexed recipe uses tomato pasta?", "limit": 1, "dataset_limit": 3, "provider_mode": "mock", "model": "mock-basic"})),
+        ("meal_plan", client.post("/ai/meal-plan", json={"days": 1, "meals_per_day": 1, "preferences": "lemon", "candidate_limit": 2, "provider_mode": "mock", "model": "mock-basic"})),
     ]
 
     for name, response in checks:
@@ -116,6 +116,10 @@ try:
         for forbidden in ("OPENAI_API_KEY", "sk-", "Authorization:"):
             if forbidden in text:
                 raise SystemExit(f"{name} leaked forbidden text: {forbidden}")
+        if name in {"importer", "ask_my_cookbook", "dataset_ask", "meal_plan"}:
+            data = response.json()
+            if data.get("provider") != "mock" or data.get("model") != "mock-basic":
+                raise SystemExit(f"{name} did not honor explicit mock provider preference: {response.text}")
         print(f"PASS: {name}")
 
     product = client.get("/product")
@@ -137,25 +141,29 @@ try:
 
     session_start = client.post(
         "/ai/recipe-session/start",
-        json={"text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight"},
+        json={"text": "classic baked cheesecake for 4 with cream cheese sugar eggs vanilla graham cracker crust bake and chill overnight", "provider_mode": "mock", "model": "mock-basic"},
     )
     if session_start.status_code != 200:
         raise SystemExit(f"recipe_session_start failed with HTTP {session_start.status_code}: {session_start.text}")
     session_data = session_start.json()
     if session_data.get("response_state") != "draft_generated" or not session_data.get("interaction_id"):
         raise SystemExit(f"recipe_session_start returned unexpected state: {session_start.text}")
+    if session_data.get("provider") != "mock" or session_data.get("model") != "mock-basic":
+        raise SystemExit(f"recipe_session_start did not honor explicit mock provider preference: {session_start.text}")
     interaction_id = session_data["interaction_id"]
     print("PASS: recipe_session_start")
 
     session_message = client.post(
         f"/ai/recipe-session/{interaction_id}/message",
-        json={"text": "actually make it no-bake"},
+        json={"text": "actually make it no-bake", "provider_mode": "mock", "model": "mock-basic"},
     )
     if session_message.status_code != 200:
         raise SystemExit(f"recipe_session_message failed with HTTP {session_message.status_code}: {session_message.text}")
     message_data = session_message.json()
     if message_data.get("response_state") not in ("rag_refreshed", "draft_revised") or message_data.get("rag_refreshed") is not True:
         raise SystemExit(f"recipe_session_message returned unexpected state: {session_message.text}")
+    if message_data.get("provider") != "mock" or message_data.get("model") != "mock-basic":
+        raise SystemExit(f"recipe_session_message did not honor explicit mock provider preference: {session_message.text}")
     print("PASS: recipe_session_message")
 
     session_get = client.get(f"/ai/recipe-session/{interaction_id}")

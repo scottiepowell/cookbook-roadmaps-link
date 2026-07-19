@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException, Request
 
 from app.ai_access_models import AiAccessWorkflow
+from app.ai_mode_routing import resolve_ai_mode
 from app.ai_invite_sessions import require_demo_workflow_access
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.observability import log_ai_workflow
@@ -48,9 +49,19 @@ from app.schemas import (
 router = APIRouter(prefix="/ai/recipe-session", tags=["recipe-session-alpha"])
 
 
+def _resolve_session_provider(payload):
+    if payload.provider_mode is None and payload.model is None:
+        return None
+    resolution = resolve_ai_mode(payload.provider_mode, payload.model)
+    if resolution.effective_provider is None:
+        raise HTTPException(status_code=503, detail=resolution.safe_unavailable_reason or "Requested AI mode is unavailable.")
+    return resolution.provider()
+
+
 @router.post("/start", response_model=RecipeSessionApiResponse)
 def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -> RecipeSessionApiResponse:
     access_session = _require_demo_workflow_access(request, AiAccessWorkflow.RECIPE_SESSION)
+    provider = _resolve_session_provider(payload)
     requirements = extract_recipe_requirements(payload.text)
     decision = decide_clarification(requirements)
 
@@ -83,13 +94,14 @@ def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -
         _generation_text(requirements),
         response_state=RecipeSessionResponseState.DRAFT_GENERATED,
         source=payload.source,
+        provider=provider,
         budget_session_state=access_session,
     )
     log_ai_workflow(
         "recipe.session.start",
         request,
-        provider="mock" if session.draft else None,
-        model=None,
+        provider=session.provider,
+        model=session.model,
         retrieved_count=session.retrieval.retrieved_count if session.retrieval else 0,
         citation_count=len(session.citations),
         warning_count=len(session.warnings),
@@ -122,15 +134,19 @@ def message_recipe_session(
         return _session_response(session, classification=classification, previous_requirements=previous_requirements)
 
     if classification.label == RecipeFollowUpLabel.REGENERATE_WITHOUT_NEW_REQUIREMENTS:
+        provider = _resolve_session_provider(payload)
         session = _generate_and_store_draft(
             session,
             _generation_text(previous_requirements),
             response_state=RecipeSessionResponseState.DRAFT_REVISED,
             budget_session_state=access_session,
+            provider=provider,
         )
         log_ai_workflow(
             "recipe.session.message",
             request,
+            provider=session.provider,
+            model=session.model,
             retrieved_count=session.retrieval.retrieved_count if session.retrieval else 0,
             citation_count=len(session.citations),
             warning_count=len(session.warnings),
@@ -188,10 +204,13 @@ def message_recipe_session(
         _generation_text(updated_requirements),
         response_state=response_state,
         budget_session_state=access_session,
+        provider=_resolve_session_provider(payload),
     )
     log_ai_workflow(
         "recipe.session.message",
         request,
+        provider=session.provider,
+        model=session.model,
         status=response_state.value,
         retrieved_count=session.retrieval.retrieved_count if session.retrieval else 0,
         citation_count=len(session.citations),
@@ -257,9 +276,10 @@ def _generate_and_store_draft(
     response_state: RecipeSessionResponseState,
     source: str | None = None,
     budget_session_state: object | None = None,
+    provider=None,
 ) -> RecipeSessionState:
     try:
-        response = import_recipe_text(RecipeImportRequest(text=text, source=source), session_state=budget_session_state or session)
+        response = import_recipe_text(RecipeImportRequest(text=text, source=source), provider=provider, session_state=budget_session_state or session)
     except RecipeImportProviderError as exc:
         raise HTTPException(status_code=503, detail="Recipe-session provider is not available.") from exc
     except RecipeImportValidationError as exc:
@@ -283,6 +303,8 @@ def _generate_and_store_draft(
         citations=response.citations,
         retrieval=response.retrieval,
         warnings=response.warnings,
+        provider=response.provider,
+        model=response.model,
     )
     if updated is None:
         raise _not_found()
@@ -425,6 +447,8 @@ def _session_response(
         retrieval=session.retrieval.model_dump() if session.retrieval else None,
         retrieval_summary=_retrieval_summary_response(session),
         support_level=session.retrieval.support_level if session.retrieval else session.requirements.last_support_level,
+        provider=session.provider,
+        model=session.model,
         revision_count=session.revision_count,
         expires_at=session.expires_at.isoformat(),
         warnings=session.warnings,

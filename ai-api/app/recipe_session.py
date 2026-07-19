@@ -22,6 +22,8 @@ class RecipeSessionState(BaseModel):
     citations: list[RecipeImportCitation] = Field(default_factory=list)
     retrieval: RecipeImportRetrievalMetadata | None = None
     warnings: list[str] = Field(default_factory=list)
+    provider: str | None = None
+    model: str | None = None
     finalized_for_demo: bool = False
 
 
@@ -214,6 +216,8 @@ class RecipeSessionStore:
         citations: list[RecipeImportCitation] | None = None,
         retrieval: RecipeImportRetrievalMetadata | None = None,
         warnings: list[str] | None = None,
+        provider: str | None = None,
+        model: str | None = None,
         finalized_for_demo: bool | None = None,
     ) -> RecipeSessionState | None:
         current_time = now or datetime.now(UTC)
@@ -242,6 +246,8 @@ class RecipeSessionStore:
             citations=citations if citations is not None else existing.citations,
             retrieval=retrieval if retrieval is not None else existing.retrieval,
             warnings=warnings if warnings is not None else existing.warnings,
+            provider=provider if provider is not None else existing.provider,
+            model=model if model is not None else existing.model,
             finalized_for_demo=finalized_for_demo if finalized_for_demo is not None else existing.finalized_for_demo,
         )
         self._sessions[interaction_id] = session

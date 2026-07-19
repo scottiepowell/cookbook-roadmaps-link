@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.ai_access_models import AiAccessWorkflow
+from app.ai_mode_routing import resolve_ai_mode
 from app.ai_invite_sessions import invite_router, require_demo_workflow_access
 from app.ai_operator_gate import check_operator_gate
 from app.ai_usage_report import AiUsageReport, build_ai_usage_report
@@ -198,7 +199,7 @@ def search_dataset_post(payload: DatasetSearchRequest, request: Request) -> Data
 def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskResponse:
     access_session = _require_demo_workflow_access(request, AiAccessWorkflow.DATASET_ASK)
     try:
-        response = ask_dataset_recipes(payload, session_state=access_session)
+        response = ask_dataset_recipes(payload, provider=_resolve_request_provider(payload), session_state=access_session)
         log_ai_workflow(
             "dataset.ask",
             request,
@@ -224,7 +225,7 @@ def ask_dataset(payload: DatasetAskRequest, request: Request) -> DatasetAskRespo
 def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImportResponse:
     access_session = _require_demo_workflow_access(request, AiAccessWorkflow.IMPORTER)
     try:
-        response = import_recipe_text(payload, session_state=access_session)
+        response = import_recipe_text(payload, provider=_resolve_request_provider(payload), session_state=access_session)
         log_ai_workflow(
             "recipe.import",
             request,
@@ -252,7 +253,7 @@ def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImpor
 @app.post("/ai/ask", response_model=AskResponse)
 def ask_my_cookbook(payload: AskRequest, request: Request) -> AskResponse:
     try:
-        response = ask_cookbook(payload)
+        response = ask_cookbook(payload, provider=_resolve_request_provider(payload))
         log_ai_workflow(
             "cookbook.ask",
             request,
@@ -284,7 +285,7 @@ def ask_my_cookbook(payload: AskRequest, request: Request) -> AskResponse:
 def meal_plan(payload: MealPlanRequest, request: Request) -> MealPlanResponse:
     access_session = _require_demo_workflow_access(request, AiAccessWorkflow.MEAL_PLAN)
     try:
-        response = create_meal_plan(payload, session_state=access_session)
+        response = create_meal_plan(payload, provider=_resolve_request_provider(payload), session_state=access_session)
         log_ai_workflow(
             "meal.plan",
             request,
@@ -335,6 +336,19 @@ def _safe_recipe_count() -> int | None:
         return len(load_recipe_documents())
     except (NoRecipeTableFoundError, RecipeReaderError, OSError, sqlite3.Error):
         return None
+
+
+def _resolve_request_provider(payload):
+    requested_mode = getattr(payload, "provider_mode", None)
+    requested_model = getattr(payload, "model", None)
+    # Existing non-UI callers keep their configured provider and budget behavior.
+    # The browser always sends an explicit preference for request-scoped routing.
+    if requested_mode is None and requested_model is None:
+        return None
+    resolution = resolve_ai_mode(requested_mode, requested_model)
+    if resolution.effective_provider is None:
+        raise HTTPException(status_code=503, detail=resolution.safe_unavailable_reason or "Requested AI mode is unavailable.")
+    return resolution.provider()
 
 
 def _provider_debug_log_fields(exc: BaseException) -> dict[str, str]:

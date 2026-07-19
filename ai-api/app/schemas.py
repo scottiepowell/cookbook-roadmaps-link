@@ -324,6 +324,8 @@ class RecipeSessionApiResponse(BaseModel):
     retrieval: RecipeImportRetrievalMetadata | None = None
     retrieval_summary: RecipeSessionRetrievalSummary | None = None
     support_level: str | None = None
+    provider: str | None = None
+    model: str | None = None
     revision_count: int = 0
     expires_at: str | None = None
     warnings: list[str] = Field(default_factory=list)
