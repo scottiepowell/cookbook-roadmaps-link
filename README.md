@@ -42,6 +42,8 @@ Demo and evidence links:
 - [AI secondary provider implementation gate](docs/ai-secondary-provider-implementation-gate.md)
 - [AI production readiness roadmap](docs/ai-production-readiness-roadmap.md)
 - [Recipe session requirements architecture](docs/recipe-session-requirements-architecture.md)
+- [RAG requirements interaction architecture](docs/rag-requirements-interaction-architecture.md)
+- [Recipe creator session memory model](docs/recipe-creator-session-memory-model.md)
 - [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md)
 - [AI invite-only demo session flow](docs/ai-invite-only-demo-session-flow.md)
 - [AI demo walkthrough](docs/ai-demo-walkthrough.md)

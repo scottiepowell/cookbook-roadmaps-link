@@ -9,6 +9,8 @@ No runtime endpoints, production storage, auth, paid access, database migrations
 ## Architecture Docs Created
 
 - `docs/recipe-session-requirements-architecture.md`
+- `docs/rag-requirements-interaction-architecture.md` (requirements-interaction entry document)
+- `docs/recipe-creator-session-memory-model.md` (session-memory model companion)
 
 The document defines the purpose, scope, request flow, relationship to 0029B, requirements state, clarification policy, RAG refresh policy, delta classifier, session/cache interaction, alpha API proposal, UI implications, example flows, and future test strategy.
 
