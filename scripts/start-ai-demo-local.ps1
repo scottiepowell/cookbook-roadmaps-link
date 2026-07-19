@@ -1,6 +1,7 @@
 param(
     [int]$Port = 8000,
     [string]$DemoDataDir = ".tmp-ai-demo\local",
+    [string]$EnvFile = ".env",
     [ValidateSet("mock", "openai")]
     [string]$Provider = "mock",
     [string]$OpenAIModel = "",
@@ -10,7 +11,9 @@ param(
     [Nullable[int]]$LiveTestBudgetCents = $null,
     [Nullable[double]]$AiTimeoutSeconds = $null,
     [switch]$ProviderDebug,
-    [switch]$EnableLiveTests
+    [switch]$EnableLiveTests,
+    [switch]$WriteMissingLiveDefaults,
+    [switch]$CheckRuntimeProfile
 )
 
 Set-StrictMode -Version Latest
@@ -19,6 +22,56 @@ $ScriptParameters = $PSBoundParameters
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $RepoRoot
+. (Join-Path $PSScriptRoot "lib\ai-env-file.ps1")
+
+function Resolve-AbsolutePathString {
+    param(
+        [string]$PathValue
+    )
+
+    if ([string]::IsNullOrWhiteSpace($PathValue)) {
+        return $PathValue
+    }
+
+    if ([System.IO.Path]::IsPathRooted($PathValue)) {
+        return [System.IO.Path]::GetFullPath($PathValue)
+    }
+
+    return [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $PathValue))
+}
+
+$LocalLiveDefaults = [ordered]@{
+    AI_PROVIDER = "openai"
+    OPENAI_ENABLE_LIVE_TESTS = "true"
+    OPENAI_MODEL = "gpt-5.4-nano"
+    AI_MAX_OUTPUT_TOKENS = "300"
+    AI_TIMEOUT_SECONDS = "60"
+    OPENAI_LIVE_TEST_BUDGET_CENTS = "25"
+    AI_PROVIDER_CALLS_ENABLED = "true"
+    AI_PROVIDER_GLOBAL_DISABLE = "false"
+    AI_PROVIDER_BUDGET_MODE = "enforce"
+}
+
+if (-not [string]::IsNullOrWhiteSpace($EnvFile)) {
+    $ResolvedEnvFile = Resolve-AbsolutePathString -PathValue $EnvFile
+    if ($WriteMissingLiveDefaults) {
+        $Appended = Write-AiEnvDefaults -Path $ResolvedEnvFile -Defaults $LocalLiveDefaults -OnlyMissing
+        if ($Appended.Count -gt 0) {
+            Write-Host ("Added safe local live defaults: {0}" -f ($Appended -join ", "))
+        } else {
+            Write-Host "Safe local live defaults already present."
+        }
+        Write-Host "Add OPENAI_API_KEY to your local ignored .env or process environment. Never commit or paste it."
+    }
+    if (Test-Path -LiteralPath $ResolvedEnvFile -PathType Leaf) {
+        Import-AiEnvFile -Path $ResolvedEnvFile -OnlyIfMissing | Out-Null
+        $LoadedLocalEnv = $true
+    } else {
+        $LoadedLocalEnv = $false
+    }
+} else {
+    $LoadedLocalEnv = $false
+}
 
 $Python = Join-Path $RepoRoot ".venv\Scripts\python.exe"
 if (-not (Test-Path $Python)) {
@@ -65,22 +118,6 @@ function Get-ParameterOrEnvBool {
     return $EnvValue.Trim().ToLowerInvariant() -in @("1", "true", "yes", "on")
 }
 
-function Resolve-AbsolutePathString {
-    param(
-        [string]$PathValue
-    )
-
-    if ([string]::IsNullOrWhiteSpace($PathValue)) {
-        return $PathValue
-    }
-
-    if ([System.IO.Path]::IsPathRooted($PathValue)) {
-        return [System.IO.Path]::GetFullPath($PathValue)
-    }
-
-    return [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $PathValue))
-}
-
 $EffectiveProvider = (Get-ParameterOrEnv -Name "Provider" -Value $Provider -EnvName "AI_PROVIDER" -DefaultValue "mock").ToString().ToLowerInvariant()
 if ($EffectiveProvider -notin @("mock", "openai")) {
     [Console]::Error.WriteLine("Invalid provider '$EffectiveProvider'. Use -Provider mock or -Provider openai.")
@@ -91,7 +128,7 @@ $EffectiveOpenAIModel = (Get-ParameterOrEnv -Name "OpenAIModel" -Value $OpenAIMo
 $EffectiveRecipeDatasetIndexLimit = [int](Get-ParameterOrEnv -Name "RecipeDatasetIndexLimit" -Value $RecipeDatasetIndexLimit -EnvName "RECIPE_DATASET_INDEX_LIMIT" -DefaultValue 25)
 $DefaultMaxOutputTokens = 500
 if ($EffectiveProvider -eq "openai") {
-    $DefaultMaxOutputTokens = 900
+    $DefaultMaxOutputTokens = 300
 }
 $EffectiveMaxOutputTokens = [int](Get-ParameterOrEnv -Name "MaxOutputTokens" -Value $MaxOutputTokens -EnvName "AI_MAX_OUTPUT_TOKENS" -DefaultValue $DefaultMaxOutputTokens)
 $EffectiveLiveTestBudgetCents = [int](Get-ParameterOrEnv -Name "LiveTestBudgetCents" -Value $LiveTestBudgetCents -EnvName "OPENAI_LIVE_TEST_BUDGET_CENTS" -DefaultValue 25)
@@ -104,8 +141,8 @@ if ($EffectiveMaxOutputTokens -lt 1) {
     exit 2
 }
 
-if ($EffectiveLiveTestBudgetCents -lt 1) {
-    [Console]::Error.WriteLine("OPENAI_LIVE_TEST_BUDGET_CENTS must be greater than 0.")
+if ($EffectiveLiveTestBudgetCents -lt 1 -or $EffectiveLiveTestBudgetCents -gt 25) {
+    [Console]::Error.WriteLine("OPENAI_LIVE_TEST_BUDGET_CENTS must be between 1 and 25.")
     exit 2
 }
 
@@ -120,6 +157,16 @@ if ($EffectiveAiTimeoutSeconds -le 0) {
 }
 
 if ($EffectiveProvider -eq "openai") {
+    if ($EffectiveOpenAIModel -ne "gpt-5.4-nano") {
+        [Console]::Error.WriteLine("Provider=openai only supports OPENAI_MODEL=gpt-5.4-nano for the local product.")
+        exit 2
+    }
+
+    if ($EffectiveMaxOutputTokens -gt 300) {
+        [Console]::Error.WriteLine("AI_MAX_OUTPUT_TOKENS must be between 1 and 300 for local live mode.")
+        exit 2
+    }
+
     if (-not $EffectiveLiveTestsEnabled) {
         [Console]::Error.WriteLine("Provider=openai requires -EnableLiveTests or existing OPENAI_ENABLE_LIVE_TESTS=true. This prevents accidental live provider calls.")
         exit 2
@@ -129,6 +176,35 @@ if ($EffectiveProvider -eq "openai") {
         [Console]::Error.WriteLine("Provider=openai requires OPENAI_API_KEY to be set in the environment. The script will not prompt for or print the key.")
         exit 2
     }
+}
+
+$DisplayModel = "mock-basic"
+if ($EffectiveProvider -eq "openai") {
+    $DisplayModel = $EffectiveOpenAIModel
+} elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("AI_MODEL"))) {
+    $DisplayModel = [Environment]::GetEnvironmentVariable("AI_MODEL")
+}
+
+function Write-SafeStartupSummary {
+    Write-Host ""
+    Write-Host ("Local ignored config loaded: {0}" -f $LoadedLocalEnv.ToString().ToLowerInvariant())
+    Write-Host "Provider: $EffectiveProvider"
+    Write-Host "Model: $DisplayModel"
+    Write-Host "Live tests enabled: $($EffectiveLiveTestsEnabled.ToString().ToLowerInvariant())"
+    if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("OPENAI_API_KEY"))) {
+        Write-Host "OpenAI API key: missing"
+    } else {
+        Write-Host "OpenAI API key: redacted-present"
+    }
+    Write-Host "Budget cents: $EffectiveLiveTestBudgetCents"
+    Write-Host "Max output tokens: $EffectiveMaxOutputTokens"
+    Write-Host "AI timeout seconds: $EffectiveAiTimeoutSeconds"
+    Write-Host "Provider debug: $($EffectiveProviderDebug.ToString().ToLowerInvariant())"
+}
+
+if ($CheckRuntimeProfile) {
+    Write-SafeStartupSummary
+    exit 0
 }
 
 $env:PYTHONPATH = "ai-api"
@@ -157,27 +233,12 @@ if ($EffectiveProvider -eq "openai") {
 }
 $env:COOKBOOK_DB_PATH = Join-Path $ResolvedDataDir "recipes.sqlite"
 
-$DisplayModel = "mock-basic"
-if ($EffectiveProvider -eq "openai") {
-    $DisplayModel = $EffectiveOpenAIModel
-} elseif (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("AI_MODEL"))) {
-    $DisplayModel = [Environment]::GetEnvironmentVariable("AI_MODEL")
-}
-
-Write-Host ""
+Write-SafeStartupSummary
 Write-Host "AI demo data is ready."
-Write-Host "Provider: $EffectiveProvider"
-Write-Host "Model: $DisplayModel"
-Write-Host "Live tests enabled: $($EffectiveLiveTestsEnabled.ToString().ToLowerInvariant())"
-Write-Host "Budget cents: $EffectiveLiveTestBudgetCents"
-Write-Host "Max output tokens: $EffectiveMaxOutputTokens"
-Write-Host "AI timeout seconds: $EffectiveAiTimeoutSeconds"
-Write-Host "Provider debug: $($EffectiveProviderDebug.ToString().ToLowerInvariant())"
 Write-Host "Open local product: http://127.0.0.1:$Port/product"
 Write-Host "AI workspace remains available: http://127.0.0.1:$Port/demo"
 Write-Host "Cookbook container target: http://127.0.0.1:3000/ (start Docker Compose separately)"
-Write-Host "Cookbook DB path: $env:COOKBOOK_DB_PATH"
-Write-Host "Dataset path: $env:RECIPE_DATASET_DIR"
+Write-Host "Fixture data: generated local demo database and dataset."
 Write-Host "Dataset index limit: $env:RECIPE_DATASET_INDEX_LIMIT"
 Write-Host "Logs will print in this terminal. Stop with Ctrl+C."
 Write-Host ""

@@ -59,24 +59,34 @@ Run the safe mock demo:
 .\scripts\demo-ai-mock.ps1
 ```
 
-Start the local browser demo with generated demo-safe saved recipes and dataset fixtures:
+Start the local integrated product with generated demo-safe saved recipes and
+dataset fixtures:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
-Then open `http://127.0.0.1:8000/demo` for the guided browser demo UI.
+When ignored local `.env` contains valid live settings, this starts the sidecar
+in local OpenAI mode. Open `http://127.0.0.1:8000/product` first; `/demo`
+remains the guided AI workspace.
 
-For intentional live OpenAI manual demo mode, keep `OPENAI_API_KEY` in the local environment and run:
+Create safe, ignored live defaults without writing a key:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -WriteMissingLiveDefaults -Provider mock -CheckRuntimeProfile
 ```
 
-Optional bounded live overrides:
+Then add `OPENAI_API_KEY` only to local ignored `.env` (or the process
+environment). The launcher imports that file into its own server process,
+redacts the key in its summary, and permits only `gpt-5.4-nano` with a
+1–300 output-token cap. Precedence is explicit script arguments, existing
+process environment, local `.env`, then script defaults. To force the free
+deterministic path, use `-Provider mock`.
+
+For a one-off explicit live override:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 900 -LiveTestBudgetCents 25 -Port 8001
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 300 -LiveTestBudgetCents 25 -Port 8001
 ```
 
 Full local RAG manual importer launch:
@@ -86,7 +96,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
   -Provider openai `
   -EnableLiveTests `
   -OpenAIModel gpt-5.4-nano `
-  -MaxOutputTokens 900 `
+  -MaxOutputTokens 300 `
   -LiveTestBudgetCents 25 `
   -AiTimeoutSeconds 60 `
   -RecipeDatasetDir recipe-dataset `
@@ -94,7 +104,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
   -ProviderDebug
 ```
 
-The start script defaults to mock mode, respects existing provider environment variables unless explicit parameters override them, and never prints API keys or environment file contents. `AI_PROVIDER_DEBUG=true` is opt-in and only adds sanitized local provider diagnostics such as error category, exception type, and a short redacted summary. It does not log API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings.
+The browser sends only a safe mode/model preference; it never receives or
+stores provider keys. The server-side launcher controls whether live is
+available, so a UI Live selection still gets a controlled unavailable response
+when the process lacks valid opt-in/key/budget configuration. `AI_PROVIDER_DEBUG=true`
+is opt-in and only adds sanitized local provider diagnostics.
 
 The generated `.tmp-ai-demo` fixture dataset still only contains three records, so citation/provenance quality there is useful for smoke tests but not for meaningful RAG evaluation. Use the full `recipe-dataset` path for manual importer validation.
 

@@ -40,6 +40,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-live-smoke.p
 
 `-WriteMissingEnvDefaults` appends safe missing defaults only. It does not write `OPENAI_API_KEY`, it does not turn on live mode by itself, and it preserves existing file values and comments. Existing process environment values still win over values loaded from `.env`.
 
+`scripts\start-ai-demo-local.ps1` now uses the same ignored `.env` convention
+automatically for the local product launcher. It imports values into the
+server process only, never prints the key, and still requires all live opt-in
+and budget settings to be valid before browser-selected Live OpenAI can run.
+
 The configured model comes from the existing provider settings:
 
 ```text

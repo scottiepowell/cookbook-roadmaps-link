@@ -2,6 +2,15 @@
 
 This backlog breaks the medium-path AI design into follow-on mailbox tasks. Task numbers are proposed and may change if new operational fixes are needed first.
 
+## 0030I-6: Local Live Runtime Profile and Secret Injection
+
+Status: complete.
+
+The local launcher imports ignored `.env` values into the server process with
+safe precedence, supports non-secret default initialization, permits only
+`gpt-5.4-nano` for live mode, and keeps mock validation explicit and offline.
+No production secret store or deployment secret mechanism is implemented.
+
 ## 0016: Scaffold AI FastAPI Sidecar
 
 Status: complete.

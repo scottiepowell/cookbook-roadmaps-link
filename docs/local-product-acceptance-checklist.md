@@ -12,6 +12,10 @@
 
 - Open `http://127.0.0.1:8000/product` first. This is the canonical local
   entry point; `/demo` remains the direct AI workspace.
+- With valid ignored `.env`, the same start command launches local live mode
+  using only `gpt-5.4-nano`; otherwise use `-Provider mock` for the normal
+  deterministic acceptance path. A missing live key must be reported safely,
+  never shown.
 
 ## Product checks
 
