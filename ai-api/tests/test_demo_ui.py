@@ -46,6 +46,9 @@ def test_local_product_shell_connects_cookbook_and_ai_workflows():
     assert "mock/offline by default" in response.text
     assert "never write production storage" in response.text
     assert "start-ai-demo-local.ps1" in response.text
+    assert "Live OpenAI" in response.text
+    assert "Mock offline" in response.text
+    assert "gpt-5.4-nano" in response.text
     assert client.get("/product/ai", follow_redirects=False).headers["location"] == "/demo"
     assert client.get("/product/cookbook", follow_redirects=False).headers["location"] == "http://127.0.0.1:3000/"
 

@@ -18,6 +18,13 @@
         <h2 id="product-readiness-title">Local readiness</h2>
         <div id="product-readiness" class="result empty">Checking provider and generated demo-data status…</div>
       </section>
+      <section class="workflow" aria-labelledby="ai-mode-title">
+        <p class="eyebrow">AI mode</p><h2 id="ai-mode-title">Choose your local AI experience</h2>
+        <label><input type="radio" name="ai-mode" value="openai" checked> Live OpenAI</label>
+        <label><input type="radio" name="ai-mode" value="mock"> Mock offline</label>
+        <p class="hint">Live model: <strong>gpt-5.4-nano</strong>. Live use may consume API budget; mock offline is free and deterministic.</p>
+        <div id="ai-mode-status" class="result">Checking whether the configured runtime can honor Live OpenAI…</div>
+      </section>
       <section class="product-actions" aria-label="Local product destinations">
         <article class="product-card">
           <p class="eyebrow">Upstream app</p>
