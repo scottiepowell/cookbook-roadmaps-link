@@ -119,9 +119,21 @@ try:
         print(f"PASS: {name}")
 
     product = client.get("/product")
-    for required in ("Vanilla Cookbook", "Recipe Creator", "/product/cookbook", "/product/ai"):
+    for required in ("Local integrated product", "Vanilla Cookbook", "Recipe Creator", "/product/cookbook", "/product/ai", "mock/offline by default", "never write production storage"):
         if required not in product.text:
             raise SystemExit(f"local_product missing expected integration marker: {required}")
+    cookbook_redirect = client.get("/product/cookbook", follow_redirects=False)
+    ai_redirect = client.get("/product/ai", follow_redirects=False)
+    if cookbook_redirect.status_code not in (302, 307) or cookbook_redirect.headers.get("location") != "http://127.0.0.1:3000/":
+        raise SystemExit("local_product cookbook redirect did not target the local upstream app")
+    if ai_redirect.status_code not in (302, 307) or ai_redirect.headers.get("location") != "/demo":
+        raise SystemExit("local_product AI redirect did not target the AI workspace")
+    readiness = client.get("/demo/readiness")
+    if readiness.status_code != 200:
+        raise SystemExit(f"local_product readiness failed with HTTP {readiness.status_code}")
+    for forbidden in ("OPENAI_API_KEY", "sk-", "Authorization:", "C:\\"):
+        if forbidden in readiness.text or forbidden in product.text:
+            raise SystemExit(f"local_product leaked forbidden text: {forbidden}")
 
     session_start = client.post(
         "/ai/recipe-session/start",

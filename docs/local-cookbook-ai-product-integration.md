@@ -31,6 +31,9 @@ The shell reads only `/demo/readiness`, exposing provider mode/model and data
 availability. It does not show environment values, paths, prompts, provider
 responses, credentials, or raw dataset content.
 
+Use the [Local Product Acceptance Checklist](local-product-acceptance-checklist.md)
+for the go/no-go local demo flow before AWS/platform planning resumes.
+
 ## Boundary before platform work
 
 This is a local operator experience only. It is not a reverse proxy for a

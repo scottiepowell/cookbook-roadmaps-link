@@ -12,7 +12,7 @@
         <p class="eyebrow">Local integrated product</p>
         <h1>Cookbook AI</h1>
         <p class="lede">One local starting point for Vanilla Cookbook and the AI sidecar workflows.</p>
-        <p class="hint">Local/demo-only. The Cookbook app remains an external upstream container; AI stays in this sidecar. No production storage or public route is added.</p>
+        <p class="hint">Local/demo-only and mock/offline by default. The Cookbook app remains an external upstream container; AI stays in this sidecar. Recipe Session Alpha finalize actions never write production storage.</p>
       </header>
       <section class="workflow" aria-labelledby="product-readiness-title">
         <h2 id="product-readiness-title">Local readiness</h2>
@@ -41,7 +41,7 @@
       </section>
       <section class="workflow">
         <h2>Start and reset guidance</h2>
-        <p>Run <code>scripts\start-ai-demo-local.ps1</code>, then open this page first. It generates local mock fixture data for the sidecar. If readiness reports missing data, stop the sidecar and run the script again; no raw dataset is committed.</p>
+        <p>Run <code>scripts\start-ai-demo-local.ps1</code>, then open this page first. It generates local mock fixture data for the sidecar. If readiness reports missing data, stop the sidecar and run the script again; no raw dataset is committed. Recipe Session Alpha finalization is demo-only and never writes production storage.</p>
       </section>
     </main>
     <script src="/static/product.js"></script>

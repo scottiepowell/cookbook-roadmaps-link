@@ -21,7 +21,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 
 - Open the local integrated product first at `http://127.0.0.1:8000/product`.
   It links the external Vanilla Cookbook container and the existing AI workspace.
-  The direct AI browser UI remains at `http://127.0.0.1:8000/demo`.
+The direct AI browser UI remains at `http://127.0.0.1:8000/demo`.
+
+Before a local product walkthrough, follow the [Local Product Acceptance Checklist](local-product-acceptance-checklist.md). It makes `/product` the first URL, verifies the upstream Cookbook and AI redirects, and keeps the demo mock/offline.
 - Open a terminal for logs.
 
 ## Mock/Demo Mode Path

@@ -43,6 +43,9 @@ def test_local_product_shell_connects_cookbook_and_ai_workflows():
     assert "/product/ai" in response.text
     assert "Recipe Creator" in response.text
     assert "Local/demo-only" in response.text
+    assert "mock/offline by default" in response.text
+    assert "never write production storage" in response.text
+    assert "start-ai-demo-local.ps1" in response.text
     assert client.get("/product/ai", follow_redirects=False).headers["location"] == "/demo"
     assert client.get("/product/cookbook", follow_redirects=False).headers["location"] == "http://127.0.0.1:3000/"
 
@@ -59,6 +62,8 @@ def test_demo_static_assets_load():
     assert js_response.status_code == 200
     assert "javascript" in js_response.headers["content-type"]
     assert product_js_response.status_code == 200
+    assert "Mock/offline default is active." in product_js_response.text
+    assert "Fixtures are missing" in product_js_response.text
     assert "fetch(" in js_response.text
     assert "importerAnswer" in js_response.text
     assert "importerEvidenceSection" in js_response.text
