@@ -143,6 +143,21 @@ Future public exposure should follow [AI Public Route Exposure Review](ai-public
 
 ## Importer-Only Diagnostic
 
+For a controlled live importer 503 investigation, run the bounded diagnostic
+below. The first command is preflight-only; adding `-ApproveLiveCall` permits
+at most one importer call after live settings are checked. It prints only safe
+categories and guidance, never provider bodies, prompts, headers, keys, or
+stack traces, and it never retries.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -ApproveLiveCall
+```
+
+The API 503 envelope likewise contains only `status=unavailable`, a
+`safe_unavailable_category`, and `safe_guidance`. Keep normal validation and
+the Playwright runner mock-only.
+
 Prefer the dedicated live importer smoke script:
 
 ```powershell

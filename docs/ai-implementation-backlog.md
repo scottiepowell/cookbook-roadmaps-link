@@ -31,6 +31,15 @@ confirmed `openai/gpt-5.4-nano` readiness; its one permitted importer call
 returned controlled HTTP 503 and was not retried. Follow up with explicit
 provider-account/quota diagnosis before claiming a successful new live run.
 
+## 0030I-8: Bounded Live Importer 503 Diagnostics
+
+Status: complete for safe diagnosis; additional live acceptance remains manual.
+
+The importer route returns a bounded unavailable envelope with a safe
+category/guidance pair. `scripts/diagnose-live-importer.ps1` performs redacted
+preflight and requires explicit operator approval before one `gpt-5.4-nano`
+importer call. No retry, provider body, prompt, key, or stack trace is emitted.
+
 ## 0016: Scaffold AI FastAPI Sidecar
 
 Status: complete.

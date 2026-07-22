@@ -58,6 +58,11 @@ For repeatable browser-facing troubleshooting, see
 [Playwright UI Troubleshooting](playwright-ui-troubleshooting.md). It is
 optional/local and uses a mock sidecar by default.
 
+For a controlled live importer 503, use the approval-gated
+`scripts/diagnose-live-importer.ps1` preflight. It verifies the ignored server
+configuration, allows at most one `gpt-5.4-nano` importer call, and emits only
+safe category/guidance metadata; it never exposes provider internals.
+
 ## Boundary before platform work
 
 This is a local operator experience only. It is not a reverse proxy for a

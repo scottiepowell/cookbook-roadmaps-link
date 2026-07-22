@@ -139,6 +139,18 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/ai/import-recipe -Cont
 
 For a script-based importer smoke test with safe success/failure summaries, run `scripts\smoke-openai-importer-live.ps1`.
 
+To diagnose one live importer 503 safely, run the preflight (no provider call)
+first, then add `-ApproveLiveCall` only after reviewing its redacted summary:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -ApproveLiveCall
+```
+
+This path is importer-only, bounded to one call, and reports only safe failure
+categories/guidance. It never prints keys, prompts, response bodies, or stack
+traces and is not part of normal offline validation.
+
 With `-ProviderDebug` enabled, local logs can distinguish timeout, schema rejection, bad model, quota/rate limit, auth, and network failures while keeping the public `503` response safe.
 
 Run the live OpenAI demo eval wrapper only with explicit live opt-in settings:

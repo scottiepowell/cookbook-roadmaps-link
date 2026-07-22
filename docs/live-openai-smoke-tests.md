@@ -31,6 +31,12 @@ $env:AI_MAX_OUTPUT_TOKENS="200"
 
 The dedicated importer-only live diagnostic keeps a separate output-cap rule for structured recipe drafts and reports sanitized provider failure categories when `-ProviderDebug` is set. See [AI Live Demo Runbook](ai-live-demo-runbook.md) for the importer-specific guidance.
 
+For one explicitly approved diagnosis of a live importer 503, use
+`scripts/diagnose-live-importer.ps1`. Without `-ApproveLiveCall` it performs
+only redacted preflight. With approval it permits one bounded call using only
+`gpt-5.4-nano`; there is no retry loop. Normal smoke, eval, validator, and
+Playwright runs do not invoke this path.
+
 The PowerShell wrapper can also load an ignored local `.env` file explicitly:
 
 ```powershell

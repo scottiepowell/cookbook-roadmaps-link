@@ -61,6 +61,10 @@
 - Optional local UI QA can run the Playwright troubleshooting harness against a
   separately started mock sidecar; traces, screenshots, reports, and videos
   remain ignored and live OpenAI is not required.
+- If a live importer returns 503, run the no-call preflight with
+  `scripts/diagnose-live-importer.ps1`. Only an explicitly approved operator
+  may add `-ApproveLiveCall`; the diagnostic makes one importer call at most
+  and records only a safe category/guidance result.
 - Go for AWS/platform planning only when `/product`, redirects, readiness,
   Recipe Session Alpha flows, mock smoke, and offline validation all pass.
 - No-go if the shell cannot guide an operator to recovery, fixture state is

@@ -236,6 +236,17 @@ def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImpor
             warning_count=len(response.warnings),
         )
         return response
+    except HTTPException as exc:
+        if exc.status_code == 503:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "status": "unavailable",
+                    "safe_unavailable_category": "live_not_enabled",
+                    "safe_guidance": "Live OpenAI is not available in this server configuration. No provider call was attempted.",
+                },
+            ) from exc
+        raise
     except RecipeImportProviderError as exc:
         log_ai_workflow(
             "recipe.import",
@@ -244,7 +255,7 @@ def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImpor
             safe_error_type=exc.__class__.__name__,
             **_provider_debug_log_fields(exc),
         )
-        raise HTTPException(status_code=503, detail="Recipe importer provider is not available.") from exc
+        raise HTTPException(status_code=503, detail=_safe_importer_unavailable_detail(exc)) from exc
     except RecipeImportValidationError as exc:
         log_ai_workflow("recipe.import", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=502, detail="Recipe importer returned an invalid draft.") from exc
@@ -364,6 +375,23 @@ def _provider_debug_log_fields(exc: BaseException) -> dict[str, str]:
         "provider_error_type": details.exception_type,
         "safe_error_summary": details.safe_summary,
     }
+
+
+def _safe_importer_unavailable_detail(exc: BaseException) -> dict[str, str]:
+    """Return bounded importer diagnostics without provider internals."""
+    details = extract_provider_debug_details(exc)
+    category_map = {
+        "timeout": ("provider_timeout", "Live OpenAI was enabled but the bounded importer call timed out. No retry was attempted."),
+        "quota_or_rate_limit": ("provider_account_or_quota_unavailable", "The bounded live importer call was unavailable due to provider account, quota, or rate limits. No retry was attempted."),
+        "auth": ("provider_account_or_quota_unavailable", "The bounded live importer call was not authorized by the provider configuration. No retry was attempted."),
+        "bad_model": ("model_not_allowed", "The bounded importer call used a model that the provider did not allow. Only gpt-5.4-nano is supported."),
+        "network": ("provider_http_error_redacted", "The bounded live importer call could not reach the provider. No retry was attempted."),
+    }
+    category, guidance = category_map.get(
+        details.category if details else "",
+        ("unexpected_safe_internal_block", "The bounded live importer call was unavailable. No retry was attempted."),
+    )
+    return {"status": "unavailable", "safe_unavailable_category": category, "safe_guidance": guidance}
 
 
 def _require_demo_workflow_access(request: Request, workflow: AiAccessWorkflow):

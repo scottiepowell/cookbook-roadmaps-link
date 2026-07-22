@@ -829,12 +829,21 @@ function importerAnswer(data) {
 }
 
 function friendlyError(status, detail) {
-  const safeDetail = String(detail || "Request failed.").replace(/\s+/g, " ").slice(0, 220);
-  if (status === 503 && /live mode requires|live provider configuration is unavailable/i.test(safeDetail)) {
+  const safeDetail = typeof detail === "object" && detail !== null
+    ? String(detail.safe_guidance || "Request unavailable.")
+    : String(detail || "Request failed.");
+  const normalizedDetail = safeDetail.replace(/\s+/g, " ").slice(0, 220);
+  if (status === 503 && typeof detail === "object" && detail !== null && detail.safe_unavailable_category === "live_not_enabled") {
+    return "Live mode is selected but unavailable because this local server was started without live OpenAI opt-in/configuration. Switch to Mock offline or restart with explicit live settings.";
+  }
+  if (status === 503 && typeof detail === "object" && detail !== null && detail.safe_guidance) {
+    return normalizedDetail;
+  }
+  if (status === 503 && /live mode requires|live provider configuration is unavailable|live openai is not available|server configuration/i.test(normalizedDetail)) {
     return "Live mode is selected but unavailable because this local server was started without live OpenAI opt-in/configuration. Switch to Mock offline or restart with explicit live settings.";
   }
   if (status === 422) {
-    return `${safeDetail} Configure local saved recipe or dataset fixtures, then retry.`;
+    return `${normalizedDetail} Configure local saved recipe or dataset fixtures, then retry.`;
   }
   if (status === 404) {
     return "Recipe session was not found or has expired. Start a new local alpha session and retry.";
@@ -842,7 +851,7 @@ function friendlyError(status, detail) {
   if (status >= 500) {
     return "The sidecar could not complete this workflow. Check service logs and retry after confirming provider and data readiness.";
   }
-  return `${safeDetail} (HTTP ${status})`;
+  return `${normalizedDetail} (HTTP ${status})`;
 }
 
 function sanitizeData(data) {

@@ -4,7 +4,9 @@ from fastapi.testclient import TestClient
 
 from app.importer import RecipeImportValidationError, _build_prompt, import_recipe_text
 from app.main import app
+from app.main import _safe_importer_unavailable_detail
 from app.providers.base import LLMProvider, LLMRequest, LLMResponse, StructuredLLMRequest, StructuredLLMResponse
+from app.providers.errors import ProviderCallError
 from app.schemas import RecipeImportRequest
 
 
@@ -42,6 +44,22 @@ def test_importer_uses_mock_provider_by_default(monkeypatch):
     assert data["draft"]["instructions"][0]["step"] == 1
     assert data["draft"]["instructions"][0]["text"]
     assert data["draft"]["servings"] == 4
+    assert "OPENAI_API_KEY" not in response.text
+
+
+def test_import_endpoint_live_without_configuration_is_safe_unavailable(monkeypatch):
+    clear_provider_env(monkeypatch)
+
+    response = TestClient(app).post(
+        "/ai/import-recipe",
+        json={"text": "Baked cheesecake with cream cheese and eggs.", "provider_mode": "openai", "model": "gpt-5.4-nano"},
+    )
+
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert detail["status"] == "unavailable"
+    assert detail["safe_unavailable_category"] == "live_not_enabled"
+    assert "No provider call was attempted." in detail["safe_guidance"]
     assert "OPENAI_API_KEY" not in response.text
 
 
@@ -289,7 +307,30 @@ def test_import_endpoint_returns_controlled_error_for_unsupported_provider(monke
     response = TestClient(app).post("/ai/import-recipe", json={"text": "Toast bread."})
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Recipe importer provider is not available."}
+    assert response.json() == {
+        "detail": {
+            "status": "unavailable",
+            "safe_unavailable_category": "unexpected_safe_internal_block",
+            "safe_guidance": "The bounded live importer call was unavailable. No retry was attempted.",
+        }
+    }
+
+
+def test_importer_unavailable_detail_maps_timeout_without_provider_internals():
+    error = ProviderCallError(
+        "provider timeout with Authorization: Bearer sk-proj-secret",
+        failure_category="timeout",
+        exception_type="TimeoutError",
+        safe_summary="request timed out",
+    )
+
+    detail = _safe_importer_unavailable_detail(error)
+
+    assert detail["status"] == "unavailable"
+    assert detail["safe_unavailable_category"] == "provider_timeout"
+    assert "No retry was attempted." in detail["safe_guidance"]
+    assert "sk-proj-secret" not in str(detail)
+    assert "Authorization" not in str(detail)
 
 
 class InvalidStructuredProvider(LLMProvider):
