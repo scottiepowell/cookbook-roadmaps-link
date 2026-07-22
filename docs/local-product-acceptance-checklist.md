@@ -69,6 +69,9 @@
   and stop only an old sidecar you recognize. Never auto-kill an unknown
   process. Align or clear inherited `AI_MODEL`/`OPENAI_MODEL` values when the
   preflight reports `model_not_allowed`.
+- Treat `output_cap_or_incomplete_response` as a reached-but-incomplete live
+  response, not a configuration failure. Do not retry repeatedly; any cap or
+  timeout adjustment is a separately approved one-call follow-up.
 - Go for AWS/platform planning only when `/product`, redirects, readiness,
   Recipe Session Alpha flows, mock smoke, and offline validation all pass.
 - No-go if the shell cannot guide an operator to recovery, fixture state is

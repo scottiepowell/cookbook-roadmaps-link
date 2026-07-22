@@ -164,6 +164,13 @@ occupied. Inspect it with `netstat -ano | findstr :8000` and stop only an old
 sidecar you recognize (`Stop-Process -Id <PID>`); it never kills unknown
 processes automatically.
 
+If an approved diagnostic reports `output_cap_or_incomplete_response`,
+preflight and configuration succeeded and the live path was reached, but the
+provider response was incomplete or not schema-parseable within the output
+cap. Do not retry repeatedly or raise caps automatically in normal validation;
+make at most one explicitly approved follow-up with a documented cap/timeout
+adjustment.
+
 With `-ProviderDebug` enabled, local logs can distinguish timeout, schema rejection, bad model, quota/rate limit, auth, and network failures while keeping the public `503` response safe.
 
 Run the live OpenAI demo eval wrapper only with explicit live opt-in settings:

@@ -167,6 +167,13 @@ If port 8000 is occupied, inspect it with `netstat -ano | findstr :8000` and
 stop only an old sidecar you recognize. The launcher never auto-kills a
 process.
 
+`output_cap_or_incomplete_response` means the live provider path was reached
+after a valid preflight, but the structured response was incomplete or could
+not be parsed within the configured output cap. The diagnostic reports this as
+a safe category and optional safe error type, not raw provider output. Any cap
+or timeout adjustment must be explicit and limited to one approved follow-up;
+normal validation does not increase caps and does not retry repeatedly.
+
 Prefer the dedicated live importer smoke script:
 
 ```powershell

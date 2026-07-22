@@ -20,10 +20,12 @@ def _powershell() -> str:
     pytest.skip("PowerShell is required for the bounded diagnostic tests.")
 
 
-def _run(env_file: Path, *, approve: bool = False, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def _run(env_file: Path, *, approve: bool = False, env: dict[str, str] | None = None, helper: Path | None = None) -> subprocess.CompletedProcess[str]:
     command = [_powershell(), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT), "-EnvFile", str(env_file)]
     if approve:
         command.append("-ApproveLiveCall")
+    if helper is not None:
+        command.extend(["-HelperPath", str(helper)])
     merged = os.environ.copy()
     for name in (
         "AI_PROVIDER",
@@ -153,6 +155,37 @@ def test_valid_model_preflight_reports_allowed_without_call(tmp_path: Path) -> N
     assert "model_config=valid" in output
     assert "safe_unavailable_category=operator_approval_required" in output
     assert "No provider call was attempted." in output
+
+
+def test_failed_helper_output_cap_is_safe_envelope_without_native_command_error(tmp_path: Path) -> None:
+    env_file = _write_env(
+        tmp_path,
+        AI_PROVIDER="openai",
+        OPENAI_ENABLE_LIVE_TESTS="true",
+        OPENAI_API_KEY="fake-offline-key",
+        OPENAI_MODEL="gpt-5.4-nano",
+        AI_MODEL="gpt-5.4-nano",
+        OPENAI_LIVE_TEST_BUDGET_CENTS="25",
+        AI_MAX_OUTPUT_TOKENS="300",
+        AI_TIMEOUT_SECONDS="60",
+    )
+    helper = tmp_path / "fake-helper.ps1"
+    helper.write_text(
+        'Write-Output "provider_error_category=output_cap_or_incomplete_response"\n'
+        'Write-Output "provider_error_type=JSONDecodeError"\n'
+        "exit 1\n",
+        encoding="utf-8",
+    )
+    result = _run(env_file, approve=True, helper=helper)
+    output = result.stdout + result.stderr
+    assert result.returncode == 1
+    assert "status=failed" in output
+    assert "safe_unavailable_category=output_cap_or_incomplete_response" in output
+    assert "safe_provider_error_type=JSONDecodeError" in output
+    assert "The bounded importer call reached the live provider path" in output
+    assert "NativeCommandError" not in output
+    assert "fake-offline-key" not in output
+    assert "provider_error_category=" not in output
 
 
 def test_diagnostic_script_contains_bounded_safety_contract() -> None:

@@ -41,6 +41,13 @@ For a named no-call preflight use `-PreflightOnly`. It trims and validates both
 `AI_MODEL` and `OPENAI_MODEL`; inherited process values override `.env`, so
 stale `mock-basic` values must be cleared or changed to `gpt-5.4-nano`.
 
+An approved diagnostic failure categorized as
+`output_cap_or_incomplete_response` confirms the live path was reached but
+the response was incomplete or not schema-parseable within the cap. Keep raw
+provider output private; only consider one explicitly approved run with a
+documented cap/timeout adjustment after preflight. Do not change normal
+offline validation caps or add retries.
+
 The PowerShell wrapper can also load an ignored local `.env` file explicitly:
 
 ```powershell

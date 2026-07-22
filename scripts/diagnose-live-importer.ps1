@@ -1,7 +1,8 @@
 param(
     [string]$EnvFile = ".env",
     [switch]$ApproveLiveCall,
-    [switch]$PreflightOnly
+    [switch]$PreflightOnly,
+    [string]$HelperPath = ""
 )
 
 Set-StrictMode -Version Latest
@@ -11,7 +12,7 @@ Set-Location $RepoRoot
 . (Join-Path $PSScriptRoot "lib\ai-env-file.ps1")
 
 function Write-SafeSummary {
-    param([string]$Status, [string]$Category, [string]$Guidance)
+    param([string]$Status, [string]$Category, [string]$Guidance, [string]$ProviderErrorType = "")
     Write-Host "workflow=importer"
     Write-Host "requested_provider=openai"
     Write-Host "requested_model=gpt-5.4-nano"
@@ -25,6 +26,9 @@ function Write-SafeSummary {
     Write-Host ("timeout_config={0}" -f $script:TimeoutState)
     Write-Host "status=$Status"
     Write-Host "safe_unavailable_category=$Category"
+    if (-not [string]::IsNullOrWhiteSpace($ProviderErrorType)) {
+        Write-Host "safe_provider_error_type=$ProviderErrorType"
+    }
     Write-Host "safe_guidance=$Guidance"
 }
 
@@ -91,18 +95,31 @@ if ($PreflightOnly -or -not $ApproveLiveCall) {
 }
 
 $Python = Join-Path $RepoRoot ".venv\Scripts\python.exe"
-if (-not (Test-Path -LiteralPath $Python)) { $Python = "python" }
-$captured = (& $Python "scripts\smoke-openai-importer-live.py" --max-output-tokens $tokens --ai-timeout-seconds $timeout 2>&1 | Out-String)
+if (-not [string]::IsNullOrWhiteSpace($HelperPath)) {
+    $Python = $HelperPath
+} elseif (-not (Test-Path -LiteralPath $Python)) {
+    $Python = "python"
+}
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+if ([System.IO.Path]::GetExtension($Python) -eq ".ps1") {
+    $captured = (& powershell -NoProfile -ExecutionPolicy Bypass -File $Python 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
+} else {
+    $captured = (& $Python "scripts\smoke-openai-importer-live.py" --max-output-tokens $tokens --ai-timeout-seconds $timeout 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
+}
 $exitCode = $LASTEXITCODE
+$ErrorActionPreference = $previousErrorActionPreference
 if ($exitCode -eq 0) {
     Write-SafeSummary -Status "passed" -Category "none" -Guidance "One bounded importer call completed. No retry was attempted."
     exit 0
 }
 
 $category = "unexpected_safe_internal_block"
+$providerErrorType = ""
 if ($captured -match "provider_error_category=([^\s]+)") {
     $rawCategory = $Matches[1]
     $category = switch ($rawCategory) {
+        "output_cap_or_incomplete_response" { "output_cap_or_incomplete_response"; break }
         "timeout" { "provider_timeout"; break }
         "quota_or_rate_limit" { "provider_account_or_quota_unavailable"; break }
         "auth" { "provider_account_or_quota_unavailable"; break }
@@ -111,5 +128,17 @@ if ($captured -match "provider_error_category=([^\s]+)") {
         default { "unexpected_safe_internal_block" }
     }
 }
-Write-SafeSummary -Status "failed" -Category $category -Guidance "The bounded importer call did not complete successfully. No retry was attempted."
+$typeMatch = [regex]::Match($captured, "provider_error_type=([^\s]+)")
+if ($typeMatch.Success -and $typeMatch.Groups[1].Value -match "^[A-Za-z][A-Za-z0-9_.-]{0,80}$") {
+    $providerErrorType = $typeMatch.Groups[1].Value
+}
+$guidance = switch ($category) {
+    "output_cap_or_incomplete_response" { "The bounded importer call reached the live provider path but the response could not be parsed as complete schema JSON within the configured output cap. No retry was attempted."; break }
+    "provider_timeout" { "Live OpenAI was enabled but the bounded importer call timed out. No retry was attempted."; break }
+    "provider_account_or_quota_unavailable" { "The bounded live importer call was unavailable due to provider account, quota, or rate limits. No retry was attempted."; break }
+    "model_not_allowed" { "The bounded importer call used a model that the provider did not allow. Only gpt-5.4-nano is supported."; break }
+    "provider_http_error_redacted" { "The bounded importer call could not reach the provider. No retry was attempted."; break }
+    default { "The bounded importer call did not complete successfully. No retry was attempted." }
+}
+Write-SafeSummary -Status "failed" -Category $category -ProviderErrorType $providerErrorType -Guidance $guidance
 exit 1

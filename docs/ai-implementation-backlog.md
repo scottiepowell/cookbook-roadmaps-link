@@ -44,6 +44,10 @@ The 0030I-8R correction makes model preflight truthful when inherited process
 values override `.env`, adds explicit `-PreflightOnly`, and makes the local
 launcher refuse an occupied port before attempting Uvicorn.
 
+The 0030I-8S correction maps bounded helper failures such as
+`output_cap_or_incomplete_response` and `JSONDecodeError` into safe diagnostic
+fields without leaking PowerShell native error frames.
+
 ## 0016: Scaffold AI FastAPI Sidecar
 
 Status: complete.
