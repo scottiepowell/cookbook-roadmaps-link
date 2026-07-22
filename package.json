@@ -1,0 +1,11 @@
+{
+  "name": "cookbook-ai-ui-troubleshooting",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test:ui": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}

@@ -51,6 +51,7 @@ Demo and evidence links:
 - [REST request examples](scripts/demo-ai-requests.http)
 - [AI evals plan](docs/ai-evals-plan.md)
 - [Manual live OpenAI smoke tests](docs/live-openai-smoke-tests.md)
+- [Playwright UI troubleshooting](docs/playwright-ui-troubleshooting.md)
 - [AI screenshot capture guide](docs/ai-screenshot-capture-guide.md)
 
 Run the safe mock demo:
@@ -109,6 +110,12 @@ stores provider keys. The server-side launcher controls whether live is
 available, so a UI Live selection still gets a controlled unavailable response
 when the process lacks valid opt-in/key/budget configuration. `AI_PROVIDER_DEBUG=true`
 is opt-in and only adds sanitized local provider diagnostics.
+
+For optional local browser QA of `/product` and `/demo`, install Chromium for
+Playwright and run `scripts\run-ui-playwright.ps1` with a separately started
+mock sidecar. This troubleshooting harness intercepts normalized mode/model
+payloads and checks safe live-unavailable behavior; it is not part of normal
+validation and produces ignored artifacts only.
 
 The generated `.tmp-ai-demo` fixture dataset still only contains three records, so citation/provenance quality there is useful for smoke tests but not for meaningful RAG evaluation. Use the full `recipe-dataset` path for manual importer validation.
 

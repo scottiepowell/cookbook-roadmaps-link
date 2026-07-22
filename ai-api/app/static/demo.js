@@ -77,6 +77,15 @@ function providerPreference() {
   const mode = selected === "live" || selected === "openai" ? "openai" : "mock";
   return { provider_mode: mode, model: mode === "openai" ? "gpt-5.4-nano" : "mock-basic" };
 }
+
+function renderModeStatus() {
+  const target = document.getElementById("demo-ai-mode-status");
+  if (!target) return;
+  const preference = providerPreference();
+  target.textContent = preference.provider_mode === "openai"
+    ? "AI mode: Live OpenAI selected · model gpt-5.4-nano. Live calls require valid server-side opt-in and budget configuration."
+    : "AI mode: Mock offline selected · model mock-basic. Free deterministic local demo mode.";
+}
 document.querySelector(workflows.datasetSearch.button).addEventListener("click", runDatasetSearch);
 document.querySelector(workflows.datasetRag.button).addEventListener("click", runDatasetRag);
 document.querySelector(workflows.mealPlan.button).addEventListener("click", runMealPlan);
@@ -87,6 +96,7 @@ for (const workflow of Object.values(workflows)) {
 
 refreshReadiness();
 refreshUsageReport();
+renderModeStatus();
 
 async function refreshReadiness() {
   const grid = document.getElementById("readiness-grid");

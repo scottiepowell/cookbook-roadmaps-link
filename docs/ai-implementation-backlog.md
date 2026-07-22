@@ -11,6 +11,15 @@ safe precedence, supports non-secret default initialization, permits only
 `gpt-5.4-nano` for live mode, and keeps mock validation explicit and offline.
 No production secret store or deployment secret mechanism is implemented.
 
+## 0030I-7: Playwright UI Troubleshooting Harness
+
+Status: complete.
+
+Adds optional local Chromium browser QA for `/product` and `/demo`, including
+mode propagation, payload inspection, safe live-unavailable behavior, mock
+workflow checks, and layout bounds. It remains outside normal offline
+validation and produces ignored local artifacts only.
+
 ## 0016: Scaffold AI FastAPI Sidecar
 
 Status: complete.

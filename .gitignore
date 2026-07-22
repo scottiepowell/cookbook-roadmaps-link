@@ -10,6 +10,10 @@ recipe-dataset/
 *.tfstate.*
 .DS_Store
 node_modules/
+test-results/
+playwright-report/
+ui-artifacts/
+*.webm
 __pycache__/
 .pytest_cache/
 .tmp-pytest*/

@@ -26,6 +26,10 @@ The direct AI browser UI remains at `http://127.0.0.1:8000/demo`.
 Before a local product walkthrough, follow the [Local Product Acceptance Checklist](local-product-acceptance-checklist.md). It makes `/product` the first URL, verifies the upstream Cookbook and AI redirects, and keeps the demo mock/offline.
 - Open a terminal for logs.
 
+For optional browser-level troubleshooting before a demo, run the local
+[Playwright UI Troubleshooting](playwright-ui-troubleshooting.md) harness
+against a mock sidecar. It does not perform live OpenAI calls.
+
 ## Local Runtime Profile and Mock/Demo Path
 
 The launcher imports ignored local `.env` automatically, without overwriting

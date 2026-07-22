@@ -48,6 +48,9 @@ request-scoped routing, not a browser mutation of the process-wide provider.
 
 Use the [Local Product Acceptance Checklist](local-product-acceptance-checklist.md)
 for the go/no-go local demo flow before AWS/platform planning resumes.
+For repeatable browser-facing troubleshooting, see
+[Playwright UI Troubleshooting](playwright-ui-troubleshooting.md). It is
+optional/local and uses a mock sidecar by default.
 
 ## Boundary before platform work
 

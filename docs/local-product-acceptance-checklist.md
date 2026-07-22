@@ -52,6 +52,9 @@
   responses, environment values, or local paths.
 - Direct Windows pytest may fail on the known `pytest-of-scott` Temp ACL issue;
   use the Git Bash validator as the reliable full-suite check when it passes.
+- Optional local UI QA can run the Playwright troubleshooting harness against a
+  separately started mock sidecar; traces, screenshots, reports, and videos
+  remain ignored and live OpenAI is not required.
 - Go for AWS/platform planning only when `/product`, redirects, readiness,
   Recipe Session Alpha flows, mock smoke, and offline validation all pass.
 - No-go if the shell cannot guide an operator to recovery, fixture state is

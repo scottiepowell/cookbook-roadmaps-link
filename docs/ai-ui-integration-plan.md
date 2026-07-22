@@ -57,6 +57,14 @@ GET /demo/readiness
 
 Readiness reports safe status only: sidecar health, provider mode/model, offline demo mode, saved-recipe availability/count, and local dataset availability. It does not expose local filesystem paths or sensitive runtime values.
 
+## Local browser troubleshooting
+
+`tests/ui/cookbook-ai-mode.spec.js` is an optional Playwright Chromium harness
+for local `/product` and `/demo` QA. It verifies selector propagation,
+normalized request preferences, safe mock/live-unavailable states, and desktop
+layout bounds without requiring live OpenAI. See
+[Playwright UI Troubleshooting](playwright-ui-troubleshooting.md).
+
 ## Workflows Exercised
 
 The demo UI calls existing endpoints only:
