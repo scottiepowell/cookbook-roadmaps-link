@@ -158,6 +158,15 @@ The API 503 envelope likewise contains only `status=unavailable`, a
 `safe_unavailable_category`, and `safe_guidance`. Keep normal validation and
 the Playwright runner mock-only.
 
+Use `-PreflightOnly` for an explicit no-call check. Existing process values
+take precedence over ignored `.env` values, so a stale `AI_MODEL` or
+`OPENAI_MODEL` can block the diagnostic. The preflight reports only whether
+each model field is `allowed`, `not_allowed`, or `missing`; set both fields to
+`gpt-5.4-nano` or clear the stale process value before approving one call.
+If port 8000 is occupied, inspect it with `netstat -ano | findstr :8000` and
+stop only an old sidecar you recognize. The launcher never auto-kills a
+process.
+
 Prefer the dedicated live importer smoke script:
 
 ```powershell

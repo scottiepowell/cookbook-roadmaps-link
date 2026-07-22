@@ -37,6 +37,10 @@ only redacted preflight. With approval it permits one bounded call using only
 `gpt-5.4-nano`; there is no retry loop. Normal smoke, eval, validator, and
 Playwright runs do not invoke this path.
 
+For a named no-call preflight use `-PreflightOnly`. It trims and validates both
+`AI_MODEL` and `OPENAI_MODEL`; inherited process values override `.env`, so
+stale `mock-basic` values must be cleared or changed to `gpt-5.4-nano`.
+
 The PowerShell wrapper can also load an ignored local `.env` file explicitly:
 
 ```powershell

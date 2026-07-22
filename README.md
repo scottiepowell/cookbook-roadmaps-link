@@ -151,6 +151,19 @@ This path is importer-only, bounded to one call, and reports only safe failure
 categories/guidance. It never prints keys, prompts, response bodies, or stack
 traces and is not part of normal offline validation.
 
+Run the no-call preflight explicitly when checking a live configuration:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -PreflightOnly
+```
+
+The launcher preserves existing process environment values over `.env`; stale
+`AI_MODEL` or `OPENAI_MODEL` values must be cleared or aligned to
+`gpt-5.4-nano`. The launcher also stops before Uvicorn if port 8000 is already
+occupied. Inspect it with `netstat -ano | findstr :8000` and stop only an old
+sidecar you recognize (`Stop-Process -Id <PID>`); it never kills unknown
+processes automatically.
+
 With `-ProviderDebug` enabled, local logs can distinguish timeout, schema rejection, bad model, quota/rate limit, auth, and network failures while keeping the public `503` response safe.
 
 Run the live OpenAI demo eval wrapper only with explicit live opt-in settings:

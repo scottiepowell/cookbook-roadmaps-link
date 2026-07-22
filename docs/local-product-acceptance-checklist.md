@@ -65,6 +65,10 @@
   `scripts/diagnose-live-importer.ps1`. Only an explicitly approved operator
   may add `-ApproveLiveCall`; the diagnostic makes one importer call at most
   and records only a safe category/guidance result.
+- If startup reports port 8000 in use, inspect `netstat -ano | findstr :8000`
+  and stop only an old sidecar you recognize. Never auto-kill an unknown
+  process. Align or clear inherited `AI_MODEL`/`OPENAI_MODEL` values when the
+  preflight reports `model_not_allowed`.
 - Go for AWS/platform planning only when `/product`, redirects, readiness,
   Recipe Session Alpha flows, mock smoke, and offline validation all pass.
 - No-go if the shell cannot guide an operator to recovery, fixture state is

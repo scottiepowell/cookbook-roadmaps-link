@@ -1,6 +1,7 @@
 param(
     [string]$EnvFile = ".env",
-    [switch]$ApproveLiveCall
+    [switch]$ApproveLiveCall,
+    [switch]$PreflightOnly
 )
 
 Set-StrictMode -Version Latest
@@ -14,6 +15,9 @@ function Write-SafeSummary {
     Write-Host "workflow=importer"
     Write-Host "requested_provider=openai"
     Write-Host "requested_model=gpt-5.4-nano"
+    Write-Host "openai_model_status=$script:OpenAiModelState"
+    Write-Host "ai_model_status=$script:AiModelState"
+    Write-Host "model_config=$script:ModelState"
     Write-Host ("api_key={0}" -f ($(if ([string]::IsNullOrWhiteSpace($env:OPENAI_API_KEY)) { "missing" } else { "redacted-present" })))
     Write-Host ("live_opt_in={0}" -f ($env:OPENAI_ENABLE_LIVE_TESTS -eq "true"))
     Write-Host ("budget_config={0}" -f $script:BudgetState)
@@ -32,6 +36,9 @@ try {
     $script:BudgetState = "invalid"
     $script:TokenState = "invalid"
     $script:TimeoutState = "invalid"
+    $script:OpenAiModelState = "unknown"
+    $script:AiModelState = "unknown"
+    $script:ModelState = "invalid"
     Write-SafeSummary -Status "blocked" -Category "unexpected_safe_internal_block" -Guidance "Local runtime configuration could not be loaded safely. No provider call was attempted."
     exit 0
 }
@@ -39,6 +46,15 @@ try {
 $script:BudgetState = "valid"
 $script:TokenState = "valid"
 $script:TimeoutState = "valid"
+$script:OpenAiModelState = "missing"
+$script:AiModelState = "missing"
+$script:ModelState = "invalid"
+$allowedModel = "gpt-5.4-nano"
+$openAiModel = if ($null -eq $env:OPENAI_MODEL) { "" } else { $env:OPENAI_MODEL.Trim() }
+$aiModel = if ($null -eq $env:AI_MODEL) { "" } else { $env:AI_MODEL.Trim() }
+if ($openAiModel -eq $allowedModel) { $script:OpenAiModelState = "allowed" } elseif (-not [string]::IsNullOrWhiteSpace($openAiModel)) { $script:OpenAiModelState = "not_allowed" }
+if ($aiModel -eq $allowedModel) { $script:AiModelState = "allowed" } elseif (-not [string]::IsNullOrWhiteSpace($aiModel)) { $script:AiModelState = "not_allowed" }
+if ($script:OpenAiModelState -eq "allowed" -and ($script:AiModelState -in @("allowed", "missing"))) { $script:ModelState = "valid" }
 $budget = 0
 $tokens = 0
 $timeout = 0.0
@@ -46,20 +62,20 @@ if (-not [int]::TryParse($env:OPENAI_LIVE_TEST_BUDGET_CENTS, [ref]$budget) -or $
 if (-not [int]::TryParse($env:AI_MAX_OUTPUT_TOKENS, [ref]$tokens) -or $tokens -lt 1 -or $tokens -gt 300) { $script:TokenState = "invalid" }
 if (-not [double]::TryParse($env:AI_TIMEOUT_SECONDS, [ref]$timeout) -or $timeout -le 0) { $script:TimeoutState = "invalid" }
 
-if (-not $ApproveLiveCall) {
-    Write-SafeSummary -Status "blocked" -Category "operator_approval_required" -Guidance "Pass -ApproveLiveCall after reviewing the redacted preflight. No provider call was attempted."
-    exit 0
-}
 if ($env:AI_PROVIDER -ne "openai" -or $env:OPENAI_ENABLE_LIVE_TESTS -ne "true") {
     Write-SafeSummary -Status "blocked" -Category "live_not_enabled" -Guidance "Set explicit local live opt-in and AI_PROVIDER=openai before approving this diagnostic. No provider call was attempted."
     exit 0
 }
-if ([string]::IsNullOrWhiteSpace($env:OPENAI_API_KEY)) {
-    Write-SafeSummary -Status "blocked" -Category "missing_api_key" -Guidance "Add OPENAI_API_KEY to the ignored local environment, then rerun the bounded diagnostic. No provider call was attempted."
+if ($script:OpenAiModelState -ne "allowed") {
+    Write-SafeSummary -Status "blocked" -Category "model_not_allowed" -Guidance "OPENAI_MODEL is set to a value outside the allowed live diagnostic model. Set OPENAI_MODEL to gpt-5.4-nano or clear the stale process value. No provider call was attempted."
     exit 0
 }
-if ($env:OPENAI_MODEL -ne "gpt-5.4-nano" -or $env:AI_MODEL -and $env:AI_MODEL -ne "gpt-5.4-nano") {
-    Write-SafeSummary -Status "blocked" -Category "model_not_allowed" -Guidance "Only gpt-5.4-nano is allowed for this diagnostic. No provider call was attempted."
+if ($script:AiModelState -eq "not_allowed") {
+    Write-SafeSummary -Status "blocked" -Category "model_not_allowed" -Guidance "AI_MODEL is set to a value outside the allowed live diagnostic model. Set both AI_MODEL and OPENAI_MODEL to gpt-5.4-nano or clear the stale process value. No provider call was attempted."
+    exit 0
+}
+if ([string]::IsNullOrWhiteSpace($env:OPENAI_API_KEY)) {
+    Write-SafeSummary -Status "blocked" -Category "missing_api_key" -Guidance "Add OPENAI_API_KEY to the ignored local environment, then rerun the bounded diagnostic. No provider call was attempted."
     exit 0
 }
 if ($script:BudgetState -ne "valid") { Write-SafeSummary -Status "blocked" -Category "budget_not_configured" -Guidance "Configure a live-test budget from 1 to 25 cents. No provider call was attempted."; exit 0 }
@@ -67,6 +83,10 @@ if ($script:TokenState -ne "valid") { Write-SafeSummary -Status "blocked" -Categ
 if ($script:TimeoutState -ne "valid") { Write-SafeSummary -Status "blocked" -Category "unexpected_safe_internal_block" -Guidance "Configure a positive AI timeout. No provider call was attempted."; exit 0 }
 if ($env:AI_PROVIDER_CALLS_ENABLED -eq "false" -or $env:AI_PROVIDER_GLOBAL_DISABLE -eq "true") {
     Write-SafeSummary -Status "blocked" -Category "provider_calls_disabled" -Guidance "Provider calls are disabled by local safety settings. No provider call was attempted."
+    exit 0
+}
+if ($PreflightOnly -or -not $ApproveLiveCall) {
+    Write-SafeSummary -Status "blocked" -Category "operator_approval_required" -Guidance "Preflight passed. Pass -ApproveLiveCall after reviewing the redacted summary to permit one bounded importer call. No provider call was attempted."
     exit 0
 }
 

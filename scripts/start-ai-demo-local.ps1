@@ -214,9 +214,33 @@ function Write-SafeStartupSummary {
     Write-Host "Provider debug: $($EffectiveProviderDebug.ToString().ToLowerInvariant())"
 }
 
+function Test-LocalPortInUse {
+    param([int]$PortNumber)
+    $client = [System.Net.Sockets.TcpClient]::new()
+    try {
+        $pending = $client.BeginConnect("127.0.0.1", $PortNumber, $null, $null)
+        if (-not $pending.AsyncWaitHandle.WaitOne(250)) {
+            return $false
+        }
+        $client.EndConnect($pending)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $client.Dispose()
+    }
+}
+
 if ($CheckRuntimeProfile) {
     Write-SafeStartupSummary
     exit 0
+}
+
+if (Test-LocalPortInUse -PortNumber $Port) {
+    [Console]::Error.WriteLine("Port $Port on 127.0.0.1 is already in use; Uvicorn was not started.")
+    [Console]::Error.WriteLine("Inspect it with: netstat -ano | findstr :$Port")
+    [Console]::Error.WriteLine("If it is an old Cookbook AI sidecar you recognize, stop it with: Stop-Process -Id <PID>")
+    exit 3
 }
 
 $env:PYTHONPATH = "ai-api"

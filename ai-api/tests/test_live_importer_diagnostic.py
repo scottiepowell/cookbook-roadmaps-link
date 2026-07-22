@@ -106,6 +106,55 @@ def test_diagnostic_rejects_unsupported_model_safely(tmp_path: Path) -> None:
     assert "fake-offline-key" not in output
 
 
+@pytest.mark.parametrize(
+    ("field", "expected_guidance"),
+    (
+        ("AI_MODEL", "AI_MODEL is set to a value outside"),
+        ("OPENAI_MODEL", "OPENAI_MODEL is set to a value outside"),
+    ),
+)
+def test_diagnostic_identifies_stale_model_field(tmp_path: Path, field: str, expected_guidance: str) -> None:
+    values = {
+        "AI_PROVIDER": "openai",
+        "OPENAI_ENABLE_LIVE_TESTS": "true",
+        "OPENAI_API_KEY": "fake-offline-key",
+        "OPENAI_MODEL": "gpt-5.4-nano",
+        "AI_MODEL": "gpt-5.4-nano",
+        "OPENAI_LIVE_TEST_BUDGET_CENTS": "25",
+        "AI_MAX_OUTPUT_TOKENS": "300",
+        "AI_TIMEOUT_SECONDS": "60",
+    }
+    values[field] = "mock-basic"
+    result = _run(_write_env(tmp_path, **values), approve=True)
+    output = result.stdout + result.stderr
+    assert result.returncode == 0
+    assert "safe_unavailable_category=model_not_allowed" in output
+    assert expected_guidance in output
+    assert "provider_error" not in output
+
+
+def test_valid_model_preflight_reports_allowed_without_call(tmp_path: Path) -> None:
+    env_file = _write_env(
+        tmp_path,
+        AI_PROVIDER="openai",
+        OPENAI_ENABLE_LIVE_TESTS="true",
+        OPENAI_API_KEY="fake-offline-key",
+        OPENAI_MODEL=" gpt-5.4-nano ",
+        AI_MODEL=" gpt-5.4-nano ",
+        OPENAI_LIVE_TEST_BUDGET_CENTS="25",
+        AI_MAX_OUTPUT_TOKENS="300",
+        AI_TIMEOUT_SECONDS="60",
+    )
+    result = _run(env_file, env={"AI_MODEL": "gpt-5.4-nano"})
+    output = result.stdout + result.stderr
+    assert result.returncode == 0
+    assert "openai_model_status=allowed" in output
+    assert "ai_model_status=allowed" in output
+    assert "model_config=valid" in output
+    assert "safe_unavailable_category=operator_approval_required" in output
+    assert "No provider call was attempted." in output
+
+
 def test_diagnostic_script_contains_bounded_safety_contract() -> None:
     text = SCRIPT.read_text(encoding="utf-8")
     assert "ApproveLiveCall" in text

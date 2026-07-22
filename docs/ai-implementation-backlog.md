@@ -40,6 +40,10 @@ category/guidance pair. `scripts/diagnose-live-importer.ps1` performs redacted
 preflight and requires explicit operator approval before one `gpt-5.4-nano`
 importer call. No retry, provider body, prompt, key, or stack trace is emitted.
 
+The 0030I-8R correction makes model preflight truthful when inherited process
+values override `.env`, adds explicit `-PreflightOnly`, and makes the local
+launcher refuse an occupied port before attempting Uvicorn.
+
 ## 0016: Scaffold AI FastAPI Sidecar
 
 Status: complete.

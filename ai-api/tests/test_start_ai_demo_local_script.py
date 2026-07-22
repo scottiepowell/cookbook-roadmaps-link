@@ -1,3 +1,4 @@
+import socket
 import subprocess
 import os
 from pathlib import Path
@@ -119,6 +120,42 @@ def test_start_ai_demo_local_has_valid_powershell_syntax():
     )
 
     assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_start_ai_demo_local_preflights_port_before_uvicorn():
+    text = read_script()
+
+    assert "Test-LocalPortInUse" in text
+    assert "Port $Port on 127.0.0.1 is already in use" in text
+    assert "netstat -ano | findstr :$Port" in text
+    assert "Uvicorn was not started" in text
+    assert "Stop-Process -Id <PID>" in text
+
+
+def test_start_ai_demo_local_reports_occupied_port_without_launching_uvicorn():
+    port = 18765
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    listener.bind(("127.0.0.1", port))
+    listener.listen(1)
+    try:
+        result = subprocess.run(
+            [
+                "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT),
+                "-Provider", "mock", "-EnvFile", "", "-Port", str(port),
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    finally:
+        listener.close()
+
+    output = (result.stdout or "") + (result.stderr or "")
+    assert result.returncode == 3
+    assert f"Port {port} on 127.0.0.1 is already in use" in output
+    assert "Uvicorn was not started" in output
 
 
 def _check_runtime_profile(env_file: Path, *, provider: str | None = None):
