@@ -44,6 +44,7 @@ $LocalLiveDefaults = [ordered]@{
     AI_PROVIDER = "openai"
     OPENAI_ENABLE_LIVE_TESTS = "true"
     OPENAI_MODEL = "gpt-5.4-nano"
+    AI_MODEL = "gpt-5.4-nano"
     AI_MAX_OUTPUT_TOKENS = "300"
     AI_TIMEOUT_SECONDS = "60"
     OPENAI_LIVE_TEST_BUDGET_CENTS = "25"
@@ -132,7 +133,11 @@ if ($EffectiveProvider -eq "openai") {
 }
 $EffectiveMaxOutputTokens = [int](Get-ParameterOrEnv -Name "MaxOutputTokens" -Value $MaxOutputTokens -EnvName "AI_MAX_OUTPUT_TOKENS" -DefaultValue $DefaultMaxOutputTokens)
 $EffectiveLiveTestBudgetCents = [int](Get-ParameterOrEnv -Name "LiveTestBudgetCents" -Value $LiveTestBudgetCents -EnvName "OPENAI_LIVE_TEST_BUDGET_CENTS" -DefaultValue 25)
-$EffectiveAiTimeoutSeconds = [double](Get-ParameterOrEnv -Name "AiTimeoutSeconds" -Value $AiTimeoutSeconds -EnvName "AI_TIMEOUT_SECONDS" -DefaultValue 20)
+$DefaultAiTimeoutSeconds = 20
+if ($EffectiveProvider -eq "openai") {
+    $DefaultAiTimeoutSeconds = 60
+}
+$EffectiveAiTimeoutSeconds = [double](Get-ParameterOrEnv -Name "AiTimeoutSeconds" -Value $AiTimeoutSeconds -EnvName "AI_TIMEOUT_SECONDS" -DefaultValue $DefaultAiTimeoutSeconds)
 $EffectiveProviderDebug = Get-ParameterOrEnvBool -Name "ProviderDebug" -Value ([bool]$ProviderDebug) -EnvName "AI_PROVIDER_DEBUG" -DefaultValue $false
 $EffectiveLiveTestsEnabled = Get-ParameterOrEnvBool -Name "EnableLiveTests" -Value ([bool]$EnableLiveTests) -EnvName "OPENAI_ENABLE_LIVE_TESTS" -DefaultValue $false
 
@@ -234,10 +239,12 @@ if (-not [string]::IsNullOrWhiteSpace($EffectiveRecipeDatasetDir)) {
 }
 if ($EffectiveProvider -eq "openai") {
     $env:OPENAI_MODEL = $EffectiveOpenAIModel
+    $env:AI_MODEL = $EffectiveOpenAIModel
     $env:OPENAI_ENABLE_LIVE_TESTS = "true"
     $env:OPENAI_LIVE_TEST_BUDGET_CENTS = $EffectiveLiveTestBudgetCents.ToString()
     $env:AI_MAX_OUTPUT_TOKENS = $EffectiveMaxOutputTokens.ToString()
 } else {
+    $env:AI_MODEL = "mock-basic"
     $env:OPENAI_ENABLE_LIVE_TESTS = "false"
 }
 $env:COOKBOOK_DB_PATH = Join-Path $ResolvedDataDir "recipes.sqlite"

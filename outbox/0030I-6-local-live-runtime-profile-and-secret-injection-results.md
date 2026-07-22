@@ -57,3 +57,17 @@ No production secret store, AWS/platform work, deployment automation, public
 routes, auth, payment, Cloudflare/DNS change, secondary-provider runtime,
 embeddings/vector database, upstream UI rewrite, browser automation, raw
 datasets, persistent index, or disk cache was added.
+
+## Follow-up correction
+
+The completed local Playwright hardening identified that an explicit mock
+launcher process must not inherit live enablement from ignored `.env`. The
+launcher now forces `OPENAI_ENABLE_LIVE_TESTS=false` and `AI_MODEL=mock-basic`
+for `-Provider mock`; the normal no-argument launch still resolves valid local
+live configuration from ignored `.env`. The safe defaults and `.env.example`
+now set both `AI_MODEL` and `OPENAI_MODEL` to `gpt-5.4-nano` for live mode.
+
+Validation after this correction: the offline Git Bash validator passed 338
+pytest tests and the 39-case eval suite; mock smoke remained mock-only. Live
+wrappers were not run with the ignored live configuration, so no live provider
+call was made for this correction.

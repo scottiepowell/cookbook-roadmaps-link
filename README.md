@@ -82,7 +82,8 @@ environment). The launcher imports that file into its own server process,
 redacts the key in its summary, and permits only `gpt-5.4-nano` with a
 1–300 output-token cap. Precedence is explicit script arguments, existing
 process environment, local `.env`, then script defaults. To force the free
-deterministic path, use `-Provider mock`.
+deterministic path, use `-Provider mock`; that explicit override also disables
+inherited live enablement and uses `mock-basic` for the child process.
 
 For a one-off explicit live override:
 

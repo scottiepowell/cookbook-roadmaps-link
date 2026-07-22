@@ -37,6 +37,7 @@ def test_start_ai_demo_local_uses_safe_live_profile_defaults():
     assert "OPENAI_LIVE_TEST_BUDGET_CENTS" in text
     assert "$DefaultMaxOutputTokens = 500" in text
     assert "$DefaultMaxOutputTokens = 300" in text
+    assert "$DefaultAiTimeoutSeconds = 60" in text
     assert "DefaultValue 25" in text
 
 
@@ -61,11 +62,14 @@ def test_start_ai_demo_local_loads_ignored_env_before_falling_back_to_mock():
     assert "Import-AiEnvFile -Path $ResolvedEnvFile -OnlyIfMissing" in text
     assert '$LocalLiveDefaults = [ordered]@{' in text
     assert 'AI_PROVIDER = "openai"' in text
+    assert 'AI_MODEL = "gpt-5.4-nano"' in text
     assert '"Provider=openai requires -EnableLiveTests' in text
     assert '$env:OPENAI_ENABLE_LIVE_TESTS = "true"' in text
     assert 'Get-ParameterOrEnv -Name "RecipeDatasetDir"' in text
     assert 'DefaultValue $DefaultRecipeDatasetDir' in text
     assert '$env:AI_PROVIDER_DEBUG = $EffectiveProviderDebug.ToString().ToLowerInvariant()' in text
+    assert '$env:AI_MODEL = $EffectiveOpenAIModel' in text
+    assert '$env:AI_MODEL = "mock-basic"' in text
 
 
 def test_start_ai_demo_local_prints_safe_summary_without_key_value():
@@ -132,7 +136,11 @@ def _check_runtime_profile(env_file: Path, *, provider: str | None = None):
     if provider:
         command.extend(["-Provider", provider])
     env = os.environ.copy()
-    for name in ("AI_PROVIDER", "OPENAI_ENABLE_LIVE_TESTS", "OPENAI_API_KEY", "OPENAI_MODEL", "AI_MAX_OUTPUT_TOKENS"):
+    for name in (
+        "AI_PROVIDER", "AI_MODEL", "OPENAI_ENABLE_LIVE_TESTS", "OPENAI_API_KEY", "OPENAI_MODEL",
+        "OPENAI_LIVE_TEST_BUDGET_CENTS", "AI_MAX_OUTPUT_TOKENS", "AI_TIMEOUT_SECONDS",
+        "AI_PROVIDER_CALLS_ENABLED", "AI_PROVIDER_GLOBAL_DISABLE", "AI_PROVIDER_BUDGET_MODE",
+    ):
         env.pop(name, None)
     return subprocess.run(command, cwd=REPO_ROOT, capture_output=True, text=True, check=False, env=env)
 
@@ -160,6 +168,7 @@ def test_start_script_resolves_fake_local_live_env_without_exposing_key(tmp_path
     assert "Provider: openai" in result.stdout
     assert "Model: gpt-5.4-nano" in result.stdout
     assert "OpenAI API key: redacted-present" in result.stdout
+    assert "AI timeout seconds: 60" in result.stdout
     assert "fake-local-test-key" not in result.stdout
 
 
@@ -194,7 +203,11 @@ def test_start_script_explicit_mock_override_and_safe_default_initialization(tmp
         "-CheckRuntimeProfile",
     ]
     env = os.environ.copy()
-    for name in ("AI_PROVIDER", "OPENAI_ENABLE_LIVE_TESTS", "OPENAI_API_KEY", "OPENAI_MODEL", "AI_MAX_OUTPUT_TOKENS"):
+    for name in (
+        "AI_PROVIDER", "AI_MODEL", "OPENAI_ENABLE_LIVE_TESTS", "OPENAI_API_KEY", "OPENAI_MODEL",
+        "OPENAI_LIVE_TEST_BUDGET_CENTS", "AI_MAX_OUTPUT_TOKENS", "AI_TIMEOUT_SECONDS",
+        "AI_PROVIDER_CALLS_ENABLED", "AI_PROVIDER_GLOBAL_DISABLE", "AI_PROVIDER_BUDGET_MODE",
+    ):
         env.pop(name, None)
     result = subprocess.run(command, cwd=REPO_ROOT, capture_output=True, text=True, check=False, env=env)
 
@@ -215,3 +228,5 @@ def test_local_env_example_and_ignore_rules_keep_secrets_out_of_git():
     assert "OPENAI_API_KEY=fake" not in example
     assert "OPENAI_API_KEY=sk-" not in example
     assert "OPENAI_MODEL=gpt-5.4-nano" in example
+    assert "AI_MODEL=gpt-5.4-nano" in example
+    assert "OPENAI_FALLBACK_MODEL=" not in example

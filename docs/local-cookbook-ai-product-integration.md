@@ -27,6 +27,12 @@ container is needed on port 3000. If product readiness reports missing saved
 recipes or dataset data, restart the seed/start script; generated artifacts
 remain ignored.
 
+For a live local profile, set both `AI_MODEL=gpt-5.4-nano` and
+`OPENAI_MODEL=gpt-5.4-nano`; this product supports no other live model. An
+explicit `-Provider mock` override forces `OPENAI_ENABLE_LIVE_TESTS=false` and
+`AI_MODEL=mock-basic` in the child process so validation cannot inherit a
+usable live setting.
+
 The launcher automatically imports ignored local `.env` values only when the
 corresponding process variable is absent. A valid local live profile uses
 `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`,

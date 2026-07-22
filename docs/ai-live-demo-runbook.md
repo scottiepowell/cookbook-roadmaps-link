@@ -57,6 +57,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 Add the key only to ignored `.env` or the process environment, then use the
 normal start command. Required profile values are `AI_PROVIDER=openai`,
 `OPENAI_ENABLE_LIVE_TESTS=true`, `OPENAI_MODEL=gpt-5.4-nano`,
+`AI_MODEL=gpt-5.4-nano`,
 `AI_MAX_OUTPUT_TOKENS=300`, and `OPENAI_LIVE_TEST_BUDGET_CENTS=1..25`.
 Arguments override process environment, which overrides `.env`, which
 overrides launcher defaults.
@@ -65,7 +66,10 @@ overrides launcher defaults.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
-If you prefer explicit local config loading, the live smoke wrapper also accepts `-EnvFile .\.env`. Live mode still stays off unless the file or process environment explicitly sets `OPENAI_ENABLE_LIVE_TESTS=true` and `AI_PROVIDER=openai`. The underlying Python live helpers do not auto-read `repo_root/.env`, so passing `-EnvFile` or exporting the variables yourself is required for live mode.
+The launcher auto-loads ignored `.env` for the local product. The live smoke
+wrapper also accepts `-EnvFile .\.env`; it remains separately opt-in. The
+underlying Python live helpers do not auto-read `repo_root/.env`, so pass
+`-EnvFile` or export variables for those explicit live checks.
 
 Full local RAG browser demo mode with local provider diagnostics:
 
