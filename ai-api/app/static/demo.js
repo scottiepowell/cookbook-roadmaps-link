@@ -830,6 +830,9 @@ function importerAnswer(data) {
 
 function friendlyError(status, detail) {
   const safeDetail = String(detail || "Request failed.").replace(/\s+/g, " ").slice(0, 220);
+  if (status === 503 && /live mode requires|live provider configuration is unavailable/i.test(safeDetail)) {
+    return "Live mode is selected but unavailable because this local server was started without live OpenAI opt-in/configuration. Switch to Mock offline or restart with explicit live settings.";
+  }
   if (status === 422) {
     return `${safeDetail} Configure local saved recipe or dataset fixtures, then retry.`;
   }

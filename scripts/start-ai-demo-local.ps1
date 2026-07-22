@@ -136,6 +136,13 @@ $EffectiveAiTimeoutSeconds = [double](Get-ParameterOrEnv -Name "AiTimeoutSeconds
 $EffectiveProviderDebug = Get-ParameterOrEnvBool -Name "ProviderDebug" -Value ([bool]$ProviderDebug) -EnvName "AI_PROVIDER_DEBUG" -DefaultValue $false
 $EffectiveLiveTestsEnabled = Get-ParameterOrEnvBool -Name "EnableLiveTests" -Value ([bool]$EnableLiveTests) -EnvName "OPENAI_ENABLE_LIVE_TESTS" -DefaultValue $false
 
+# An explicit mock process must remain offline even when ignored local runtime
+# configuration contains live defaults. This keeps mock smoke and browser QA
+# from inheriting a usable live-provider setting.
+if ($EffectiveProvider -eq "mock") {
+    $EffectiveLiveTestsEnabled = $false
+}
+
 if ($EffectiveMaxOutputTokens -lt 1) {
     [Console]::Error.WriteLine("AI_MAX_OUTPUT_TOKENS must be greater than 0.")
     exit 2
@@ -230,6 +237,8 @@ if ($EffectiveProvider -eq "openai") {
     $env:OPENAI_ENABLE_LIVE_TESTS = "true"
     $env:OPENAI_LIVE_TEST_BUDGET_CENTS = $EffectiveLiveTestBudgetCents.ToString()
     $env:AI_MAX_OUTPUT_TOKENS = $EffectiveMaxOutputTokens.ToString()
+} else {
+    $env:OPENAI_ENABLE_LIVE_TESTS = "false"
 }
 $env:COOKBOOK_DB_PATH = Join-Path $ResolvedDataDir "recipes.sqlite"
 

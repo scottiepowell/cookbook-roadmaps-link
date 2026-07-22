@@ -6,12 +6,13 @@ Added a repository-local, Chromium-focused Playwright harness for troubleshootin
 
 ## Tooling and coverage
 
-- Added `package.json`, lockfile, `playwright.config.js`, and `tests/ui/cookbook-ai-mode.spec.js`.
+- Added `package.json`, lockfile, `playwright.config.js`, and `tests/ui/cookbook-ai-mode.spec.ts`.
 - Added `scripts/run-ui-playwright.ps1`, which verifies Node/npm, confirms the sidecar is already serving `http://127.0.0.1:8000/product`, and then runs the local browser tests. It never starts or opts into live OpenAI.
 - Added product/demo coverage for visible mode controls and readiness, `/product` action navigation, `/demo` back navigation, desktop overflow and card-action bounds, and the local Cookbook redirect.
-- Added browser request inspection for importer, Recipe Session start/follow-up, Ask My Cookbook, Dataset Ask, and Meal Planner. The harness asserts normalized mock payloads use `mock`/`mock-basic`, while live selection uses `openai`/`gpt-5.4-nano`.
-- Added a stale localStorage `live` alias check and a mock-server live-selection check for controlled unavailable guidance rather than disguised mock output.
+- The first troubleshooting use case is Live/OpenAI versus Mock/offline selector drift. Browser request inspection covers importer, Recipe Session start/follow-up, Ask My Cookbook, Dataset Ask, and Meal Planner. The harness asserts normalized mock payloads use `mock`/`mock-basic`, while live selection uses `openai`/`gpt-5.4-nano`.
+- Added stale localStorage checks for `live`, `openai`, `mock`, and `offline`, including protection against the invalid `live` plus `mock-basic` combination. The mock-server live-selection scenario checks controlled unavailable guidance rather than disguised mock output.
 - Added a concise demo mode-status line so the persisted selection and approved model are observable in the workspace.
+- The first real Chromium run caught two gaps: safe 503 details were being collapsed into a generic recovery card, and a mock launcher process could inherit live enablement from ignored config. The launcher now forces `OPENAI_ENABLE_LIVE_TESTS=false` for its explicit mock child process; the demo maps safe live-unavailable categories to explicit switch-to-mock or explicitly-restart-live guidance without revealing configuration values.
 
 ## Safety and local-only boundaries
 
@@ -24,6 +25,7 @@ Added a repository-local, Chromium-focused Playwright harness for troubleshootin
 
 - `npm install`: passed.
 - `npx playwright test --list`: passed; four Chromium troubleshooting cases are discoverable.
+- `scripts/run-ui-playwright.ps1`: passed against a verified local `mock`/`mock-basic` sidecar (4/4 Chromium cases).
 - `scripts/test-ai-env-file-loader.ps1`: passed (5/5).
 - `evals/ai_cookbook/run_evals.py`: passed (39/39).
 - `scripts/validate-repo.sh`: passed (338 pytest tests plus offline evals).
@@ -31,8 +33,8 @@ Added a repository-local, Chromium-focused Playwright harness for troubleshootin
 - `scripts/demo-ai-mock.ps1`: passed with mock-only endpoint smoke.
 - Live smoke and live-eval wrappers skipped cleanly because explicit live opt-in was absent.
 
-The Chromium binary download was attempted in this environment but timed out before a browser executable became available. Consequently, a real-browser Playwright run was not claimed as passed here. On a local machine, run `npm install`, `npx playwright install chromium`, start the sidecar in mock mode, and then run `scripts/run-ui-playwright.ps1`; generated artifacts remain ignored.
+Chromium-only browser execution is now verified locally. On another machine, run `npm install`, `npx playwright install chromium`, start the sidecar in mock mode, and then run `scripts/run-ui-playwright.ps1`; generated artifacts remain ignored.
 
 ## Follow-up
 
-Run the four browser cases after Chromium is installed locally. If they reveal a real layout or interaction regression, retain only the code/test fix; do not commit generated browser artifacts.
+Run the four browser cases after Chromium is installed locally. A separate acceptance run against a server intentionally started with valid live configuration remains a future, explicitly opted-in follow-up; browser selection alone cannot bypass the server-side live gate. If browser cases reveal a real layout or interaction regression, retain only the code/test fix; do not commit generated browser artifacts.

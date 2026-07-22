@@ -78,6 +78,7 @@ def test_demo_static_assets_load():
     assert "function providerPreference()" in js_response.text
     assert "function renderModeStatus()" in js_response.text
     assert "AI mode: Live OpenAI selected" in js_response.text
+    assert "Live mode is selected but unavailable" in js_response.text
     assert 'selected === "live" || selected === "openai"' in js_response.text
     assert 'mode === "openai" ? "gpt-5.4-nano" : "mock-basic"' in js_response.text
     assert js_response.text.count("...providerPreference()") >= 6
@@ -244,7 +245,7 @@ def test_demo_ui_renders_recipe_session_requirement_diff_and_revision_summary():
 def test_playwright_harness_is_local_only_and_artifacts_are_ignored():
     root = Path(__file__).resolve().parents[2]
     config = (root / "playwright.config.js").read_text(encoding="utf-8")
-    spec = (root / "tests" / "ui" / "cookbook-ai-mode.spec.js").read_text(encoding="utf-8")
+    spec = (root / "tests" / "ui" / "cookbook-ai-mode.spec.ts").read_text(encoding="utf-8")
     runner = (root / "scripts" / "run-ui-playwright.ps1").read_text(encoding="utf-8")
     ignore_rules = (root / ".gitignore").read_text(encoding="utf-8")
 
@@ -254,8 +255,9 @@ def test_playwright_harness_is_local_only_and_artifacts_are_ignored():
     assert "provider_mode" in spec
     assert "gpt-5.4-nano" in spec
     assert "mock-basic" in spec
-    assert "Live mode requires" in spec
+    assert "Live mode is selected but unavailable" in spec
     assert "not running" in runner
+    assert "This local UI harness is mock-only" in runner
     for ignored in ("test-results/", "playwright-report/", "ui-artifacts/", "*.webm"):
         assert ignored in ignore_rules
     forbidden_markers = (

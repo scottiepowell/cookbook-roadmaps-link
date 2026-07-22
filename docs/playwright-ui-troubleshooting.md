@@ -20,7 +20,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-ui-playwright.ps
 
 The runner requires `http://127.0.0.1:8000/product` to be available and gives
 concise recovery guidance when it is not. It does not start the sidecar or
-enable live mode for you.
+enable live mode for you. It additionally checks `/demo/readiness` and refuses
+to run unless the sidecar reports `mock`/`mock-basic`; an explicit
+`-Provider mock` launcher override disables inherited live enablement for that
+child process.
 
 ## What it checks
 
@@ -33,6 +36,12 @@ enable live mode for you.
   Planner;
 - mock success metadata and controlled live-unavailable UI behavior; and
 - the visible `/demo` link back to `/product`.
+
+The current HTTP schema calls the model field `model`; it is the equivalent of
+an `ai_model` preference. The browser test rejects the earlier unsafe
+`live`/`mock-basic` pairing and captures every provider-backed workflow
+request. Against a mock-started server, selecting Live must result in safe
+unavailable guidance, never mock output presented as a live success.
 
 Artifacts such as traces, screenshots, videos, reports, and result folders are
 ignored. Do not commit them or use them to capture secrets.
