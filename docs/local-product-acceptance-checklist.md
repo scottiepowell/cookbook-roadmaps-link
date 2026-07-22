@@ -4,10 +4,10 @@
 
 - Use the repository virtual environment and Docker Compose when the upstream
   Cookbook container is needed.
-- Start the mock local product:
+- Start the deterministic mock local product for normal acceptance:
 
   ```powershell
-  powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
+  powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider mock
   ```
 
 - Open `http://127.0.0.1:8000/product` first. This is the canonical local
@@ -16,6 +16,12 @@
   using only `gpt-5.4-nano`; otherwise use `-Provider mock` for the normal
   deterministic acceptance path. A missing live key must be reported safely,
   never shown.
+
+- For a separate, manually authorized live acceptance, use the no-argument
+  launcher and first confirm its safe summary reports `openai` and
+  `gpt-5.4-nano`. Run one minimal importer request only within the configured
+  budget/token cap. Do not use the Playwright runner for this path: it
+  intentionally refuses non-mock sidecars.
 
 ## Product checks
 

@@ -25,6 +25,11 @@ to run unless the sidecar reports `mock`/`mock-basic`; an explicit
 `-Provider mock` launcher override disables inherited live enablement for that
 child process.
 
+It intentionally refuses a live-capable sidecar. Use it to prove mock payload
+propagation and controlled live-unavailable UI behavior, not to make a live
+acceptance call. A manually authorized live acceptance begins with the
+no-argument launcher and remains server-side/budget-gated.
+
 ## What it checks
 
 - `/product` visibility, action-card bounds, desktop overflow, and local route

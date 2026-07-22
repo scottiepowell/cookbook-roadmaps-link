@@ -59,11 +59,15 @@ Readiness reports safe status only: sidecar health, provider mode/model, offline
 
 ## Local browser troubleshooting
 
-`tests/ui/cookbook-ai-mode.spec.js` is an optional Playwright Chromium harness
+`tests/ui/cookbook-ai-mode.spec.ts` is an optional Playwright Chromium harness
 for local `/product` and `/demo` QA. It verifies selector propagation,
 normalized request preferences, safe mock/live-unavailable states, and desktop
 layout bounds without requiring live OpenAI. See
 [Playwright UI Troubleshooting](playwright-ui-troubleshooting.md).
+
+The Playwright runner intentionally requires a `mock/mock-basic` sidecar. It
+is evidence for selector propagation and safe unavailable behavior, not a
+live-provider acceptance tool.
 
 ## Workflows Exercised
 

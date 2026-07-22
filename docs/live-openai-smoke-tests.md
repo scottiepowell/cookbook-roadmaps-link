@@ -90,6 +90,12 @@ budget_cents=25
 status=passed
 ```
 
+The local product mode audit is intentionally narrower than this four-workflow
+smoke. It starts the no-argument local launcher, verifies safe
+`openai/gpt-5.4-nano` readiness, and permits one importer call. If that call
+returns a controlled failure, do not retry automatically or treat mock output
+as a live success.
+
 Skip/fail behavior:
 
 - disabled live flag: exits `0` with a skip message and no live calls;

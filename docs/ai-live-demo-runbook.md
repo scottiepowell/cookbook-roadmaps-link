@@ -19,6 +19,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-mock.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
+For a bounded manual product acceptance, confirm the redacted startup summary
+shows `Provider: openai`, `Model: gpt-5.4-nano`, live enabled, and an allowed
+budget/token cap. Then perform one importer workflow only. Record only the
+provider, model, and status; do not print the prompt, provider body, key, or
+environment values. The Playwright runner remains mock-only by design.
+
 - Open the local integrated product first at `http://127.0.0.1:8000/product`.
   It links the external Vanilla Cookbook container and the existing AI workspace.
 The direct AI browser UI remains at `http://127.0.0.1:8000/demo`.

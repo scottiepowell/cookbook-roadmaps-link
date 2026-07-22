@@ -20,6 +20,17 @@ mode propagation, payload inspection, safe live-unavailable behavior, mock
 workflow checks, and layout bounds. It remains outside normal offline
 validation and produces ignored local artifacts only.
 
+## 0030I-5: Local Live Mode Product Acceptance and Mode Audit
+
+Status: complete with a recorded bounded live-provider availability failure.
+
+The mock audit confirms all six provider-backed workflows use `mock/mock-basic`
+and that Live selection on a mock server remains safely unavailable. The
+optional browser suite stays mock-only. A no-argument local launcher audit
+confirmed `openai/gpt-5.4-nano` readiness; its one permitted importer call
+returned controlled HTTP 503 and was not retried. Follow up with explicit
+provider-account/quota diagnosis before claiming a successful new live run.
+
 ## 0016: Scaffold AI FastAPI Sidecar
 
 Status: complete.

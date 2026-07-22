@@ -118,6 +118,12 @@ mock sidecar. This troubleshooting harness intercepts normalized mode/model
 payloads and checks safe live-unavailable behavior; it is not part of normal
 validation and produces ignored artifacts only.
 
+For a separately authorized live acceptance, start the sidecar with the normal
+no-argument launcher, verify its redacted summary says `openai` and
+`gpt-5.4-nano`, then run one minimal importer request within the configured
+budget. The browser runner deliberately refuses live-capable sidecars, and the
+browser never receives provider credentials.
+
 The generated `.tmp-ai-demo` fixture dataset still only contains three records, so citation/provenance quality there is useful for smoke tests but not for meaningful RAG evaluation. Use the full `recipe-dataset` path for manual importer validation.
 
 Importer-only diagnostic without the browser:
