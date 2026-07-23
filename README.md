@@ -4,6 +4,12 @@ This mailbox-driven DevOps lab deploys Vanilla Cookbook to AWS EC2 at [cookbook.
 
 ## AI Cookbook Showcase
 
+Current product-validation priority: [Manual Product Integration Usability
+Validation](docs/manual-product-integration-usability-validation.md). Run the
+local shell with `-Provider mock` and use `/product` as the starting point for
+checking the Cookbook handoff, readiness, and AI workspace. This is an
+app-level usability exercise; AWS/platform work is a separate future effort.
+
 This repo now includes a portfolio-ready AI cookbook sidecar: Vanilla Cookbook remains the source app, while a FastAPI `ai-api` service provides offline-first AI workflows for structured recipe import, saved-recipe Q&A, deterministic local dataset search/RAG, and saved-recipe meal planning. The architecture is intentionally conservative: retrieval happens before provider calls, responses carry citations/provenance, normal validation uses generated fixtures and the mock provider, and live OpenAI calls are manual-only.
 
 Completed AI workflows:
@@ -29,6 +35,8 @@ Demo and evidence links:
 - [AI portfolio showcase](docs/ai-portfolio-showcase.md)
 - [AI feature completion review](docs/ai-feature-completion-review.md)
 - [AI UI integration plan](docs/ai-ui-integration-plan.md)
+- [Manual product integration usability validation](docs/manual-product-integration-usability-validation.md)
+- [Product priority roadmap after 0032A](docs/product-priority-roadmap-after-0032A.md)
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)

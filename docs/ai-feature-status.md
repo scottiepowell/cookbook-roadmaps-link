@@ -1,5 +1,21 @@
 # AI Feature Status
 
+## Current product-validation focus
+
+`0033A` validates the local Cookbook shell and AI sidecar as one product
+through mock/offline startup, endpoint smoke checks, and optional local UI
+checks. The current shell exercises readiness, importer, Ask My Cookbook,
+Dataset Ask, Meal Planner, and Recipe Session flows, but still visibly hands
+off between the upstream Cookbook target and the sidecar `/demo` workspace.
+The interactive browser was unavailable for the recorded run; this limitation
+is documented in the [manual integration validation](manual-product-integration-usability-validation.md)
+note.
+
+The next priority is closing the highest-impact seamlessness gaps. Normal
+validation remains mock/offline. Live importer acceptance remains explicit,
+operator-approved, and one bounded call per invocation; it is not part of UI
+or repository validation.
+
 This matrix summarizes what is complete, how to demo it, and what evidence supports each claim. Normal validation is offline and mock-only.
 
 For the final phase-close acceptance matrix, see [AI Feature Completion Review](ai-feature-completion-review.md).

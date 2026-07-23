@@ -1,5 +1,18 @@
 # AI Implementation Backlog
 
+## 0033A: Manual Product Integration Usability Validation
+
+Status: complete as a mock/offline validation exercise.
+
+The local sidecar ran with generated demo fixtures and mock mode. The mock
+endpoint smoke passed all workflows and the existing 4-test UI harness passed,
+including controlled Live-unavailable behavior against a mock server. Follow-
+up candidates are native navigation/visual continuity, shared loading,
+empty/error/accessibility states, safe session/user context handoff, and a
+production-shaped acceptance checklist once the upstream Cookbook container
+is available locally. No implementation was added; AWS/platform work remains
+separate.
+
 This backlog breaks the medium-path AI design into follow-on mailbox tasks. Task numbers are proposed and may change if new operational fixes are needed first.
 
 ## 0030I-6: Local Live Runtime Profile and Secret Injection

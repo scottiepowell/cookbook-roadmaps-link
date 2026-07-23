@@ -63,3 +63,13 @@ The Cookbook repo should not start AWS/IaC implementation from `0032A`. The next
 ## Immediate next task
 
 `0033A-manual-product-integration-usability-validation` should be the next active Cookbook task. It should manually validate the current local product integration and identify the next concrete production-usability gaps before new feature implementation begins.
+
+## 0033A validation emphasis
+
+The manual validation should exercise `/product`, `/product/cookbook`,
+`/product/ai`, `/demo`, readiness, importer, Ask My Cookbook, Dataset Ask,
+Meal Planner, and Recipe Session in mock/offline mode. Prioritize gaps in
+navigation, shared visual and interaction states, accessibility, responsive
+behavior, and the visible split between the upstream Cookbook container and
+the sidecar workspace. Live importer acceptance remains explicit,
+operator-approved, one-call bounded, and outside normal validation.
