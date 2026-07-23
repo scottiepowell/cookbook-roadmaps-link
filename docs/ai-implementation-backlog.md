@@ -1983,3 +1983,22 @@ provider changes, vector/embedding infrastructure, upstream UI changes,
 browser automation, live calls, AWS/platform work, or payment/subscription
 behavior. Normal validation remains mock/offline and current live gating is
 unchanged.
+
+## 0031D: QMD Local Hybrid Retrieval Adapter Spike
+
+Status: complete, docs-only; QMD remains an unaccepted optional candidate.
+
+Added [QMD Local Hybrid Retrieval Adapter Spike](qmd-local-hybrid-retrieval-adapter-spike.md).
+The spike inspected QMD's public repository and documentation at a high level,
+recording its Node/Bun packaging, Markdown collections, BM25/vector/hybrid
+search modes, CLI/MCP surfaces, local configuration/index artifacts, native
+dependencies, local GGUF model implications, and MIT license. It does not
+install or vendor QMD, download models, generate snapshots/indexes, or add any
+dependency to this repository.
+
+The note keeps QMD behind a future `RetrievalBackend`/`RetrievalAdapter` seam,
+defines a Markdown snapshot and Cookbook-ID/provenance mapping concept,
+compares it with the accepted deterministic keyword backend, and lists risks,
+unknowns, local-only proof-of-concept shape, seamless UX requirements, and
+go/no-go criteria. Normal validation remains mock/offline and the deterministic
+backend remains the accepted default.
