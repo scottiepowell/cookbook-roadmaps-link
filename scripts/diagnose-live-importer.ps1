@@ -2,7 +2,8 @@ param(
     [string]$EnvFile = ".env",
     [switch]$ApproveLiveCall,
     [switch]$PreflightOnly,
-    [string]$HelperPath = ""
+    [string]$HelperPath = "",
+    [Nullable[int]]$MaxOutputTokens = $null
 )
 
 Set-StrictMode -Version Latest
@@ -10,12 +11,14 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $RepoRoot
 . (Join-Path $PSScriptRoot "lib\ai-env-file.ps1")
+$script:RequestedMaxOutputTokens = if ($PSBoundParameters.ContainsKey("MaxOutputTokens")) { $MaxOutputTokens } else { "default" }
 
 function Write-SafeSummary {
     param([string]$Status, [string]$Category, [string]$Guidance, [string]$ProviderErrorType = "")
     Write-Host "workflow=importer"
     Write-Host "requested_provider=openai"
     Write-Host "requested_model=gpt-5.4-nano"
+    Write-Host "requested_max_output_tokens=$script:RequestedMaxOutputTokens"
     Write-Host "openai_model_status=$script:OpenAiModelState"
     Write-Host "ai_model_status=$script:AiModelState"
     Write-Host "model_config=$script:ModelState"
@@ -53,6 +56,7 @@ $script:TimeoutState = "valid"
 $script:OpenAiModelState = "missing"
 $script:AiModelState = "missing"
 $script:ModelState = "invalid"
+$script:RequestedMaxOutputTokens = if ($PSBoundParameters.ContainsKey("MaxOutputTokens")) { $MaxOutputTokens } else { $null }
 $allowedModel = "gpt-5.4-nano"
 $openAiModel = if ($null -eq $env:OPENAI_MODEL) { "" } else { $env:OPENAI_MODEL.Trim() }
 $aiModel = if ($null -eq $env:AI_MODEL) { "" } else { $env:AI_MODEL.Trim() }
@@ -63,7 +67,13 @@ $budget = 0
 $tokens = 0
 $timeout = 0.0
 if (-not [int]::TryParse($env:OPENAI_LIVE_TEST_BUDGET_CENTS, [ref]$budget) -or $budget -lt 1 -or $budget -gt 25) { $script:BudgetState = "invalid" }
-if (-not [int]::TryParse($env:AI_MAX_OUTPUT_TOKENS, [ref]$tokens) -or $tokens -lt 1 -or $tokens -gt 300) { $script:TokenState = "invalid" }
+if ($PSBoundParameters.ContainsKey("MaxOutputTokens")) {
+    $tokens = $MaxOutputTokens
+    if ($tokens -lt 1 -or $tokens -gt 1000) { $script:TokenState = "invalid" }
+} elseif (-not [int]::TryParse($env:AI_MAX_OUTPUT_TOKENS, [ref]$tokens) -or $tokens -lt 1 -or $tokens -gt 300) {
+    $script:TokenState = "invalid"
+}
+$script:RequestedMaxOutputTokens = $tokens
 if (-not [double]::TryParse($env:AI_TIMEOUT_SECONDS, [ref]$timeout) -or $timeout -le 0) { $script:TimeoutState = "invalid" }
 
 if ($env:AI_PROVIDER -ne "openai" -or $env:OPENAI_ENABLE_LIVE_TESTS -ne "true") {
@@ -83,7 +93,15 @@ if ([string]::IsNullOrWhiteSpace($env:OPENAI_API_KEY)) {
     exit 0
 }
 if ($script:BudgetState -ne "valid") { Write-SafeSummary -Status "blocked" -Category "budget_not_configured" -Guidance "Configure a live-test budget from 1 to 25 cents. No provider call was attempted."; exit 0 }
-if ($script:TokenState -ne "valid") { Write-SafeSummary -Status "blocked" -Category "budget_not_configured" -Guidance "Configure AI_MAX_OUTPUT_TOKENS from 1 to 300. No provider call was attempted."; exit 0 }
+if ($script:TokenState -ne "valid") {
+    $tokenGuidance = if ($PSBoundParameters.ContainsKey("MaxOutputTokens")) {
+        "Pass -MaxOutputTokens from 1 to 1000 for this explicit diagnostic. No provider call was attempted."
+    } else {
+        "Configure AI_MAX_OUTPUT_TOKENS from 1 to 300, or pass -MaxOutputTokens for the explicit diagnostic profile. No provider call was attempted."
+    }
+    Write-SafeSummary -Status "blocked" -Category "budget_not_configured" -Guidance $tokenGuidance
+    exit 0
+}
 if ($script:TimeoutState -ne "valid") { Write-SafeSummary -Status "blocked" -Category "unexpected_safe_internal_block" -Guidance "Configure a positive AI timeout. No provider call was attempted."; exit 0 }
 if ($env:AI_PROVIDER_CALLS_ENABLED -eq "false" -or $env:AI_PROVIDER_GLOBAL_DISABLE -eq "true") {
     Write-SafeSummary -Status "blocked" -Category "provider_calls_disabled" -Guidance "Provider calls are disabled by local safety settings. No provider call was attempted."
@@ -104,7 +122,7 @@ if (-not [string]::IsNullOrWhiteSpace($HelperPath)) {
 $previousErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
 if ([System.IO.Path]::GetExtension($Python) -eq ".ps1") {
-    $captured = (& powershell -NoProfile -ExecutionPolicy Bypass -File $Python 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
+    $captured = (& powershell -NoProfile -ExecutionPolicy Bypass -File $Python --text $SmokeText --max-output-tokens $tokens --ai-timeout-seconds $timeout 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
 } else {
     $captured = (& $Python "scripts\smoke-openai-importer-live.py" --text $SmokeText --max-output-tokens $tokens --ai-timeout-seconds $timeout 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
 }

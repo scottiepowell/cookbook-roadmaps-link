@@ -49,8 +49,13 @@ The 0030I-8S correction maps bounded helper failures such as
 fields without leaking PowerShell native error frames.
 
 The bounded importer diagnostic uses a tiny deterministic scrambled-egg input
-and the accepted 300-token cap; it does not alter the full-RAG importer eval
-profile or normal mock/offline validation.
+and defaults to the 300-token cap. The recorded 300-token live diagnostic
+still failed with `output_cap_or_incomplete_response`. The explicit
+`-MaxOutputTokens 1000` profile is a manual diagnostic only, permits one
+approved importer call per operator run, and never retries. Normal validation
+remains mock/offline. If 1000 succeeds, later dial down manually:
+`1000 -> 800 -> 600 -> 500 -> 400 -> 300`. It does not alter normal validation
+or the full-RAG importer eval profile.
 
 ## 0016: Scaffold AI FastAPI Sidecar
 

@@ -174,9 +174,19 @@ a safe category and optional safe error type, not raw provider output. Any cap
 or timeout adjustment must be explicit and limited to one approved follow-up;
 normal validation does not increase caps and does not retry repeatedly.
 
-The approval-gated diagnostic uses a tiny scrambled-egg fixture and the
-accepted 300-token cap. This is intentionally smaller than the 900-token full
-RAG importer evaluation profile and does not weaken importer validation.
+The approval-gated diagnostic uses a tiny scrambled-egg fixture and defaults to
+the 300-token cap. The recorded 300-token live diagnostic still failed with
+`output_cap_or_incomplete_response`. A 1000-token profile is an explicit manual
+diagnostic only:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 1000
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 1000
+```
+
+It permits one approved importer call per operator run, with no automatic or
+repeated retries. Normal validation remains mock/offline. If 1000 succeeds,
+dial down manually in later runs: `1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
 
 Prefer the dedicated live importer smoke script:
 

@@ -49,8 +49,19 @@ documented cap/timeout adjustment after preflight. Do not change normal
 offline validation caps or add retries.
 
 The bounded importer diagnostic uses a deterministic scrambled-egg fixture and
-the accepted 300-token cap; full RAG importer evaluation retains its separate
-larger manual profile.
+defaults to 300 tokens. The 300-token live diagnostic still fails with
+`output_cap_or_incomplete_response`. A 1000-token cap is accepted only through
+the explicit manual diagnostic parameter and permits one approved call per
+operator run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 1000
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 1000
+```
+
+There are no repeated retries, and normal smoke/eval/validator/Playwright
+validation remains mock/offline. If successful, later dial down manually:
+`1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
 
 The PowerShell wrapper can also load an ignored local `.env` file explicitly:
 

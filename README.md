@@ -202,8 +202,19 @@ The first local alpha implementation for that layer now exists in `ai-api/app/re
 The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts. The live eval harness keeps a separate importer-only cap with a 900-token default and a 1200-token ceiling so importer evals can stay distinct from the 300-token non-importer guard. Importer scoring and token thresholds are also calibrated separately because structured recipe JSON plus retrieval metadata is larger than short-answer workflows, while the non-importer live checks stay on the stricter generic threshold.
 
 The approval-gated diagnostic deliberately uses a smaller scrambled-egg fixture
-and the accepted 300-token cap, so it is a bounded completion check rather
-than a full RAG importer evaluation.
+and defaults to the normal 300-token cap, so it is a bounded completion check
+rather than a full RAG importer evaluation. The recorded 300-token diagnostic
+still failed as `output_cap_or_incomplete_response`. For one explicit manual
+experiment only, operators may request 1000 tokens:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 1000
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 1000
+```
+
+This permits one approved importer call per operator run, never retries, and
+does not change normal mock/offline validation. If 1000 succeeds, dial down
+manually in later runs, for example `1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
 
 The live importer `503` blocker from manual testing was traced to strict structured-output schema metadata that OpenAI rejected. The schema normalizer now strips unsupported metadata such as `default`, `examples`, `title`, and `description` before the provider call, while application behavior still defaults importer servings to 4.
 
