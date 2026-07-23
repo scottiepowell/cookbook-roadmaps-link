@@ -1,5 +1,13 @@
 # AI Feature Status
 
+## Traffic analytics and behavior tracking
+
+Proposed, docs/research-only: [Traffic Analytics and Behavior Tracking ADR](traffic-analytics-behavior-tracking-adr.md)
+defines product questions, an allowlisted event taxonomy, prohibited data,
+privacy/consent, retention/deletion, and staged aggregate measurement. No
+analytics collection, vendor, cookie, script, pixel, beacon, public route, or
+tracking implementation exists; normal validation remains mock/offline.
+
 ## SSO and BYOS identity/storage
 
 Proposed, docs/research-only: [SSO and BYOS Identity/Storage Architecture ADR](sso-byos-identity-storage-architecture-adr.md)

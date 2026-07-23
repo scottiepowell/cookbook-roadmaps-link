@@ -90,3 +90,11 @@ ADR](sso-byos-identity-storage-architecture-adr.md). It investigates email and
 external identity providers separately from user-owned cloud storage, with
 portable data, least-privilege scopes, revocation/deletion behavior, and local
 fallback as first-class requirements. No auth or storage integration is added.
+
+## 0033D analytics ADR emphasis
+
+The next app-level design is the [Traffic Analytics and Behavior Tracking
+ADR](traffic-analytics-behavior-tracking-adr.md). It investigates privacy-
+respecting aggregate measurement, event taxonomy, consent, retention,
+deletion, and vendor tradeoffs. No tracking implementation is added; ads,
+sponsors, and conversions remain deferred to the future monetization ADR.

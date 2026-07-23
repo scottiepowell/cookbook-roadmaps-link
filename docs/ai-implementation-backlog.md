@@ -1,5 +1,17 @@
 # AI Implementation Backlog
 
+## 0033D: Traffic Analytics and Behavior Tracking ADR
+
+Status: complete, docs/research-only.
+
+The ADR defines the product questions and safe event categories needed for
+future aggregate measurement, while explicitly excluding recipe text, prompts,
+provider outputs, tokens, private storage data, sensitive details, and raw
+identifiers. It separates anonymous, pseudonymous, account-linked, operator,
+and commercial modes; preserves the AI metering and timer boundaries; and
+defers ads/conversions to the future monetization ADR. No tracking or vendor
+integration is implemented.
+
 ## 0033C: SSO and BYOS Identity/Storage Architecture ADR
 
 Status: complete, docs/research-only.
