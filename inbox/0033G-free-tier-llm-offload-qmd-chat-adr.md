@@ -6,6 +6,8 @@ Investigate a future architecture for using free, near-free, or local LLM option
 
 This ADR should also examine whether QMD-style local hybrid retrieval could reduce provider calls, improve chat responsiveness, and support a richer conversational experience while preserving the current safety, cost, and modularity boundaries.
 
+It must explicitly analyze how free-tier/local models plus QMD-style retrieval could make the RAG layer better, more efficient, and more cost effective. The ADR should cover retrieval quality, context packing, reranking, query expansion, citation/provenance fidelity, cacheability, latency, token usage, and provider-call reduction.
+
 This is docs/architecture/research only. Do not implement provider runtime, QMD runtime, routing, auth, payment, analytics, or public exposure in this task.
 
 ## Context
@@ -27,7 +29,9 @@ The operator wants to investigate whether a free-tier model layer could:
 - allow more chat/discussion turns for free-tier users;
 - reduce cost pressure for public usage;
 - combine with QMD/local retrieval so simple or retrieval-heavy interactions do not always require hosted OpenAI calls;
-- make the AI/chat interface feel more dynamic while still preserving accurate final answers and safe provider boundaries.
+- make the AI/chat interface feel more dynamic while still preserving accurate final answers and safe provider boundaries;
+- improve RAG efficiency by using cheaper/local models for query expansion, retrieval planning, snippet compression, reranking, citation checking, and clarification before any baseline final-answer call;
+- improve RAG cost effectiveness by reducing unnecessary hosted-provider calls, reducing prompt/context size, reusing local retrieval results, and reserving OpenAI `gpt-5.4-nano` for final structured outputs or higher-risk answers.
 
 The operator supplied candidate examples and routes such as GLM-family models, Gemma-style local models, Groq free tier, DeepSeek/MiniMax/Gemini-style free or near-free options, Cloudflare Workers AI, Zhipu AI native APIs, and OpenRouter-style OpenAI-compatible endpoints. Treat these as hypotheses to verify, not accepted facts.
 
@@ -105,6 +109,10 @@ The ADR should cover:
 - why the OpenAI `gpt-5.4-nano` path remains the trusted baseline for final answers until alternatives are proven;
 - how QMD/local retrieval could reduce hosted-provider calls;
 - how a free-tier LLM could support longer exploratory chat without becoming the final-answer authority by default;
+- how free-tier/local models could improve RAG quality through query expansion, paraphrase matching, reranking, clarification, and context compression;
+- how QMD/hybrid search could improve retrieval efficiency by combining keyword precision, semantic recall, local indexes, and provenance-aware result mapping;
+- how the architecture could lower RAG cost by reducing hosted-token usage, shrinking final-answer context, reusing local retrieval/cached snippets, and avoiding baseline calls for no-match or low-risk exploratory turns;
+- how to measure RAG efficiency and cost effectiveness, such as retrieval precision/recall proxies, answer citation quality, context token size, provider call count, latency, cache hit rate, and estimated cost per successful answer;
 - task classification: what can safely be offloaded vs what must stay on the baseline model;
 - provider fact verification table;
 - candidate provider/model comparison table;
@@ -132,6 +140,10 @@ Allowed candidate offload tasks:
 - draft critique that cannot become the final answer
 - context compression over retrieved snippets
 - QMD/local-note summarization with citations
+- retrieval reranking over already retrieved snippets
+- citation/provenance consistency checks that cannot invent new citations
+- no-match triage before calling the baseline model
+- cache-key generation and retrieval-plan suggestions
 
 Blocked or baseline-only tasks:
 - final recipe importer JSON
@@ -145,7 +157,42 @@ Blocked or baseline-only tasks:
 
 Use the existing secondary-provider fact gate where possible instead of inventing a parallel gate.
 
-### 5. Define QMD-assisted chat concept
+### 5. Define RAG efficiency and cost-effectiveness concept
+
+Include a design-only flow showing how the RAG stack could become cheaper and better without making an offload model the final-answer authority:
+
+```text
+User question
+  -> deterministic intent/no-match/safety classifier
+  -> QMD/local hybrid retrieval when available
+  -> optional cheap/free/local model query expansion or reranking
+  -> context compression with citation/provenance preservation
+  -> baseline OpenAI final-answer path only when needed
+  -> safe answer with citations, usage metadata, and budget accounting
+```
+
+Cover possible RAG improvements:
+
+- fewer hosted OpenAI calls for retrieval-only, no-match, exploratory, or clarification turns;
+- smaller baseline prompts because local/QMD retrieval and compression send only the best snippets;
+- better recall for paraphrased questions through semantic or hybrid retrieval;
+- better precision through reranking and recipe-specific filters;
+- lower latency for local-only answers or clarification turns;
+- lower cost per successful answer through provider-call avoidance and token reduction;
+- better user experience because chat can ask more clarifying questions before spending a baseline final-answer call;
+- safer answers because final structured outputs still flow through the trusted baseline path until offload candidates pass evals.
+
+Also cover risks:
+
+- semantic false positives from local/vector retrieval;
+- stale QMD indexes or deleted recipe snapshots;
+- citation drift when compressed context loses provenance;
+- local model hallucination during query expansion or summarization;
+- confusing users if free-tier/offload answers differ from baseline answers;
+- hidden operational cost from local model CPU/RAM/disk requirements;
+- privacy and retention differences across free hosted providers.
+
+### 6. Define QMD-assisted chat concept
 
 Include a design-only flow such as:
 
@@ -160,7 +207,7 @@ User chat turn
 
 QMD remains optional and local-only until a later approved implementation task proves value.
 
-### 6. Define free-tier user experience concept
+### 7. Define free-tier user experience concept
 
 Investigate a product policy such as:
 
@@ -176,7 +223,7 @@ Free tier:
 
 Do not implement the timer, SSO, BYOS, analytics, ads, or monetization in this task.
 
-### 7. Update planning docs
+### 8. Update planning docs
 
 Update as appropriate:
 
@@ -189,7 +236,7 @@ docs/product-priority-roadmap-after-0032A.md
 
 Keep the status clear: this ADR is an investigation only and does not approve runtime use of any candidate model/provider.
 
-### 8. Add outbox report
+### 9. Add outbox report
 
 Create:
 
@@ -203,6 +250,7 @@ Summarize:
 - external facts verified or limitation noted;
 - candidate provider/model matrix;
 - QMD-assisted chat concept;
+- RAG quality/efficiency/cost-effectiveness analysis;
 - offload task policy;
 - pros/cons;
 - risks and unknowns;
@@ -216,6 +264,8 @@ Summarize:
 - ADR treats all provider/model claims as verified, unverified, or blocked behind a fact gate.
 - ADR explains how offload could reduce OpenAI `gpt-5.4-nano` usage without replacing the trusted baseline prematurely.
 - ADR defines how QMD/local retrieval could support dynamic chat while preserving citations/provenance.
+- ADR explains how free-tier/local models and QMD-style retrieval could make RAG better, more efficient, and more cost effective.
+- ADR defines candidate RAG efficiency metrics such as provider calls avoided, context tokens reduced, latency, cacheability, retrieval quality, citation fidelity, and estimated cost per successful answer.
 - ADR defines allowed vs blocked task classes for offload.
 - ADR includes pros/cons for direct provider APIs, OpenAI-compatible gateways, Cloudflare Workers AI-style hosted options, OpenRouter-style routing, and local/open-weight options when supported by current facts.
 - ADR preserves no user-selectable model picker unless a future task explicitly approves one.
