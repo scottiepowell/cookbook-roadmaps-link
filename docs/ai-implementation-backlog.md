@@ -1,5 +1,17 @@
 # AI Implementation Backlog
 
+## 0033E: Website Marketing and Community Outreach ADR
+
+Status: complete, docs/research-only.
+
+The ADR evaluates marketing goals, community outreach, and a tightly bounded
+YouTube transcript/comment concept. It requires human review, authenticity,
+rights/terms review, clear disclosure, and small experiments, while rejecting
+automation, scraping, bot accounts, fake engagement, impersonation, mass or
+repetitive comments, and undisclosed promotion. Safer alternatives include
+owned SEO/blog content, creator outreach, newsletters, partnerships, and
+build-in-public updates. No implementation is added.
+
 ## 0033D: Traffic Analytics and Behavior Tracking ADR
 
 Status: complete, docs/research-only.

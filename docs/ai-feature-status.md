@@ -1,5 +1,14 @@
 # AI Feature Status
 
+## Website marketing and community outreach
+
+Proposed, docs/research-only: [Website Marketing and Community Outreach ADR](website-marketing-community-outreach-adr.md)
+evaluates policy-compliant, human-reviewed outreach and safer content/creator
+channels. The YouTube transcript/comment idea remains exploration only; spam,
+bot posting, fake engagement, impersonation, undisclosed promotion, scraping,
+and mass commenting are explicitly rejected. No marketing implementation or
+content automation exists.
+
 ## Traffic analytics and behavior tracking
 
 Proposed, docs/research-only: [Traffic Analytics and Behavior Tracking ADR](traffic-analytics-behavior-tracking-adr.md)

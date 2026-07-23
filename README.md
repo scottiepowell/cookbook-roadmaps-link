@@ -40,6 +40,7 @@ Demo and evidence links:
 - [Application session timer and access exceptions ADR](docs/application-session-timer-access-exceptions-adr.md)
 - [SSO and BYOS identity/storage architecture ADR](docs/sso-byos-identity-storage-architecture-adr.md)
 - [Traffic analytics and behavior tracking ADR](docs/traffic-analytics-behavior-tracking-adr.md)
+- [Website marketing and community outreach ADR](docs/website-marketing-community-outreach-adr.md)
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)

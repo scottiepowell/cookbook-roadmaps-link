@@ -98,3 +98,12 @@ ADR](traffic-analytics-behavior-tracking-adr.md). It investigates privacy-
 respecting aggregate measurement, event taxonomy, consent, retention,
 deletion, and vendor tradeoffs. No tracking implementation is added; ads,
 sponsors, and conversions remain deferred to the future monetization ADR.
+
+## 0033E marketing ADR emphasis
+
+The next app-level design is the [Website Marketing and Community Outreach
+ADR](website-marketing-community-outreach-adr.md). It evaluates useful,
+transparent marketing and the cooking-video transcript/comment idea without
+approving scraping, automation, mass commenting, fake engagement,
+impersonation, or undisclosed promotion. Safer owned-content and human creator
+outreach options remain the preferred exploration path.
