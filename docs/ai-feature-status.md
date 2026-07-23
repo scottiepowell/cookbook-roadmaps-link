@@ -16,6 +16,16 @@ validation remains mock/offline. Live importer acceptance remains explicit,
 operator-approved, and one bounded call per invocation; it is not part of UI
 or repository validation.
 
+## Application session timer
+
+Proposed, docs-only: [Application Session Timer and Access Exceptions ADR](application-session-timer-access-exceptions-adr.md)
+defines a future default 30-minute application session, friendly five-minute
+and one-minute warnings, safe read-only expiry, and explicit operator/trusted/
+invite exceptions. It does not implement runtime enforcement or production
+auth. Timer state remains separate from provider budgets, operator gates,
+invite scopes, and provider kill switches; normal validation remains
+mock/offline.
+
 This matrix summarizes what is complete, how to demo it, and what evidence supports each claim. Normal validation is offline and mock-only.
 
 For the final phase-close acceptance matrix, see [AI Feature Completion Review](ai-feature-completion-review.md).

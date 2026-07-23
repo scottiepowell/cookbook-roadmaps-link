@@ -73,3 +73,12 @@ navigation, shared visual and interaction states, accessibility, responsive
 behavior, and the visible split between the upstream Cookbook container and
 the sidecar workspace. Live importer acceptance remains explicit,
 operator-approved, one-call bounded, and outside normal validation.
+
+## 0033B timer ADR emphasis
+
+The next app-level design is the [Application Session Timer and Access
+Exceptions ADR](application-session-timer-access-exceptions-adr.md). It
+investigates a friendly server-authoritative 30-minute session, safe expiry,
+and explicit operator/trusted/invite exceptions while keeping timer state
+separate from provider budgets. No runtime enforcement or production auth is
+introduced by the ADR.

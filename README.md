@@ -37,6 +37,7 @@ Demo and evidence links:
 - [AI UI integration plan](docs/ai-ui-integration-plan.md)
 - [Manual product integration usability validation](docs/manual-product-integration-usability-validation.md)
 - [Product priority roadmap after 0032A](docs/product-priority-roadmap-after-0032A.md)
+- [Application session timer and access exceptions ADR](docs/application-session-timer-access-exceptions-adr.md)
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)

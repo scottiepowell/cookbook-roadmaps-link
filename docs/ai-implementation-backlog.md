@@ -13,6 +13,18 @@ production-shaped acceptance checklist once the upstream Cookbook container
 is available locally. No implementation was added; AWS/platform work remains
 separate.
 
+## 0033B: Application Session Timer and Access Exceptions ADR
+
+Status: complete, docs-only.
+
+The ADR proposes a server-authoritative 30-minute application session for a
+future public/free experience, five-minute and one-minute warnings, safe
+read-only expiry with draft preservation, and scoped operator/trusted/invite
+exceptions. It distinguishes the UI timer, application session expiry, and
+provider budget enforcement, and keeps exceptions from bypassing budgets,
+kill switches, workflow scopes, or authorization. Runtime enforcement,
+production auth, persistence, and all platform work remain future tasks.
+
 This backlog breaks the medium-path AI design into follow-on mailbox tasks. Task numbers are proposed and may change if new operational fixes are needed first.
 
 ## 0030I-6: Local Live Runtime Profile and Secret Injection
