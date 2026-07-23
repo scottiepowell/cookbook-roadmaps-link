@@ -1,5 +1,16 @@
 # AI Implementation Backlog
 
+## 0033C: SSO and BYOS Identity/Storage Architecture ADR
+
+Status: complete, docs/research-only.
+
+The ADR separates email/SSO identity from user-authorized BYOS storage,
+documents high-level Google, Meta, Dropbox, and Microsoft provider constraints,
+and defines portable bundles, consent/scope, token, revocation, deletion,
+privacy, failure-mode, and staged implementation boundaries. No auth or cloud
+integration is implemented. Future work must preserve mock/offline validation,
+server-side token handling, least privilege, and the 30-minute timer boundary.
+
 ## 0033A: Manual Product Integration Usability Validation
 
 Status: complete as a mock/offline validation exercise.

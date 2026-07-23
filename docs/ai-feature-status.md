@@ -1,5 +1,15 @@
 # AI Feature Status
 
+## SSO and BYOS identity/storage
+
+Proposed, docs/research-only: [SSO and BYOS Identity/Storage Architecture ADR](sso-byos-identity-storage-architecture-adr.md)
+keeps sign-in identity separate from user-owned cloud storage authorization.
+It favors portable JSON/Markdown exports, least-privilege app-folder scopes,
+server-side token custody, explicit disconnect/revocation handling, and local
+offline fallback. No SSO, OAuth/OIDC, email registration, storage client,
+provider SDK, migration, secret, or production route is implemented; normal
+validation remains mock/offline.
+
 ## Current product-validation focus
 
 `0033A` validates the local Cookbook shell and AI sidecar as one product

@@ -82,3 +82,11 @@ investigates a friendly server-authoritative 30-minute session, safe expiry,
 and explicit operator/trusted/invite exceptions while keeping timer state
 separate from provider budgets. No runtime enforcement or production auth is
 introduced by the ADR.
+
+## 0033C identity/storage ADR emphasis
+
+The next app-level design is the [SSO and BYOS Identity/Storage Architecture
+ADR](sso-byos-identity-storage-architecture-adr.md). It investigates email and
+external identity providers separately from user-owned cloud storage, with
+portable data, least-privilege scopes, revocation/deletion behavior, and local
+fallback as first-class requirements. No auth or storage integration is added.
