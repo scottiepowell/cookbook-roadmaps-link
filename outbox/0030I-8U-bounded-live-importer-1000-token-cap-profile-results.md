@@ -19,3 +19,36 @@ mock/offline. If a later approved 1000-token run succeeds, operators should
 dial down manually: `1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
 
 No live OpenAI call was made for this task. AWS/platform work was not started.
+
+## Post-task operator-approved live acceptance
+
+After the task was pushed, the operator ran the explicit 1000-token diagnostic
+profile. The no-call preflight passed with `openai` / `gpt-5.4-nano`, a
+redacted-present API key, valid budget/token/timeout configuration, and
+`requested_max_output_tokens=1000`.
+
+The operator then ran exactly one approved live importer call:
+
+```text
+workflow=importer
+requested_provider=openai
+requested_model=gpt-5.4-nano
+requested_max_output_tokens=1000
+openai_model_status=allowed
+ai_model_status=allowed
+model_config=valid
+api_key=redacted-present
+live_opt_in=True
+budget_config=valid
+token_config=valid
+timeout_config=valid
+status=passed
+safe_unavailable_category=none
+safe_guidance=One bounded importer call completed. No retry was attempted
+```
+
+This records successful live importer acceptance for the explicit manual
+1000-token diagnostic profile only. It does not change normal validation, which
+remains mock/offline, and it does not claim that the minimum stable cap has been
+found. The next follow-up should dial the explicit manual cap down in bounded
+single-call steps while preserving the same safety boundaries.
