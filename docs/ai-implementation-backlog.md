@@ -1950,3 +1950,36 @@ Completed behavior:
 - added [AI Secondary Provider Implementation Gate](ai-secondary-provider-implementation-gate.md) with explicit go/no-go criteria and a separate future mailbox-task requirement for any runtime adapter work;
 - added `evals/ai_cookbook/secondary_provider_fact_gate.yaml` and `evals/ai_cookbook/secondary_provider_fact_gate_eval.py` so offline validation proves unverified candidates stay blocked and only a fully verified synthetic fixture can pass;
 - updated surrounding docs to state that `0031A` defined the advisory offload ADR, `0031B` adds fact verification and implementation gating, and future work must preserve the corrected 0030 baseline including `0030P` no-bake cheesecake behavior.
+
+## 0031C: Cookbook AI Plugin Adapter Architecture ADR
+
+Status: complete, docs-only; future implementation remains unapproved.
+
+Added [Cookbook AI Plugin and Adapter Architecture ADR](cookbook-ai-plugin-adapter-architecture-adr.md).
+It defines the future boundary:
+
+```text
+cookbook.roadmaps.link core app
+        |
+        | stable app/plugin contract
+        v
+Cookbook AI Adapter
+        |
+        | stable AI sidecar API
+        v
+RAG/AI sidecar
+```
+
+The ADR preserves current ownership: the core app owns users, auth, canonical
+recipes, persistence, and UI; the adapter owns translation, scopes, and safe
+write-back; the sidecar owns RAG, AI sessions, provider controls, and safe AI
+responses. It sketches a plugin manifest, Cookbook adapter contract, AI plugin
+API, session handoff, recipe read/write and indexing boundaries, UI integration
+levels, contract tests, and staged migration phases. It requires the final
+product to feel seamless rather than visibly bolted on.
+
+This task does not implement integration, endpoints, auth, public routes,
+provider changes, vector/embedding infrastructure, upstream UI changes,
+browser automation, live calls, AWS/platform work, or payment/subscription
+behavior. Normal validation remains mock/offline and current live gating is
+unchanged.
