@@ -48,6 +48,10 @@ The 0030I-8S correction maps bounded helper failures such as
 `output_cap_or_incomplete_response` and `JSONDecodeError` into safe diagnostic
 fields without leaking PowerShell native error frames.
 
+The bounded importer diagnostic uses a tiny deterministic scrambled-egg input
+and the accepted 300-token cap; it does not alter the full-RAG importer eval
+profile or normal mock/offline validation.
+
 ## 0016: Scaffold AI FastAPI Sidecar
 
 Status: complete.

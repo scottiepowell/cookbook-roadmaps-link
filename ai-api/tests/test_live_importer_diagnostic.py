@@ -194,5 +194,7 @@ def test_diagnostic_script_contains_bounded_safety_contract() -> None:
     assert "gpt-5.4-nano" in text
     assert "smoke-openai-importer-live.py" in text
     assert "No retry was attempted." in text
+    assert "scrambled eggs: 2 eggs, 1 tbsp butter" in text
+    assert "--max-output-tokens $tokens" in text
     for forbidden in ("sk-proj-", "Authorization: Bearer", "raw_provider_prompt", "raw_provider_response"):
         assert forbidden not in text

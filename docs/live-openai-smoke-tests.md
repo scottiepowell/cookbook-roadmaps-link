@@ -48,6 +48,10 @@ provider output private; only consider one explicitly approved run with a
 documented cap/timeout adjustment after preflight. Do not change normal
 offline validation caps or add retries.
 
+The bounded importer diagnostic uses a deterministic scrambled-egg fixture and
+the accepted 300-token cap; full RAG importer evaluation retains its separate
+larger manual profile.
+
 The PowerShell wrapper can also load an ignored local `.env` file explicitly:
 
 ```powershell

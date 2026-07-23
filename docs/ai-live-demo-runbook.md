@@ -174,6 +174,10 @@ a safe category and optional safe error type, not raw provider output. Any cap
 or timeout adjustment must be explicit and limited to one approved follow-up;
 normal validation does not increase caps and does not retry repeatedly.
 
+The approval-gated diagnostic uses a tiny scrambled-egg fixture and the
+accepted 300-token cap. This is intentionally smaller than the 900-token full
+RAG importer evaluation profile and does not weaken importer validation.
+
 Prefer the dedicated live importer smoke script:
 
 ```powershell

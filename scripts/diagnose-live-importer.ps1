@@ -95,6 +95,7 @@ if ($PreflightOnly -or -not $ApproveLiveCall) {
 }
 
 $Python = Join-Path $RepoRoot ".venv\Scripts\python.exe"
+$SmokeText = "scrambled eggs: 2 eggs, 1 tbsp butter, pinch salt. Whisk eggs, cook in butter over medium-low heat, stir until softly set. Serves 1."
 if (-not [string]::IsNullOrWhiteSpace($HelperPath)) {
     $Python = $HelperPath
 } elseif (-not (Test-Path -LiteralPath $Python)) {
@@ -105,7 +106,7 @@ $ErrorActionPreference = "Continue"
 if ([System.IO.Path]::GetExtension($Python) -eq ".ps1") {
     $captured = (& powershell -NoProfile -ExecutionPolicy Bypass -File $Python 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
 } else {
-    $captured = (& $Python "scripts\smoke-openai-importer-live.py" --max-output-tokens $tokens --ai-timeout-seconds $timeout 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
+    $captured = (& $Python "scripts\smoke-openai-importer-live.py" --text $SmokeText --max-output-tokens $tokens --ai-timeout-seconds $timeout 2>&1 | ForEach-Object { $_.ToString() } | Out-String)
 }
 $exitCode = $LASTEXITCODE
 $ErrorActionPreference = $previousErrorActionPreference

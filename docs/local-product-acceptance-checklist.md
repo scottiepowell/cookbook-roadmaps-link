@@ -72,6 +72,8 @@
 - Treat `output_cap_or_incomplete_response` as a reached-but-incomplete live
   response, not a configuration failure. Do not retry repeatedly; any cap or
   timeout adjustment is a separately approved one-call follow-up.
+- The bounded diagnostic uses a tiny scrambled-egg fixture and 300-token cap;
+  it is not a substitute for the larger full-RAG importer evaluation.
 - Go for AWS/platform planning only when `/product`, redirects, readiness,
   Recipe Session Alpha flows, mock smoke, and offline validation all pass.
 - No-go if the shell cannot guide an operator to recovery, fixture state is
