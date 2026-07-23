@@ -2002,3 +2002,27 @@ compares it with the accepted deterministic keyword backend, and lists risks,
 unknowns, local-only proof-of-concept shape, seamless UX requirements, and
 go/no-go criteria. Normal validation remains mock/offline and the deterministic
 backend remains the accepted default.
+
+## 0032A: Portfolio Platform AWS Scaling Architecture ADR
+
+Status: complete, docs-only; infrastructure implementation remains unapproved.
+
+Added [Portfolio Platform AWS Scaling Architecture ADR](portfolio-platform-aws-scaling-architecture-adr.md).
+The decision is an EC2-first staged path for the broader portfolio platform:
+single EC2 with Docker Compose, production-shaped single EC2 with externalized
+config/data/logs, ALB plus EC2 Auto Scaling, and ECS on EC2 for per-service
+scaling. Fargate and EKS remain later options only when explicit evidence
+justifies them.
+
+The ADR defines app-owned routes, data, storage prefixes, flags, limits,
+labels, AI budgets, RAG/index boundaries, retention, and import/export rules;
+the shared VPC/compute/observability/config/cost model; conceptual portfolio
+metadata records; AI provider usage, budget, token, RAG, and kill-switch
+controls; migration triggers; and operational acceptance evidence per phase.
+It preserves the rule `Shared infrastructure is acceptable. Shared uncontrolled
+state is not.`
+
+This task creates no AWS resources, infrastructure-as-code, deployment
+workflow, DNS/Cloudflare change, database migration, auth/payment system,
+public route, provider routing change, secondary provider, vector/embedding
+system, or production integration. Normal validation remains offline/mock-only.

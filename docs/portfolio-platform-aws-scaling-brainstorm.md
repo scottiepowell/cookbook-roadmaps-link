@@ -291,13 +291,13 @@ Use shared compute, observability, config, and cost tracking where it reduces op
 
 ## Recommended Future Task
 
-Create a formal ADR later:
+The formal decision record is now [Portfolio Platform AWS Scaling Architecture ADR](portfolio-platform-aws-scaling-architecture-adr.md):
 
 ```text
-0031A: Portfolio Platform AWS Scaling Architecture ADR
+0032A: Portfolio Platform AWS Scaling Architecture ADR
 ```
 
-That ADR should decide:
+The ADR decides:
 
 - EC2-first architecture boundary;
 - when to introduce ALB + Auto Scaling;
@@ -308,3 +308,7 @@ That ADR should decide:
 - per-app AI budget and usage model;
 - migration triggers from simple EC2 to managed container orchestration;
 - explicit non-goals such as EKS, vector DB, or production persistent memory until justified.
+
+It remains docs-only and creates no AWS resources, infrastructure-as-code,
+deployment workflow, DNS/Cloudflare change, database migration, auth/payment
+system, or production route.
