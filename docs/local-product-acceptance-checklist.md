@@ -72,14 +72,16 @@
 - Treat `output_cap_or_incomplete_response` as a reached-but-incomplete live
   response, not a configuration failure. Do not retry repeatedly; any cap or
   timeout adjustment is a separately approved one-call follow-up.
-- The bounded diagnostic uses a tiny scrambled-egg fixture and defaults to a
-  300-token cap; the recorded 300-token live diagnostic still failed with
-  `output_cap_or_incomplete_response`.
-- A 1000-token cap is an explicit manual diagnostic only. Use the preflight
-  and approval commands with `-MaxOutputTokens 1000`; this permits one approved
-  importer call per operator run, with no repeated retries. Normal validation
-  remains mock/offline. If it succeeds, dial down manually:
-  `1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
+- The explicit manual `openai` / `gpt-5.4-nano` importer diagnostic passed at
+  500 and 1000 output tokens. Use `-MaxOutputTokens 500` as the recommended
+  manual acceptance cap.
+- The 400-token run failed safely with
+  `output_cap_or_incomplete_response` / `JSONDecodeError`; the earlier
+  300-token run was also too low for complete strict-schema JSON. A 1000-token
+  cap remains a troubleshooting ceiling, not the recommended default.
+- Preflight is required before approval; each approved invocation permits
+  exactly one bounded importer call and never retries. Normal validation remains
+  mock/offline and does not call live OpenAI.
 - Go for AWS/platform planning only when `/product`, redirects, readiness,
   Recipe Session Alpha flows, mock smoke, and offline validation all pass.
 - No-go if the shell cannot guide an operator to recovery, fixture state is

@@ -49,19 +49,24 @@ documented cap/timeout adjustment after preflight. Do not change normal
 offline validation caps or add retries.
 
 The bounded importer diagnostic uses a deterministic scrambled-egg fixture and
-defaults to 300 tokens. The 300-token live diagnostic still fails with
-`output_cap_or_incomplete_response`. A 1000-token cap is accepted only through
-the explicit manual diagnostic parameter and permits one approved call per
-operator run:
+is separate from normal product/runtime caps. The explicit manual
+`openai` / `gpt-5.4-nano` diagnostic passed at 500 and 1000 tokens, so 500 is
+the recommended manual acceptance cap. A 400-token run failed safely with
+`output_cap_or_incomplete_response` / `JSONDecodeError`; the earlier 300-token
+run was also too low for complete strict-schema JSON.
+
+Use 500 for the recommended one-call acceptance run:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 1000
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 1000
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 500
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 500
 ```
 
-There are no repeated retries, and normal smoke/eval/validator/Playwright
-validation remains mock/offline. If successful, later dial down manually:
-`1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
+1000 remains the explicit manual troubleshooting ceiling, not the recommended
+default acceptance cap. Preflight is required and each approved invocation
+permits exactly one bounded importer call with no retry. Normal
+smoke/eval/validator/Playwright validation remains mock/offline and does not
+call live OpenAI.
 
 The PowerShell wrapper can also load an ignored local `.env` file explicitly:
 

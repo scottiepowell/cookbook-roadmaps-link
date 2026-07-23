@@ -49,13 +49,15 @@ The 0030I-8S correction maps bounded helper failures such as
 fields without leaking PowerShell native error frames.
 
 The bounded importer diagnostic uses a tiny deterministic scrambled-egg input
-and defaults to the 300-token cap. The recorded 300-token live diagnostic
-still failed with `output_cap_or_incomplete_response`. The explicit
-`-MaxOutputTokens 1000` profile is a manual diagnostic only, permits one
-approved importer call per operator run, and never retries. Normal validation
-remains mock/offline. If 1000 succeeds, later dial down manually:
-`1000 -> 800 -> 600 -> 500 -> 400 -> 300`. It does not alter normal validation
-or the full-RAG importer eval profile.
+and remains separate from product/runtime caps and the full-RAG importer eval
+profile. Operator-approved live evidence for `openai` / `gpt-5.4-nano` passed
+at 1000 and 500 output tokens. The recommended manual acceptance cap is 500.
+The 400-token run failed safely with
+`output_cap_or_incomplete_response` / `JSONDecodeError`; the earlier 300-token
+run was also too low for complete strict-schema JSON. 1000 remains the manual
+troubleshooting ceiling, not the recommended default. Preflight plus explicit
+approval permits exactly one bounded call per invocation, with no retries;
+normal validation remains mock/offline and does not call live OpenAI.
 
 ## 0016: Scaffold AI FastAPI Sidecar
 

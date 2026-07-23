@@ -199,22 +199,33 @@ The next recipe-creation product layer is documented, not implemented, in [Recip
 
 The first local alpha implementation for that layer now exists in `ai-api/app/recipe_requirements.py`, `ai-api/app/recipe_session.py`, and `ai-api/app/recipe_session_routes.py`. It provides deterministic requirements extraction, confidence labels, clarification and follow-up classification, RAG refresh decisions, a bounded in-memory test/demo session store, and local `/ai/recipe-session/*` endpoints for start/message/get/finalize flows. Follow-up responses include a safe requirement diff and concise revision summary so operators can see what changed and why retrieval refreshed or was reused. The `/demo` UI includes a compact Recipe Session Alpha panel for starting a session, sending a follow-up, viewing RAG refresh/no-refresh state, and finalizing for demo. `evals/ai_cookbook/run_evals.py` now includes deterministic `recipe_session` cases for draft generation, clarification, method/equipment/exclusion RAG refresh, no-refresh, finalize, finalize-before-draft, missing-session safety, and leakage checks. The [Recipe Session Alpha acceptance runbook](docs/recipe-session-alpha-acceptance-runbook.md) documents the local demo checklist and boundaries. These endpoints, UI controls, evals, and runbook are offline/mock-friendly and are not production storage, auth, paid access, public access, persistent user memory, or a full chat UI.
 
-The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was sufficient for small smoke tests but could truncate RAG-informed structured recipe drafts. The live eval harness keeps a separate importer-only cap with a 900-token default and a 1200-token ceiling so importer evals can stay distinct from the 300-token non-importer guard. Importer scoring and token thresholds are also calibrated separately because structured recipe JSON plus retrieval metadata is larger than short-answer workflows, while the non-importer live checks stay on the stricter generic threshold.
+The full-RAG manual importer/eval path uses a separate `AI_MAX_OUTPUT_TOKENS=900`
+profile because retrieved structured recipe drafts can be larger. That profile
+is distinct from the approval-gated diagnostic acceptance cap documented below;
+it does not change normal product/runtime caps or mock/offline validation. The
+live eval harness keeps its separate importer-only cap with a 900-token default
+and a 1200-token ceiling so importer evals stay distinct from the 300-token
+non-importer guard.
 
 The approval-gated diagnostic deliberately uses a smaller scrambled-egg fixture
-and defaults to the normal 300-token cap, so it is a bounded completion check
-rather than a full RAG importer evaluation. The recorded 300-token diagnostic
-still failed as `output_cap_or_incomplete_response`. For one explicit manual
-experiment only, operators may request 1000 tokens:
+and remains separate from normal product/runtime caps and full-RAG evaluation.
+The explicit manual `openai` / `gpt-5.4-nano` diagnostic has now passed at both
+500 and 1000 output tokens. The current recommended manual acceptance cap is
+500 tokens. The 400-token run failed safely as
+`output_cap_or_incomplete_response` / `JSONDecodeError`, and the earlier
+300-token run was also too low for complete strict-schema JSON.
+
+Use 500 for the recommended one-call acceptance check:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 1000
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 1000
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 500
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 500
 ```
 
-This permits one approved importer call per operator run, never retries, and
-does not change normal mock/offline validation. If 1000 succeeds, dial down
-manually in later runs, for example `1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
+1000 remains the explicit manual troubleshooting ceiling, not the recommended
+default acceptance cap. Every approved run requires preflight and permits
+exactly one bounded importer call; it never retries. Normal validation remains
+mock/offline and does not call live OpenAI.
 
 The live importer `503` blocker from manual testing was traced to strict structured-output schema metadata that OpenAI rejected. The schema normalizer now strips unsupported metadata such as `default`, `examples`, `title`, and `description` before the provider call, while application behavior still defaults importer servings to 4.
 

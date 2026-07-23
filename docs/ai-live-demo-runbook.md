@@ -174,19 +174,24 @@ a safe category and optional safe error type, not raw provider output. Any cap
 or timeout adjustment must be explicit and limited to one approved follow-up;
 normal validation does not increase caps and does not retry repeatedly.
 
-The approval-gated diagnostic uses a tiny scrambled-egg fixture and defaults to
-the 300-token cap. The recorded 300-token live diagnostic still failed with
-`output_cap_or_incomplete_response`. A 1000-token profile is an explicit manual
-diagnostic only:
+The approval-gated diagnostic uses a tiny scrambled-egg fixture and is separate
+from normal product/runtime caps and full-RAG evaluation. The explicit manual
+`openai` / `gpt-5.4-nano` diagnostic passed at 500 and 1000 output tokens. The
+recommended manual acceptance cap is 500. A 400-token run failed safely with
+`output_cap_or_incomplete_response` / `JSONDecodeError`; the earlier 300-token
+run was also too low for complete strict-schema JSON.
+
+Use 500 for the recommended acceptance check:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 1000
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 1000
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -PreflightOnly -MaxOutputTokens 500
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-live-importer.ps1 -ApproveLiveCall -MaxOutputTokens 500
 ```
 
-It permits one approved importer call per operator run, with no automatic or
-repeated retries. Normal validation remains mock/offline. If 1000 succeeds,
-dial down manually in later runs: `1000 -> 800 -> 600 -> 500 -> 400 -> 300`.
+1000 remains the explicit manual troubleshooting ceiling, not the recommended
+default acceptance cap. Preflight is required, each approved invocation
+permits exactly one bounded importer call, and there are no retries. Normal
+validation remains mock/offline and does not call live OpenAI.
 
 Prefer the dedicated live importer smoke script:
 
@@ -217,7 +222,15 @@ Expected live-path signals for the current manual acceptance target:
 
 If `AI_PROVIDER_DEBUG=true`, local logs should add sanitized `provider_error_category`, `provider_error_type`, and `safe_error_summary` fields. Those diagnostics must not include API keys, Authorization headers, raw prompts, raw provider responses, `.env` contents, or secret-like strings. The live importer eval wrapper now records the same safe failure categories in its summary output.
 
-The manual importer path now recommends `AI_MAX_OUTPUT_TOKENS=900`. The earlier 500-token cap was fine for smaller smoke tests, but not for RAG-informed structured drafts like cheesecake. If the provider budget guard is enabled and the budget is too tight, the importer returns a safe budget message instead of a provider call. The live eval harness uses a separate importer-only cap with a 900-token default and a 1200-token ceiling, controlled by `OPENAI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS` or `AI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS`, so importer evals stay distinct from the 300-token non-importer live-eval cap.
+The full-RAG manual importer/eval path uses a separate `AI_MAX_OUTPUT_TOKENS=900`
+profile because retrieved structured recipe drafts can be larger. That profile
+is distinct from the approval-gated 500-token diagnostic acceptance cap above
+and does not change normal product/runtime caps or mock/offline validation. If
+the provider budget guard is enabled and the budget is too tight, the importer
+returns a safe budget message instead of a provider call. The live eval harness
+uses a separate importer-only cap with a 900-token default and a 1200-token
+ceiling, controlled by `OPENAI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS` or
+`AI_IMPORTER_LIVE_MAX_OUTPUT_TOKENS`.
 
 The importer scorer is also calibrated separately from short-answer workflows. Valid imperative recipe verbs and short labeled steps such as `Brighten with lemon: Stir in lemon juice and zest.` should pass, while placeholder, rambling, or non-action steps still fail. Importer token thresholds are also separate because structured drafts include recipe JSON plus retrieval metadata.
 
