@@ -44,6 +44,11 @@ _DRAFT_FIELDS = {
 }
 _INGREDIENT_FIELDS = {"name", "quantity", "unit", "note"}
 _INSTRUCTION_FIELDS = {"step", "text"}
+_SENSITIVE_TEXT_PATTERNS = (
+    re.compile(r"openai_api_key|api[_ -]?key", re.IGNORECASE),
+    re.compile(r"raw provider|provider output|provider body|raw prompt|prompt:", re.IGNORECASE),
+    re.compile(r"(?:[A-Za-z]:\\|/home/|/tmp/|\\\\)"),
+)
 
 
 class CookbookIngredientPayload(BaseModel):
@@ -179,6 +184,31 @@ def _source_errors(source: str | None) -> list[CookbookFieldError]:
     return []
 
 
+def _iter_text_values(value: Any, field: str = "draft") -> Iterable[tuple[str, str]]:
+    if isinstance(value, str):
+        yield field, value
+    elif isinstance(value, Mapping):
+        for key, nested in value.items():
+            yield from _iter_text_values(nested, f"{field}.{key}")
+    elif isinstance(value, list):
+        for index, nested in enumerate(value):
+            yield from _iter_text_values(nested, f"{field}[{index}]")
+
+
+def _sensitive_text_errors(raw: Mapping[str, Any]) -> list[CookbookFieldError]:
+    errors = []
+    for field, value in _iter_text_values(raw):
+        if any(pattern.search(value) for pattern in _SENSITIVE_TEXT_PATTERNS):
+            errors.append(
+                CookbookFieldError(
+                    field=field,
+                    code="sensitive_value",
+                    message="Disallowed sensitive content is not accepted.",
+                )
+            )
+    return errors
+
+
 def _normalise_ingredient(item: Mapping[str, Any]) -> dict[str, str | None]:
     return {
         "name": _normalise_text(str(item.get("name", ""))) or "",
@@ -218,11 +248,13 @@ def _build_candidate(raw: Mapping[str, Any], idempotency_key: str) -> tuple[Cook
     warnings: list[str] = []
     if errors:
         return None, errors, warnings
+    errors.extend(_sensitive_text_errors(raw))
+    errors.extend(_source_errors(raw.get("source")))
 
     try:
         draft = RecipeImportDraft.model_validate(raw)
     except ValidationError as exc:
-        return None, _validation_errors(exc), warnings
+        return None, [*errors, *_validation_errors(exc)], warnings
 
     if len(draft.title) > MAX_TITLE_LENGTH:
         errors.append(CookbookFieldError(field="title", code="too_long", message=f"Title must be {MAX_TITLE_LENGTH} characters or fewer."))
@@ -242,7 +274,6 @@ def _build_candidate(raw: Mapping[str, Any], idempotency_key: str) -> tuple[Cook
         warnings.append("One or more instruction fields are unusually long and require user review.")
     if len(draft.tags) > MAX_TAGS or any(len(tag) > MAX_TAG_LENGTH for tag in draft.tags):
         errors.append(CookbookFieldError(field="tags", code="bounded_list", message="Tags exceed the candidate contract limits."))
-    errors.extend(_source_errors(draft.source))
 
     steps = [item.step for item in draft.instructions]
     if steps != list(range(1, len(steps) + 1)):

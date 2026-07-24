@@ -11,6 +11,18 @@ the product page documents recovery when Compose is unavailable. `/product/ai`
 continues to redirect to `/demo`. No upstream proxy, AI routing change, or
 infrastructure work was added.
 
+## 0033N: AI Importer Save Dry-Run Candidate Operation
+
+Status: complete, internal/local-only; commit/write work remains unapproved.
+
+Added `ai-api/app/cookbook_import_dry_run.py`, an explicit-gate service
+operation around the 0033M fixture adapter. It returns a stable no-write
+envelope with mapped candidates, field errors, warnings, duplicates,
+idempotency results, and contract/schema versions. It is disabled by default
+and has no HTTP route because the current sidecar lacks an authenticated
+core-app adapter boundary. No database, filesystem, upload, provider, or
+production target is contacted.
+
 ## 0033M: AI Importer Save Adapter Fixture Contract
 
 Status: complete, fixture-only/local; future dry-run and write phases remain

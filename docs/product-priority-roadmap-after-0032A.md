@@ -157,3 +157,11 @@ returns safe validation, duplicate, schema-version, and idempotency results.
 It does not inspect or mutate the Vanilla Cookbook database, add routes or UI,
 or contact a provider. The upstream write schema remains an explicit blocker
 before disposable write/rollback testing.
+
+## 0033N dry-run candidate operation
+
+Phase 2 adds a disabled-by-default internal service wrapper around the fixture
+adapter. Explicit local callers can exercise mapped payloads, validation,
+duplicate, idempotency, and schema-version results without Docker or storage.
+No HTTP route or commit path was added; a future review UI remains gated on
+Phase 3 disposable schema and rollback evidence.

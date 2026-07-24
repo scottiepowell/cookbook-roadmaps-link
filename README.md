@@ -256,6 +256,14 @@ signals, schema versions, and idempotency replay metadata, and never opens the
 Vanilla Cookbook database or adds a public route. The upstream write schema
 remains unknown pending separately approved disposable discovery.
 
+Phase 2 adds the internal `dry_run_import_candidate_operation` service in
+`ai-api/app/cookbook_import_dry_run.py`. It is disabled by default, has no HTTP
+route, and returns a safe unavailable response until an internal caller
+explicitly enables it. When enabled it only delegates to the in-memory fixture
+adapter; it does not save, contact Vanilla Cookbook, write files, or require
+Docker or live OpenAI. A future local review UI still depends on Phase 3
+schema/rollback work.
+
 QMD is documented in [QMD Local Hybrid Retrieval Adapter Spike](docs/qmd-local-hybrid-retrieval-adapter-spike.md) as an optional local retrieval candidate only. It is not installed, vendored, or accepted as a repository dependency; the current deterministic keyword retrieval remains the default and normal validation remains mock/offline. The spike keeps any future QMD path behind a retrieval adapter, maps hits back to canonical Cookbook IDs/provenance, and preserves the seamless native UX requirement.
 
 The broader portfolio hosting direction is documented in the [Portfolio Platform AWS Scaling Architecture ADR](docs/portfolio-platform-aws-scaling-architecture-adr.md). It proposes a staged EC2-first path—single Compose host, production-shaped EC2, ALB/Auto Scaling, then ECS on EC2—with Fargate/EKS deferred until justified by evidence. This remains a docs-only architecture decision: the repository creates no AWS resources, deployment code, DNS/Cloudflare changes, migrations, auth/payment systems, public routes, or provider-routing changes.

@@ -1,6 +1,6 @@
 # AI Importer Save-to-Cookbook Adapter Design
 
-Status: Phase 1 fixture contract complete; dry-run/write implementation requires separate approval
+Status: Phase 2 dry-run contract complete; write implementation requires separate approval
 
 Date: 2026-07-24
 
@@ -30,6 +30,14 @@ Phase 1 now has a pure in-memory contract in
 database mutation, production integration, authentication flow, or live
 provider call. The contract is deliberately not a claim about the upstream
 Vanilla Cookbook write schema.
+
+Phase 2 now wraps that contract with the internal service function
+`dry_run_import_candidate_operation` in
+`ai-api/app/cookbook_import_dry_run.py`. It is disabled unless the caller
+explicitly passes the non-secret `enabled=True` gate and otherwise returns a
+safe unavailable envelope. No HTTP route was added because the current app has
+no authenticated core-app adapter boundary; adding a route would create a
+public/exposure decision before that boundary is approved.
 
 ## Problem statement
 
@@ -256,9 +264,11 @@ no route, network client, database handle, production target, or persistence.
 
 ### Phase 2: Dry-run candidate operation
 
-Add an approved, authenticated dry-run operation that never writes. It should
-report mapping, compatibility, duplicate candidates, and safe errors. Contract
-tests must pass before any commit operation is considered.
+Complete in this task as an internal service operation. It reports mapping,
+compatibility, duplicate candidates, idempotency replay/conflict metadata, and
+safe errors while never writing. It is not a public route and has no commit
+counterpart. A future HTTP surface requires a separately approved local/auth
+and exposure design.
 
 ### Phase 3: Disposable local write/rollback test
 
@@ -334,3 +344,7 @@ The Phase 1 contract tests cover valid mapping, missing/blank fields,
 non-contiguous steps, bounded long fields, unknown fields, unsafe URLs,
 duplicate candidates, idempotent replay, key reuse conflicts, schema mismatch,
 and safe-envelope leakage checks. They run without Docker or provider keys.
+
+The Phase 2 operation tests additionally cover the disabled gate, delegation to
+the fixture adapter, operation-level versions/errors/warnings, duplicate and
+idempotent results, schema mismatch, and no-write/safe-envelope behavior.

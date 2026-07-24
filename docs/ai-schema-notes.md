@@ -110,3 +110,20 @@ testing, discover the native recipe model/table, relations, required defaults,
 ownership fields, revision behavior, transaction boundary, upload handling,
 and supported create API using only disposable local data and a verified
 restore point. No local runtime schema facts are treated as production facts.
+
+## 0033N dry-run operation
+
+`ai-api/app/cookbook_import_dry_run.py` provides the Phase 2 internal operation
+`dry_run_import_candidate_operation`. It defaults to a safe unavailable result
+and requires an explicit non-secret `enabled=True` caller decision. When
+enabled, it delegates to `FakeCookbookAdapter` and returns a stable operation
+envelope containing the no-write adapter result, mapped candidate, field
+errors, warnings, duplicate signals, idempotency metadata, and contract/schema
+versions.
+
+No HTTP route is exposed in this phase. The current sidecar does not have an
+authenticated core-app adapter boundary, so a route would prematurely create
+an exposure decision. The operation does not require Docker, the local
+Vanilla Cookbook container, SQLite, uploads, provider keys, or live OpenAI.
+Phase 3 disposable write/rollback testing must still use `cookbook-local` only
+after schema and restore-point review.
