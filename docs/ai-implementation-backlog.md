@@ -11,6 +11,19 @@ the product page documents recovery when Compose is unavailable. `/product/ai`
 continues to redirect to `/demo`. No upstream proxy, AI routing change, or
 infrastructure work was added.
 
+## 0033J: AI Importer Save-to-Cookbook Adapter Design
+
+Status: complete, docs-only; implementation remains unapproved.
+
+Added the [AI Importer Save-to-Cookbook Adapter Design](ai-importer-save-to-cookbook-adapter-design.md).
+It keeps Vanilla Cookbook as the canonical recipe owner and places candidate
+translation, authorization, validation, duplicate handling, and approved
+write-back at the core-app adapter boundary from `0031C`. It defines a
+review/edit/dry-run/confirm flow, unknown-schema discovery, idempotency,
+backup/rollback, fixture contracts, and disposable local phases. No button,
+endpoint, database mutation, production integration, auth, or live provider
+call was added.
+
 ## 0033K: Local Vanilla Cookbook Docker Dev Runtime
 
 Status: complete, local-dev/runtime-docs-only.

@@ -137,3 +137,14 @@ it does not implement Save to Cookbook or production write-back.
 Docker Desktop verification confirmed the app-only local path and HTTP
 response. Prior Coder asset inspection found no Vanilla Cookbook-specific
 files to reuse; production AWS/Cloudflare remains separate.
+
+## 0033J Save-to-Cookbook adapter design
+
+The proposed importer handoff is documented in
+[AI Importer Save-to-Cookbook Adapter Design](ai-importer-save-to-cookbook-adapter-design.md).
+It preserves Vanilla Cookbook as canonical owner and requires a bounded
+candidate contract, schema discovery, user review/edit/confirmation,
+idempotency, duplicate detection, backup/rollback, and disposable local tests
+before any write implementation. This task adds no Save-to-Cookbook button,
+endpoint, database mutation, or production write-back; the verified local
+runtime is only a future discovery/test target.
