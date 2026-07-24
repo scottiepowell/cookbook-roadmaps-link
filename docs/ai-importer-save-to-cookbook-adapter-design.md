@@ -187,6 +187,23 @@ relations, or transaction behavior. Those facts remain required before Phase
 3. Any future inspection must be read-only until a disposable backup/restore
 procedure is approved; this task performed no local DB row writes.
 
+### 0033O local schema discovery result
+
+Read-only inspection of the verified local `jt196/vanilla-cookbook:stable`
+runtime found the Prisma `Recipe` model and SQLite `Recipe` table. The model
+uses a UUID `uid`, requires an owning `userId` and `created` timestamp, stores
+ingredients and directions as nullable text, stores servings as nullable text,
+and relates categories through `RecipeCategory`. `RecipePhoto` is a separate
+media relation. The local source tree also contains authenticated native
+`POST /api/recipe` and ownership-protected update/delete paths.
+
+These are local observed facts, not production guarantees. Exact text
+serialization, category policy, transaction/rollback behavior, duplicate
+semantics, and safe core-app handoff remain unknown. The fixture candidate is
+therefore directionally mapped but not write-ready; Phase 3 remains blocked
+until a core-owned mapping and disposable backup/restore harness are approved.
+See [Local Vanilla Cookbook Schema Discovery](local-vanilla-cookbook-schema-discovery.md).
+
 ## Duplicate detection and provenance
 
 The core app should perform duplicate detection immediately before commit. A

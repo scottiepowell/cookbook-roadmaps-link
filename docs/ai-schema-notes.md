@@ -111,6 +111,14 @@ ownership fields, revision behavior, transaction boundary, upload handling,
 and supported create API using only disposable local data and a verified
 restore point. No local runtime schema facts are treated as production facts.
 
+The read-only discovery in [Local Vanilla Cookbook Schema Discovery](local-vanilla-cookbook-schema-discovery.md)
+found the local upstream Prisma `Recipe` model and SQLite table. It has UUID
+`uid`, required `userId` and `created`, nullable text `ingredients` and
+`directions`, nullable text `servings`, and relational categories/photos. The
+native local create path is authenticated and write-capable, so it was not
+called. Ingredient/direction serialization, category policy, transaction
+behavior, and production compatibility remain unknown.
+
 ## 0033N dry-run operation
 
 `ai-api/app/cookbook_import_dry_run.py` provides the Phase 2 internal operation

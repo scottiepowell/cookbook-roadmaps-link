@@ -23,6 +23,18 @@ and has no HTTP route because the current sidecar lacks an authenticated
 core-app adapter boundary. No database, filesystem, upload, provider, or
 production target is contacted.
 
+## 0033O: Local Vanilla Cookbook Schema Discovery
+
+Status: complete, read-only discovery; Phase 3 disposable writes remain blocked.
+
+Inspected the verified `cookbook-local` runtime, Prisma schema, SQLite metadata,
+and native recipe route source without reading rows or calling write routes.
+Documented UUID recipe IDs, required owner/time fields, text ingredient/
+direction/servings storage, category/photo relations, authenticated native
+create/update/delete paths, and remaining serialization/transaction/rollback
+unknowns. No DB file, upload, migration, route, or adapter assumption was
+added.
+
 ## 0033M: AI Importer Save Adapter Fixture Contract
 
 Status: complete, fixture-only/local; future dry-run and write phases remain

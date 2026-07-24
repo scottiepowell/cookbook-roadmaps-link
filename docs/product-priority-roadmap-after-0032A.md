@@ -165,3 +165,13 @@ adapter. Explicit local callers can exercise mapped payloads, validation,
 duplicate, idempotency, and schema-version results without Docker or storage.
 No HTTP route or commit path was added; a future review UI remains gated on
 Phase 3 disposable schema and rollback evidence.
+
+## 0033O local schema discovery
+
+Read-only inspection of the disposable runtime found the upstream Prisma/SQLite
+Recipe model: UUID recipe IDs, required owner/time fields, text ingredients,
+directions and servings, relational categories, separate photos, and an
+authenticated native create/update/delete API. Exact serialization, category
+ownership, transaction/rollback, and safe adapter handoff remain unknown, so
+Phase 3 disposable write testing is still blocked. No rows or uploads were
+modified.
