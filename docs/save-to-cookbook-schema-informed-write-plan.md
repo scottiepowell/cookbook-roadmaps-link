@@ -266,6 +266,14 @@ The harness is `scripts/test-save-to-cookbook-local-readiness.ps1`. It requires
 `-ApproveLocalWrite`, the `cookbook-local` Compose project, and loopback HTTP;
 it restores the ignored runtime before successful exit and expected failures.
 
+0033R adds a separate local commit service over an injected in-memory store.
+It is disabled unless callers explicitly provide enablement, approval, runtime
+verification, loopback target, exact Compose project, and synthetic ownership.
+It preserves the 0033Q serialization decisions and rejects exposed targets.
+It is not a native upstream API adapter and does not replace the 0033Q
+DB/uploads backup/restore harness; any disposable SQLite caller must retain
+those guards around the store boundary.
+
 ## Explicit non-goals
 
 This plan does not implement a write harness, Save-to-Cookbook button, commit

@@ -148,3 +148,9 @@ serialization, string servings, synthetic ownership, transaction rollback,
 duplicate/idempotency decisions, and restore cleanup. It intentionally does
 not treat this as proof of native API/UI compatibility or production schema
 compatibility.
+
+0033R's local commit service applies the discovered mapping only to an
+injected disposable store: `name`, text `servings`, newline ingredient and
+numbered direction fields, safe source/provenance, and no categories/media/
+embeddings. This is not evidence that the sidecar may write the upstream
+database directly; native ownership and API integration remain future work.

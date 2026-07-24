@@ -197,6 +197,7 @@ status=passed
 | Secondary provider offload review baseline | Pass, docs-only | ADR plus offline offload eval harness | The current OpenAI baseline remains `gpt-5.4-nano` final-answer generation, while secondary-provider ideas are evaluated offline as advisory-only candidates with no runtime routing or live GLM calls. |
 | Secondary provider implementation gate baseline | Pass, docs-only | fact register, implementation gate, and offline fact-gate eval harness | The current GLM candidate remains not implemented, blocked, and unverified unless primary documentation is recorded. Future runtime work must preserve the OpenAI final-answer path and the corrected `0030P` recipe-session baseline. |
 | Save-to-Cookbook local readiness evidence | Pass, local-only and disposable | `scripts/test-save-to-cookbook-local-readiness.ps1` plus focused offline tests | Explicit approval, loopback/Compose/mount guards, one synthetic recipe, deterministic text mapping, duplicate/idempotency evidence, injected rollback, read-after-write, and DB/uploads restore. Native adapter/UI and production write-back remain blocked. |
+| Save-to-Cookbook local commit service | Complete, disabled-by-default/local-only | `ai-api/app/cookbook_import_commit.py`, `test_cookbook_import_commit.py` | Explicit enablement/approval/runtime/loopback guards, schema-informed mapping, synthetic owner, in-memory commit result, duplicate/idempotency and rollback-safe errors. No route, native API integration, product button, or production write-back. |
 
 ## Demo Starting Points
 

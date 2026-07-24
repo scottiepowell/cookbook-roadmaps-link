@@ -193,3 +193,11 @@ backup/restore, rollback injection, duplicate/idempotency checks, and local
 read-after-write. It requires explicit approval and loopback `cookbook-local`
 only. Native adapter/UI work and production write-back remain gated on a
 separate reviewed task.
+
+## 0033R local backend integration
+
+The local-only commit service is now available as a disabled-by-default,
+in-memory backend boundary with explicit approval, loopback, Compose, runtime,
+and synthetic-owner guards. It preserves the readiness harness evidence and
+does not expose a route or call the native authenticated upstream API. A future
+UI/native adapter task remains required before any broader save behavior.

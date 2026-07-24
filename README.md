@@ -422,6 +422,13 @@ requires loopback and the local Compose project, uses one synthetic recipe,
 and restores the local DB/uploads before exit. It is not a product button,
 public route, or production write path; no live OpenAI call is involved.
 
+The local backend commit service in `ai-api/app/cookbook_import_commit.py` is
+also disabled by default and has no HTTP route. It accepts only an explicitly
+approved, verified loopback `cookbook-local` context and an injected local
+store; it is not authentication or production Save-to-Cookbook support. The
+fixture contract, dry-run operation, readiness harness, and future UI/native
+adapter remain separate boundaries.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

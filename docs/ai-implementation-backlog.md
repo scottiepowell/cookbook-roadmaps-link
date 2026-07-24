@@ -61,6 +61,19 @@ production, and tunnel targets and prints safe statuses only. No product
 button, public route, native API integration, migration, or production write is
 included.
 
+## 0033R: Local Save-to-Cookbook backend integration
+
+Status: complete, disabled-by-default and local-only; native API integration
+remains future work.
+
+Added `ai-api/app/cookbook_import_commit.py` with an injected in-memory local
+store and focused tests. The service requires explicit enablement, approval,
+runtime verification, exact `cookbook-local` scope, loopback target, and
+synthetic ownership. It maps the reviewed candidate using the 0033P/0033Q
+serialization rules, returns opaque local IDs and safe status envelopes, and
+prevents duplicate/idempotency conflicts. No HTTP route or production/native
+write path was added.
+
 ## 0033M: AI Importer Save Adapter Fixture Contract
 
 Status: complete, fixture-only/local; future dry-run and write phases remain

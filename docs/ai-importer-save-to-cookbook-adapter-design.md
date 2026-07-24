@@ -379,6 +379,19 @@ The Phase 2 operation tests additionally cover the disabled gate, delegation to
 the fixture adapter, operation-level versions/errors/warnings, duplicate and
 idempotent results, schema mismatch, and no-write/safe-envelope behavior.
 
+## 0033R local commit service
+
+0033R adds `ai-api/app/cookbook_import_commit.py`, a disabled-by-default
+service over an injected in-memory local store. It requires explicit enablement,
+approval, runtime verification, the exact `cookbook-local` project, synthetic
+ownership, and loopback HTTP. It maps the reviewed candidate to schema-informed
+`name`, string `servings`, deterministic text `ingredients`/`directions`, safe
+source fields, and bounded notes while excluding categories, media, and
+embeddings. It returns only status, opaque local IDs, versions, warnings, and
+safe errors. No route is exposed. The native authenticated upstream create path
+remains future work because its auth/session and side-effect boundary is not a
+safe sidecar integration contract.
+
 ## 0033Q local readiness evidence
 
 The separate 0033Q task adds `scripts/test-save-to-cookbook-local-readiness.ps1`

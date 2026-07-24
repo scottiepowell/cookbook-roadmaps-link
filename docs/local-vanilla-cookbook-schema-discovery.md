@@ -188,6 +188,12 @@ read-after-write evidence without inspecting rows or committing runtime data.
 It does not prove the authenticated native API/UI create path or production
 compatibility. Native adapter implementation remains separately gated.
 
+0033R reviewed the local native create route but did not call it: authentication,
+session ownership, and its possible upload/embedding side effects are not a
+stable sidecar contract. The first backend integration therefore uses an
+injected local-only store and keeps native authenticated API integration as a
+future core-owned adapter decision.
+
 ## Explicit non-goals
 
 This report does not add a Save-to-Cookbook button, public route, commit
