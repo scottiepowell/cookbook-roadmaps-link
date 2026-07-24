@@ -184,3 +184,12 @@ direction serialization, string servings, safe provenance, and no categories,
 media, uploads, or embeddings. It defines backup/restore, cleanup,
 duplicate/idempotency, failure injection, and strict localhost guards. This is
 planning only; Phase 3 remains blocked and no harness or write was added.
+
+## 0033Q local readiness evidence
+
+The local-only 0033Q harness provides disposable evidence for the narrow first
+write scope: synthetic owner, one recipe, deterministic text fields,
+backup/restore, rollback injection, duplicate/idempotency checks, and local
+read-after-write. It requires explicit approval and loopback `cookbook-local`
+only. Native adapter/UI work and production write-back remain gated on a
+separate reviewed task.

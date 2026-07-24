@@ -182,6 +182,12 @@ until a separate task defines and tests:
 No schema migration is required or proposed by this discovery task. The
 0033M/0033N fixture and dry-run contracts remain no-write and unchanged.
 
+The 0033Q harness proves the narrow local mapping, synthetic ownership,
+backup/restore, rollback injection, duplicate/idempotency, and SQLite
+read-after-write evidence without inspecting rows or committing runtime data.
+It does not prove the authenticated native API/UI create path or production
+compatibility. Native adapter implementation remains separately gated.
+
 ## Explicit non-goals
 
 This report does not add a Save-to-Cookbook button, public route, commit

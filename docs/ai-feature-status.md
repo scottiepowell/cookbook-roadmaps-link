@@ -196,6 +196,7 @@ status=passed
 | 29/30 integrated regression harness | Pass | offline regression script and wrapper | The combined baseline harness exercises operator gate, invite sessions, budget guard, usage reporting, route exposure assumptions, and recipe-session alpha behavior without enabling GLM or payment runtime behavior by default. |
 | Secondary provider offload review baseline | Pass, docs-only | ADR plus offline offload eval harness | The current OpenAI baseline remains `gpt-5.4-nano` final-answer generation, while secondary-provider ideas are evaluated offline as advisory-only candidates with no runtime routing or live GLM calls. |
 | Secondary provider implementation gate baseline | Pass, docs-only | fact register, implementation gate, and offline fact-gate eval harness | The current GLM candidate remains not implemented, blocked, and unverified unless primary documentation is recorded. Future runtime work must preserve the OpenAI final-answer path and the corrected `0030P` recipe-session baseline. |
+| Save-to-Cookbook local readiness evidence | Pass, local-only and disposable | `scripts/test-save-to-cookbook-local-readiness.ps1` plus focused offline tests | Explicit approval, loopback/Compose/mount guards, one synthetic recipe, deterministic text mapping, duplicate/idempotency evidence, injected rollback, read-after-write, and DB/uploads restore. Native adapter/UI and production write-back remain blocked. |
 
 ## Demo Starting Points
 

@@ -1,6 +1,7 @@
 # Save-to-Cookbook Schema-Informed Write Plan
 
-Status: proposed readiness plan; no-write implementation remains unapproved
+Status: readiness plan plus approved local evidence harness; native/production
+write integration remains unapproved
 
 Date: 2026-07-24
 
@@ -13,8 +14,9 @@ native core-app ownership and transaction boundary only after a separately
 approved local harness has created a backup/restore point and passed every
 localhost guard.
 
-This document plans that test. It does not implement a harness, button, commit
-endpoint, database mutation, migration, or production integration. Vanilla
+This document plans that test. The separate 0033Q task added and ran a guarded
+local evidence harness; it does not add a product button, commit endpoint,
+migration, or production integration. Vanilla
 Cookbook remains the canonical owner, and the AI sidecar remains a candidate and
 dry-run producer.
 
@@ -209,8 +211,8 @@ outputs, credentials, or session values.
 
 ## Local-only harness guardrails
 
-The future `scripts/test-save-to-cookbook-local-write.ps1` is a design sketch,
-not a file added here. It must:
+The 0033Q `scripts/test-save-to-cookbook-local-readiness.ps1` is the approved
+evidence harness. It must:
 
 - require an explicit approval switch and a clearly local test mode;
 - require the `cookbook-local` Compose project and running app;
@@ -251,8 +253,18 @@ that task and remains local/non-secret:
 8. mock/offline repository tests remain green without Docker or live OpenAI;
 9. explicit approval identifies the exact local target and rollback owner.
 
-Until then, Phase 3 is **blocked**, not ready. Schema discovery narrowed the
-unknowns but did not authorize mutation.
+The 0033Q harness now proves the narrow disposable evidence set: deterministic
+ingredient/direction serialization, synthetic ownership, DB/uploads backup and
+restore, transaction rollback injection, duplicate/idempotency decisions, and
+local read-after-write against the disposable SQLite file. It does not prove a
+native authenticated core-app adapter, UI read path, or production compatibility.
+Therefore Phase 3 evidence is **partially unblocked for a separately approved
+local harness**, while native adapter implementation and all production writes
+remain blocked.
+
+The harness is `scripts/test-save-to-cookbook-local-readiness.ps1`. It requires
+`-ApproveLocalWrite`, the `cookbook-local` Compose project, and loopback HTTP;
+it restores the ignored runtime before successful exit and expected failures.
 
 ## Explicit non-goals
 

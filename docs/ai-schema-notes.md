@@ -141,3 +141,10 @@ narrows the first future disposable test to one synthetic owner and one
 recipe, with deterministic plain-text ingredient/direction serialization,
 string servings, no categories/media/embeddings, and mandatory backup/restore.
 This is a plan only; it does not create fixtures or mutate the local runtime.
+
+The 0033Q local readiness harness exercises that narrow mapping against a
+temporary disposable SQLite copy using only synthetic data. It proves text
+serialization, string servings, synthetic ownership, transaction rollback,
+duplicate/idempotency decisions, and restore cleanup. It intentionally does
+not treat this as proof of native API/UI compatibility or production schema
+compatibility.

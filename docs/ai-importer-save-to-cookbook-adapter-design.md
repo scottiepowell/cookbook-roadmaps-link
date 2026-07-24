@@ -378,3 +378,14 @@ and safe-envelope leakage checks. They run without Docker or provider keys.
 The Phase 2 operation tests additionally cover the disabled gate, delegation to
 the fixture adapter, operation-level versions/errors/warnings, duplicate and
 idempotent results, schema mismatch, and no-write/safe-envelope behavior.
+
+## 0033Q local readiness evidence
+
+The separate 0033Q task adds `scripts/test-save-to-cookbook-local-readiness.ps1`
+as an explicitly approved, loopback-only evidence harness. It uses one
+synthetic owner and one bounded recipe candidate, serializes ingredients and
+directions as deterministic plain text, verifies ownership/read-after-write,
+checks duplicate/idempotency decisions, injects a foreign-owner failure, and
+restores the ignored local DB/uploads. It does not expose the Phase 2 service,
+add a button, or establish a native core-app adapter. Native API/UI
+compatibility and production write-back remain separate blocked work.

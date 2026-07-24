@@ -46,6 +46,21 @@ categories/media/embeddings, and defines backup/restore, transaction cleanup,
 duplicate/idempotency, failure injection, and localhost-only harness guards.
 No user, backup, harness, route, or write was created.
 
+## 0033Q: Local Save-to-Cookbook readiness evidence harness
+
+Status: complete, local-only evidence; native adapter implementation remains
+unapproved.
+
+Added `scripts/test-save-to-cookbook-local-readiness.ps1` and deterministic
+helper tests. With explicit `-ApproveLocalWrite`, it requires the ignored
+`cookbook-local` runtime and loopback target, backs up DB/uploads, performs one
+synthetic recipe transaction, verifies deterministic text serialization and
+ownership/read-after-write, exercises duplicate/idempotency and injected
+rollback, then restores the disposable runtime. It refuses exposed,
+production, and tunnel targets and prints safe statuses only. No product
+button, public route, native API integration, migration, or production write is
+included.
+
 ## 0033M: AI Importer Save Adapter Fixture Contract
 
 Status: complete, fixture-only/local; future dry-run and write phases remain
