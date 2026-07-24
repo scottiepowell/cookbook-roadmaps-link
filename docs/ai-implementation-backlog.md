@@ -11,6 +11,20 @@ the product page documents recovery when Compose is unavailable. `/product/ai`
 continues to redirect to `/demo`. No upstream proxy, AI routing change, or
 infrastructure work was added.
 
+## 0033M: AI Importer Save Adapter Fixture Contract
+
+Status: complete, fixture-only/local; future dry-run and write phases remain
+unapproved.
+
+Added `ai-api/app/cookbook_import_adapter.py` and deterministic unit tests. The
+pure in-memory contract maps validated importer drafts into a versioned
+candidate payload, reports field-level errors and warnings, detects duplicate
+synthetic fixtures, and returns idempotency replay/key-conflict metadata. It
+rejects unknown fields and unsafe source schemes and never opens SQLite,
+contacts Vanilla Cookbook, exposes a route, or calls a provider. The upstream
+write schema remains unknown and must be discovered against disposable local
+data before Phase 3.
+
 ## 0033J: AI Importer Save-to-Cookbook Adapter Design
 
 Status: complete, docs-only; implementation remains unapproved.

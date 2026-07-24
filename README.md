@@ -249,6 +249,13 @@ The future production integration direction is documented in the [Cookbook AI Pl
 
 The proposed next adapter design is documented in [AI Importer Save-to-Cookbook Adapter Design](docs/ai-importer-save-to-cookbook-adapter-design.md). It keeps Vanilla Cookbook as the canonical recipe owner and requires user review/edit/confirmation, schema discovery, idempotency, backup/rollback, and disposable local testing before any future write implementation. This is docs-only: there is no Save-to-Cookbook button, write endpoint, database mutation, or production write-back.
 
+Phase 1 of that design is now represented by the fixture-only
+`ai-api/app/cookbook_import_adapter.py` contract and offline unit tests. It
+maps validated importer drafts in memory, reports safe field errors, duplicate
+signals, schema versions, and idempotency replay metadata, and never opens the
+Vanilla Cookbook database or adds a public route. The upstream write schema
+remains unknown pending separately approved disposable discovery.
+
 QMD is documented in [QMD Local Hybrid Retrieval Adapter Spike](docs/qmd-local-hybrid-retrieval-adapter-spike.md) as an optional local retrieval candidate only. It is not installed, vendored, or accepted as a repository dependency; the current deterministic keyword retrieval remains the default and normal validation remains mock/offline. The spike keeps any future QMD path behind a retrieval adapter, maps hits back to canonical Cookbook IDs/provenance, and preserves the seamless native UX requirement.
 
 The broader portfolio hosting direction is documented in the [Portfolio Platform AWS Scaling Architecture ADR](docs/portfolio-platform-aws-scaling-architecture-adr.md). It proposes a staged EC2-first path—single Compose host, production-shaped EC2, ALB/Auto Scaling, then ECS on EC2—with Fargate/EKS deferred until justified by evidence. This remains a docs-only architecture decision: the repository creates no AWS resources, deployment code, DNS/Cloudflare changes, migrations, auth/payment systems, public routes, or provider-routing changes.

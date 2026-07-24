@@ -89,3 +89,24 @@ The real Vanilla Cookbook SQLite schema is still unknown in this repo. Before pr
 - whether deleted, archived, private, or draft recipes exist and should be filtered.
 
 Do not write to the cookbook database from the AI sidecar without a later reviewed task that covers backups, migrations, and rollback.
+
+## 0033M fixture adapter boundary
+
+The Phase 1 fixture adapter in `ai-api/app/cookbook_import_adapter.py` maps the
+validated `RecipeImportDraft` into an in-memory candidate payload. Its explicit
+labels are `cookbook-import.v1` and `cookbook-recipe-candidate.v1`; these are
+contract identifiers, not discovered Vanilla Cookbook table or API names.
+
+The adapter accepts only title, description, servings, ingredients,
+instructions, tags, source, and notes. It rejects unknown fields, invalid or
+non-contiguous steps, unsafe URL schemes, unsupported versions, and bounded
+field violations. It can compare against synthetic existing-recipe fixtures
+for duplicate warnings and keeps idempotency results in process memory. It
+does not open SQLite, call the local container, expose a route, or write any
+data.
+
+The upstream write schema remains unknown. Before disposable write/rollback
+testing, discover the native recipe model/table, relations, required defaults,
+ownership fields, revision behavior, transaction boundary, upload handling,
+and supported create API using only disposable local data and a verified
+restore point. No local runtime schema facts are treated as production facts.

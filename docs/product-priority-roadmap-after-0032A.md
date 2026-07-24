@@ -148,3 +148,12 @@ idempotency, duplicate detection, backup/rollback, and disposable local tests
 before any write implementation. This task adds no Save-to-Cookbook button,
 endpoint, database mutation, or production write-back; the verified local
 runtime is only a future discovery/test target.
+
+## 0033M fixture contract
+
+Phase 1 now has a pure in-memory adapter contract and offline tests. The
+contract maps validated AI importer drafts to a versioned candidate payload and
+returns safe validation, duplicate, schema-version, and idempotency results.
+It does not inspect or mutate the Vanilla Cookbook database, add routes or UI,
+or contact a provider. The upstream write schema remains an explicit blocker
+before disposable write/rollback testing.

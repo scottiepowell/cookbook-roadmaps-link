@@ -1,6 +1,6 @@
 # AI Importer Save-to-Cookbook Adapter Design
 
-Status: proposed, docs-only, future implementation requires separate approval
+Status: Phase 1 fixture contract complete; dry-run/write implementation requires separate approval
 
 Date: 2026-07-24
 
@@ -25,8 +25,11 @@ Cookbook AI Adapter
 AI sidecar importer
 ```
 
-This task records the design only. It adds no button, endpoint, database
-mutation, production integration, authentication flow, or live provider call.
+Phase 1 now has a pure in-memory contract in
+`ai-api/app/cookbook_import_adapter.py`. It adds no button, public endpoint,
+database mutation, production integration, authentication flow, or live
+provider call. The contract is deliberately not a claim about the upstream
+Vanilla Cookbook write schema.
 
 ## Problem statement
 
@@ -139,9 +142,12 @@ The current sidecar draft fields map conceptually as follows:
 | `source` | User-provided source reference | Confirm URL/license/provenance policy |
 | `notes` | Review/context note, not a provider transcript | Confirm whether a native notes field exists |
 
-This mapping is intentionally not an implementation schema. `RecipeDocument`
-and `docs/ai-schema-notes.md` describe conservative read fixtures only; they do
-not establish the upstream app's write schema.
+This mapping is intentionally not the upstream implementation schema.
+`RecipeDocument` and `docs/ai-schema-notes.md` describe conservative read
+fixtures only; they do not establish the upstream app's write schema. The
+fixture adapter uses `cookbook-import.v1` and
+`cookbook-recipe-candidate.v1` as explicit contract labels so a later schema
+compatibility check cannot silently accept an unknown version.
 
 ## Unknown schema and discovery requirements
 
@@ -162,6 +168,16 @@ Discovery must use the `cookbook-local` disposable runtime and synthetic
 fixtures. Do not infer write behavior from the sidecar's read-only SQLite
 reader, and do not inspect or modify production data. If the upstream app has a
 supported API/plugin hook, prefer it over table-level access.
+
+### 0033M discovery result
+
+No upstream write schema was committed or inferred in this phase. The existing
+repository notes expose only the conservative read-fixture shape, and the
+verified local container layout provides the ignored disposable DB/upload
+mounts but does not by itself establish the native create API, table names,
+relations, or transaction behavior. Those facts remain required before Phase
+3. Any future inspection must be read-only until a disposable backup/restore
+procedure is approved; this task performed no local DB row writes.
 
 ## Duplicate detection and provenance
 
@@ -232,9 +248,11 @@ semantics, and test fixtures. No endpoint, UI control, or write occurs.
 
 ### Phase 1: Local fixture adapter contract
 
-Implement a fake core-app adapter against generated fixtures only. Return
-mapped payloads and validation errors in memory. Keep it disabled from public
-routes and production targets.
+Complete in this task. `FakeCookbookAdapter` and
+`map_import_draft_to_candidate` use generated/in-memory fixtures only. They
+return mapped payloads, field errors, bounded warnings, duplicate candidates,
+schema/contract versions, and idempotency replay/conflict metadata. There is
+no route, network client, database handle, production target, or persistence.
 
 ### Phase 2: Dry-run candidate operation
 
@@ -311,3 +329,8 @@ candidate, and the sidecar remains an AI capability provider. The local
 `cookbook-local` Compose runtime from `0033K`/`0033L` is the future disposable
 test target, not a production dependency. Normal repository validation remains
 static, mock, and offline.
+
+The Phase 1 contract tests cover valid mapping, missing/blank fields,
+non-contiguous steps, bounded long fields, unknown fields, unsafe URLs,
+duplicate candidates, idempotent replay, key reuse conflicts, schema mismatch,
+and safe-envelope leakage checks. They run without Docker or provider keys.

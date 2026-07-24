@@ -240,6 +240,13 @@ def _run_openai_cap_profile(tmp_path, cap: int):
         ),
         encoding="utf-8",
     )
+    env = os.environ.copy()
+    for name in (
+        "AI_PROVIDER", "AI_MODEL", "OPENAI_ENABLE_LIVE_TESTS", "OPENAI_API_KEY", "OPENAI_MODEL",
+        "OPENAI_LIVE_TEST_BUDGET_CENTS", "AI_MAX_OUTPUT_TOKENS", "AI_TIMEOUT_SECONDS",
+        "AI_PROVIDER_CALLS_ENABLED", "AI_PROVIDER_GLOBAL_DISABLE", "AI_PROVIDER_BUDGET_MODE",
+    ):
+        env.pop(name, None)
     return subprocess.run(
         [
             "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT),
@@ -250,6 +257,7 @@ def _run_openai_cap_profile(tmp_path, cap: int):
         capture_output=True,
         text=True,
         check=False,
+        env=env,
     )
 
 
