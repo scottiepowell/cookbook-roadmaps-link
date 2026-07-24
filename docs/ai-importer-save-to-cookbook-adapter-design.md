@@ -204,6 +204,19 @@ therefore directionally mapped but not write-ready; Phase 3 remains blocked
 until a core-owned mapping and disposable backup/restore harness are approved.
 See [Local Vanilla Cookbook Schema Discovery](local-vanilla-cookbook-schema-discovery.md).
 
+### 0033P schema-informed write readiness
+
+The schema-informed plan is documented in [Save-to-Cookbook Schema-Informed Write Plan](save-to-cookbook-schema-informed-write-plan.md).
+It recommends one synthetic local user and one synthetic recipe using only
+name, description, deterministic text ingredients/directions, text servings,
+safe source/provenance, and no categories, media, uploads, or embeddings. It
+defines localhost/Compose guards, backup/restore, transaction cleanup,
+duplicate/idempotency checks, and failure injection for a future harness.
+
+Phase 3 remains blocked. The plan does not authorize a write or claim that the
+proposed text serialization, category policy, ownership setup, or rollback
+behavior has been proven.
+
 ## Duplicate detection and provenance
 
 The core app should perform duplicate detection immediately before commit. A

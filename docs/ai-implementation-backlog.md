@@ -35,6 +35,17 @@ create/update/delete paths, and remaining serialization/transaction/rollback
 unknowns. No DB file, upload, migration, route, or adapter assumption was
 added.
 
+## 0033P: Save-to-Cookbook Schema-Informed Write Plan
+
+Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.
+
+Added the [Save-to-Cookbook Schema-Informed Write Plan](save-to-cookbook-schema-informed-write-plan.md).
+It selects one synthetic user and one recipe for a future disposable test,
+maps name/servings/plain-text ingredients/directions/safe provenance, excludes
+categories/media/embeddings, and defines backup/restore, transaction cleanup,
+duplicate/idempotency, failure injection, and localhost-only harness guards.
+No user, backup, harness, route, or write was created.
+
 ## 0033M: AI Importer Save Adapter Fixture Contract
 
 Status: complete, fixture-only/local; future dry-run and write phases remain

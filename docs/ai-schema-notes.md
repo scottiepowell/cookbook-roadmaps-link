@@ -135,3 +135,9 @@ an exposure decision. The operation does not require Docker, the local
 Vanilla Cookbook container, SQLite, uploads, provider keys, or live OpenAI.
 Phase 3 disposable write/rollback testing must still use `cookbook-local` only
 after schema and restore-point review.
+
+The schema-informed readiness plan in [Save-to-Cookbook Schema-Informed Write Plan](save-to-cookbook-schema-informed-write-plan.md)
+narrows the first future disposable test to one synthetic owner and one
+recipe, with deterministic plain-text ingredient/direction serialization,
+string servings, no categories/media/embeddings, and mandatory backup/restore.
+This is a plan only; it does not create fixtures or mutate the local runtime.

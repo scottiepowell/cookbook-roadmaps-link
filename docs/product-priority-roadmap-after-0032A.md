@@ -175,3 +175,12 @@ authenticated native create/update/delete API. Exact serialization, category
 ownership, transaction/rollback, and safe adapter handoff remain unknown, so
 Phase 3 disposable write testing is still blocked. No rows or uploads were
 modified.
+
+## 0033P write-readiness plan
+
+The schema-informed plan narrows a future disposable write test to one
+synthetic local owner and one recipe, with deterministic text ingredient/
+direction serialization, string servings, safe provenance, and no categories,
+media, uploads, or embeddings. It defines backup/restore, cleanup,
+duplicate/idempotency, failure injection, and strict localhost guards. This is
+planning only; Phase 3 remains blocked and no harness or write was added.
