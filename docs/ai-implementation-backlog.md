@@ -11,6 +11,16 @@ the product page documents recovery when Compose is unavailable. `/product/ai`
 continues to redirect to `/demo`. No upstream proxy, AI routing change, or
 infrastructure work was added.
 
+## 0033K: Local Vanilla Cookbook Docker Dev Runtime
+
+Status: complete, local-dev/runtime-docs-only.
+
+Added a separate app-only Compose path and start/check/stop scripts for a
+localhost-bound Vanilla Cookbook container with ignored disposable database
+and uploads. The path excludes `cloudflared` and production `.env`, and is the
+required local foundation for future 0033J schema/discovery and disposable
+write/rollback tests. Save to Cookbook remains unimplemented.
+
 ## 0033H: Local Live Output Token Cap Correction
 
 Status: complete, script/tests/docs-only.

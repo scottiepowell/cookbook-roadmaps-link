@@ -34,6 +34,48 @@ workspace remains at `/demo`, and `/product/ai` continues to redirect there.
 
 ## Local operation
 
+### Two-terminal local runtime
+
+Vanilla Cookbook is available locally through the dedicated app-only Compose
+file, without AWS, Cloudflare Tunnel, GitHub Actions, or production secrets:
+
+```powershell
+# Terminal 1: start local Vanilla Cookbook only
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-vanilla-cookbook-local.ps1
+
+# Optional readiness check
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-vanilla-cookbook-local.ps1
+```
+
+In a second terminal, start the AI sidecar in deterministic mock mode:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider mock
+```
+
+The local surfaces are:
+
+| Surface | URL |
+| --- | --- |
+| Vanilla Cookbook Docker runtime | `http://127.0.0.1:3000/` |
+| AI product shell | `http://127.0.0.1:8000/product` |
+| AI workspace | `http://127.0.0.1:8000/demo` |
+
+Stop only the local Cookbook runtime with:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\stop-vanilla-cookbook-local.ps1
+```
+
+The local Compose project is `cookbook-local`, binds only to localhost, and
+stores disposable database/uploads under ignored
+`.local/vanilla-cookbook/`. The check reports container and port state and
+attempts an HTTP request; an image may be running before its page is ready.
+
+This runtime is the prerequisite for future `0033J` adapter schema discovery
+and disposable write/rollback tests. It does not implement Save to Cookbook or
+write to production data.
+
 `scripts\start-ai-demo-local.ps1` generates a temporary local SQLite/database
 fixture and small dataset fixture, starts the sidecar on port 8000, and prints
 the product URL. Start Docker Compose separately when the upstream Cookbook

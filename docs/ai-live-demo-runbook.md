@@ -19,6 +19,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\demo-ai-mock.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
+For local Cookbook/AI integration, start the app-only runtime first in a
+separate terminal:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-vanilla-cookbook-local.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-vanilla-cookbook-local.ps1
+```
+
+Then run the sidecar in mock mode in the AI terminal. The local app runtime
+does not start `cloudflared` and does not require AWS, GitHub Actions, or
+production secrets. Stop it with `scripts\stop-vanilla-cookbook-local.ps1`.
+
 For a bounded manual product acceptance, confirm the redacted startup summary
 shows `Provider: openai`, `Model: gpt-5.4-nano`, live enabled, and an allowed
 budget/token cap. Then perform one importer workflow only. Record only the
@@ -35,6 +47,11 @@ unavailable. For an exposed deployment, configure the non-secret
 `COOKBOOK_TARGET_URL` setting with the reachable Cookbook URL. The sidecar
 does not proxy or rewrite Vanilla Cookbook. `/product/ai` continues to route
 to `/demo`.
+
+An optional manually authorized live sidecar profile can be used only after
+the local surfaces are ready; normal validation remains mock/offline and does
+not make live OpenAI calls. Keep the local Cookbook runtime independent of the
+AI provider mode.
 
 Before a local product walkthrough, follow the [Local Product Acceptance Checklist](local-product-acceptance-checklist.md). It makes `/product` the first URL, verifies the upstream Cookbook and AI redirects, and keeps the demo mock/offline.
 - Open a terminal for logs.

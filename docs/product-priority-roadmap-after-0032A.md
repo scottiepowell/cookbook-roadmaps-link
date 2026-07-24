@@ -126,3 +126,11 @@ URL through the safe non-secret `COOKBOOK_TARGET_URL` setting. The sidecar
 continues to own `/product` and `/demo`, `/product/ai` remains a redirect to
 `/demo`, and the upstream Cookbook remains an external link rather than a
 proxy or rewrite.
+
+## 0033K local Cookbook runtime emphasis
+
+The local integration now has a separate app-only Docker Compose path bound to
+`127.0.0.1:3000`, with ignored disposable database/uploads and no
+`cloudflared`, AWS, GitHub Actions, or production secrets. This local runtime
+unblocks future `0033J` adapter schema discovery and disposable write tests;
+it does not implement Save to Cookbook or production write-back.

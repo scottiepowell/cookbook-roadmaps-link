@@ -81,9 +81,43 @@ dataset fixtures:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1
 ```
 
+For a complete local Cookbook/AI integration, use two terminals. Terminal 1
+starts only the localhost-bound Vanilla Cookbook Docker runtime; it does not
+start `cloudflared`, require AWS, GitHub Actions, or production secrets:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-vanilla-cookbook-local.ps1
+```
+
+Terminal 2 starts the deterministic AI sidecar:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider mock
+```
+
+Open `http://127.0.0.1:3000/` for Vanilla Cookbook,
+`http://127.0.0.1:8000/product` for the integrated shell, and
+`http://127.0.0.1:8000/demo` for the AI workspace. Check or stop the local
+Cookbook runtime with:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-vanilla-cookbook-local.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\stop-vanilla-cookbook-local.ps1
+```
+
+Local Cookbook database and uploads are disposable under ignored
+`.local/vanilla-cookbook/`. The production-shaped `docker-compose.yml` still
+owns the AWS/Cloudflare deployment path; do not use it for this local-only
+check when avoiding `cloudflared`.
+
 When ignored local `.env` contains valid live settings, this starts the sidecar
 in local OpenAI mode. Open `http://127.0.0.1:8000/product` first; `/demo`
 remains the guided AI workspace.
+
+For an explicitly authorized manual live sidecar check, keep the local
+Cookbook runtime in Terminal 1 and use the existing bounded launcher profile
+in Terminal 2. Normal validation remains mock/offline and must not run this
+profile.
 
 Create safe, ignored live defaults without writing a key:
 

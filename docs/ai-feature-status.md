@@ -34,6 +34,16 @@ now uses the safe non-secret `COOKBOOK_TARGET_URL` setting for
 the exposed Cookbook URL configurable per deployment. `/product/ai` remains a
 redirect to `/demo`; no upstream proxy or rewrite was added.
 
+## Local Vanilla Cookbook Docker runtime
+
+Complete, local-dev-only: `docker-compose.local.yml` and the
+`start-vanilla-cookbook-local.ps1`, `check-vanilla-cookbook-local.ps1`, and
+`stop-vanilla-cookbook-local.ps1` scripts run only the localhost-bound
+Vanilla Cookbook app with ignored disposable database/uploads. The path does
+not start `cloudflared` or require AWS, GitHub Actions, production secrets, or
+the production Compose file. It provides the disposable runtime needed before
+0033J Save-to-Cookbook adapter work; no save/write-back path exists.
+
 ## SSO and BYOS identity/storage
 
 Proposed, docs/research-only: [SSO and BYOS Identity/Storage Architecture ADR](sso-byos-identity-storage-architecture-adr.md)

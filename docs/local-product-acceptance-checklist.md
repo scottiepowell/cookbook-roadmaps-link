@@ -4,6 +4,14 @@
 
 - Use the repository virtual environment and Docker Compose when the upstream
   Cookbook container is needed.
+- For full local integration, start only the Vanilla Cookbook app in Terminal
+  1 with `scripts\start-vanilla-cookbook-local.ps1`, then start the AI sidecar
+  in Terminal 2 with `scripts\start-ai-demo-local.ps1 -Provider mock`.
+- Verify `http://127.0.0.1:3000/` with
+  `scripts\check-vanilla-cookbook-local.ps1`; stop it with
+  `scripts\stop-vanilla-cookbook-local.ps1`. The local app-only Compose path
+  does not require `CLOUDFLARE_TUNNEL_TOKEN`, AWS, GitHub Actions, or a
+  production `.env`.
 - Start the deterministic mock local product for normal acceptance:
 
   ```powershell
@@ -16,6 +24,9 @@
   using only `gpt-5.4-nano`; otherwise use `-Provider mock` for the normal
   deterministic acceptance path. A missing live key must be reported safely,
   never shown.
+
+- Local Cookbook data and uploads are disposable and live under ignored
+  `.local/vanilla-cookbook/`; do not use production database or upload paths.
 
 - For a separate, manually authorized live acceptance, use the no-argument
   launcher and first confirm its safe summary reports `openai` and
@@ -40,6 +51,10 @@
 - Confirm the selected AI mode is carried into each generated workflow:
   mock mode reports `mock/mock-basic`; an unconfigured Live OpenAI selection
   reports a safe unavailable message instead of a disguised mock response.
+
+- The local Cookbook container must be running for the handoff to be useful;
+  if it is not, the sidecar remains healthy and the product page gives the
+  Compose recovery instruction.
 
 ## Recipe Session Alpha checks
 
