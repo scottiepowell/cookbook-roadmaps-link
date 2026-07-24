@@ -27,6 +27,7 @@ def test_local_runtime_scripts_use_local_compose_without_cloudflare_or_secrets()
         text = path.read_text(encoding="utf-8")
         assert "docker-compose.local.yml" in text
         assert "cookbook-local" in text
+        assert "docker info" in text
         assert "127.0.0.1:3000" in text or path == STOP
         assert "cloudflared" not in text.lower()
         assert "CLOUDFLARE_TUNNEL_TOKEN" not in text

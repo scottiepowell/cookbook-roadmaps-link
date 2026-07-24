@@ -43,6 +43,10 @@ Vanilla Cookbook app with ignored disposable database/uploads. The path does
 not start `cloudflared` or require AWS, GitHub Actions, production secrets, or
 the production Compose file. It provides the disposable runtime needed before
 0033J Save-to-Cookbook adapter work; no save/write-back path exists.
+Docker Desktop must be running for this path. Runtime verification confirmed
+the app-only project, localhost port, and HTTP response; production AWS/
+Cloudflare access remains separate. A read-only search found no app-specific
+Coder assets to reuse.
 
 ## SSO and BYOS identity/storage
 

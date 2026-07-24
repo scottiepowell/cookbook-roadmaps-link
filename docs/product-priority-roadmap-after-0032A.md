@@ -134,3 +134,6 @@ The local integration now has a separate app-only Docker Compose path bound to
 `cloudflared`, AWS, GitHub Actions, or production secrets. This local runtime
 unblocks future `0033J` adapter schema discovery and disposable write tests;
 it does not implement Save to Cookbook or production write-back.
+Docker Desktop verification confirmed the app-only local path and HTTP
+response. Prior Coder asset inspection found no Vanilla Cookbook-specific
+files to reuse; production AWS/Cloudflare remains separate.

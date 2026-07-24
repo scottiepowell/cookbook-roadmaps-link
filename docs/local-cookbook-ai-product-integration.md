@@ -36,6 +36,10 @@ workspace remains at `/demo`, and `/product/ai` continues to redirect there.
 
 ### Two-terminal local runtime
 
+Docker Desktop must be running before the local Vanilla Cookbook command.
+Verify the daemon with `docker info`; the scripts fail clearly if the Docker
+daemon is unavailable.
+
 Vanilla Cookbook is available locally through the dedicated app-only Compose
 file, without AWS, Cloudflare Tunnel, GitHub Actions, or production secrets:
 
@@ -75,6 +79,12 @@ attempts an HTTP request; an image may be running before its page is ready.
 This runtime is the prerequisite for future `0033J` adapter schema discovery
 and disposable write/rollback tests. It does not implement Save to Cookbook or
 write to production data.
+
+The local development machine was also checked for prior Coder/Vanilla
+Cookbook Docker assets. Only a generic `coder-docker-template` workspace
+template and unrelated VS Code server caches were found; no Vanilla Cookbook
+image, Compose file, or non-secret app-specific pattern was available to
+reuse. The generic template was treated as read-only and was not copied.
 
 `scripts\start-ai-demo-local.ps1` generates a temporary local SQLite/database
 fixture and small dataset fixture, starts the sidecar on port 8000, and prints

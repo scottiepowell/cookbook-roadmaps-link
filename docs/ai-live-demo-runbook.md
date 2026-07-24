@@ -27,6 +27,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-vanilla-cookbo
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-vanilla-cookbook-local.ps1
 ```
 
+Docker Desktop must be running (`docker info` should show a server) before
+these commands. The local Compose project starts only `app`; production
+Cookbook access through AWS/Cloudflare Tunnel remains a separate deployment
+path. If Docker Desktop is stopped, start it and rerun the local start/check
+commands.
+
 Then run the sidecar in mock mode in the AI terminal. The local app runtime
 does not start `cloudflared` and does not require AWS, GitHub Actions, or
 production secrets. Stop it with `scripts\stop-vanilla-cookbook-local.ps1`.

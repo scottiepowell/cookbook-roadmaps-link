@@ -11,6 +11,13 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     exit 2
 }
 
+$Docker = (Get-Command docker).Source
+& $Docker info --format "{{.ServerVersion}}" 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    [Console]::Error.WriteLine("Docker Desktop daemon is unavailable. Start Docker Desktop and retry; verify with: docker info")
+    exit 3
+}
+
 Write-Host "Stopping local Vanilla Cookbook container only."
-& (Get-Command docker).Source compose -p $ComposeProject -f $ComposeFile down
+& $Docker compose -p $ComposeProject -f $ComposeFile down
 exit $LASTEXITCODE

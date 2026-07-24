@@ -12,6 +12,8 @@
   `scripts\stop-vanilla-cookbook-local.ps1`. The local app-only Compose path
   does not require `CLOUDFLARE_TUNNEL_TOKEN`, AWS, GitHub Actions, or a
   production `.env`.
+- Docker Desktop must be running; if the script reports an unavailable daemon,
+  start Docker Desktop and verify with `docker info` before retrying.
 - Start the deterministic mock local product for normal acceptance:
 
   ```powershell
@@ -27,6 +29,9 @@
 
 - Local Cookbook data and uploads are disposable and live under ignored
   `.local/vanilla-cookbook/`; do not use production database or upload paths.
+- The local Compose project must show only `app` in
+  `docker compose -f docker-compose.local.yml -p cookbook-local ps`; no
+  `cloudflared` service belongs in this path.
 
 - For a separate, manually authorized live acceptance, use the no-argument
   launcher and first confirm its safe summary reports `openai` and

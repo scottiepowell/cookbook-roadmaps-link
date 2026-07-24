@@ -89,6 +89,11 @@ start `cloudflared`, require AWS, GitHub Actions, or production secrets:
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-vanilla-cookbook-local.ps1
 ```
 
+Docker Desktop must be running first; verify with `docker info`. If the daemon
+is unavailable, the local runtime script stops before Compose startup with a
+recovery message. The production/exposed Cookbook URL and its AWS/Cloudflare
+Tunnel path are separate from this local development runtime.
+
 Terminal 2 starts the deterministic AI sidecar:
 
 ```powershell
@@ -109,6 +114,10 @@ Local Cookbook database and uploads are disposable under ignored
 `.local/vanilla-cookbook/`. The production-shaped `docker-compose.yml` still
 owns the AWS/Cloudflare deployment path; do not use it for this local-only
 check when avoiding `cloudflared`.
+
+The local disposable runtime is the prerequisite for `0033J` Save-to-Cookbook
+adapter schema discovery and later write/rollback tests. It does not enable
+Save to Cookbook or any production write-back.
 
 When ignored local `.env` contains valid live settings, this starts the sidecar
 in local OpenAI mode. Open `http://127.0.0.1:8000/product` first; `/demo`

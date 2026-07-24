@@ -20,6 +20,9 @@ localhost-bound Vanilla Cookbook container with ignored disposable database
 and uploads. The path excludes `cloudflared` and production `.env`, and is the
 required local foundation for future 0033J schema/discovery and disposable
 write/rollback tests. Save to Cookbook remains unimplemented.
+Docker Desktop verification is complete; the scripts now fail clearly when
+the daemon is unavailable. No prior app-specific Coder asset was found or
+copied.
 
 ## 0033H: Local Live Output Token Cap Correction
 
