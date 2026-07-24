@@ -36,7 +36,8 @@ usable live setting.
 The launcher automatically imports ignored local `.env` values only when the
 corresponding process variable is absent. A valid local live profile uses
 `AI_PROVIDER=openai`, `OPENAI_ENABLE_LIVE_TESTS=true`,
-`OPENAI_MODEL=gpt-5.4-nano`, a 1–300 output-token cap, a 1–25 cent budget, and
+`OPENAI_MODEL=gpt-5.4-nano`, a 500–1000 output-token cap for local live mode,
+with 500 recommended and 1000 as the ceiling, a 1–25 cent budget, and
 an `OPENAI_API_KEY`. The key is injected into the child Uvicorn process
 environment only; it is never placed in browser storage, static JavaScript,
 URLs, or request bodies. `-WriteMissingLiveDefaults` writes safe non-secret

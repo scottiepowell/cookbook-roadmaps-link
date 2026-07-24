@@ -45,7 +45,7 @@ $LocalLiveDefaults = [ordered]@{
     OPENAI_ENABLE_LIVE_TESTS = "true"
     OPENAI_MODEL = "gpt-5.4-nano"
     AI_MODEL = "gpt-5.4-nano"
-    AI_MAX_OUTPUT_TOKENS = "300"
+    AI_MAX_OUTPUT_TOKENS = "500"
     AI_TIMEOUT_SECONDS = "60"
     OPENAI_LIVE_TEST_BUDGET_CENTS = "25"
     AI_PROVIDER_CALLS_ENABLED = "true"
@@ -128,9 +128,6 @@ if ($EffectiveProvider -notin @("mock", "openai")) {
 $EffectiveOpenAIModel = (Get-ParameterOrEnv -Name "OpenAIModel" -Value $OpenAIModel -EnvName "OPENAI_MODEL" -DefaultValue "gpt-5.4-nano").ToString()
 $EffectiveRecipeDatasetIndexLimit = [int](Get-ParameterOrEnv -Name "RecipeDatasetIndexLimit" -Value $RecipeDatasetIndexLimit -EnvName "RECIPE_DATASET_INDEX_LIMIT" -DefaultValue 25)
 $DefaultMaxOutputTokens = 500
-if ($EffectiveProvider -eq "openai") {
-    $DefaultMaxOutputTokens = 300
-}
 $EffectiveMaxOutputTokens = [int](Get-ParameterOrEnv -Name "MaxOutputTokens" -Value $MaxOutputTokens -EnvName "AI_MAX_OUTPUT_TOKENS" -DefaultValue $DefaultMaxOutputTokens)
 $EffectiveLiveTestBudgetCents = [int](Get-ParameterOrEnv -Name "LiveTestBudgetCents" -Value $LiveTestBudgetCents -EnvName "OPENAI_LIVE_TEST_BUDGET_CENTS" -DefaultValue 25)
 $DefaultAiTimeoutSeconds = 20
@@ -174,8 +171,8 @@ if ($EffectiveProvider -eq "openai") {
         exit 2
     }
 
-    if ($EffectiveMaxOutputTokens -gt 300) {
-        [Console]::Error.WriteLine("AI_MAX_OUTPUT_TOKENS must be between 1 and 300 for local live mode.")
+    if ($EffectiveMaxOutputTokens -lt 500 -or $EffectiveMaxOutputTokens -gt 1000) {
+        [Console]::Error.WriteLine("AI_MAX_OUTPUT_TOKENS must be between 500 and 1000 for local live mode.")
         exit 2
     }
 

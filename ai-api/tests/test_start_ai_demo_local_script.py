@@ -37,7 +37,10 @@ def test_start_ai_demo_local_uses_safe_live_profile_defaults():
     assert "AI_MAX_OUTPUT_TOKENS" in text
     assert "OPENAI_LIVE_TEST_BUDGET_CENTS" in text
     assert "$DefaultMaxOutputTokens = 500" in text
-    assert "$DefaultMaxOutputTokens = 300" in text
+    assert 'AI_MAX_OUTPUT_TOKENS = "500"' in text
+    assert 'AI_MAX_OUTPUT_TOKENS must be between 500 and 1000 for local live mode.' in text
+    assert "EffectiveMaxOutputTokens -lt 500" in text
+    assert "EffectiveMaxOutputTokens -gt 1000" in text
     assert "$DefaultAiTimeoutSeconds = 60" in text
     assert "DefaultValue 25" in text
 
@@ -92,7 +95,7 @@ def test_start_ai_demo_local_prints_safe_summary_without_key_value():
 def test_ai_live_demo_runbook_documents_full_dataset_rag_launch():
     text = (Path(__file__).resolve().parents[2] / "docs" / "ai-live-demo-runbook.md").read_text(encoding="utf-8")
 
-    assert "-MaxOutputTokens 300" in text
+    assert "-MaxOutputTokens 500" in text
     assert "-RecipeDatasetDir recipe-dataset" in text
     assert "-RecipeDatasetIndexLimit 5000" in text
     assert "-ProviderDebug" in text
@@ -191,7 +194,7 @@ def test_start_script_resolves_fake_local_live_env_without_exposing_key(tmp_path
                 "OPENAI_ENABLE_LIVE_TESTS=true",
                 "OPENAI_API_KEY=fake-local-test-key",
                 "OPENAI_MODEL=gpt-5.4-nano",
-                "AI_MAX_OUTPUT_TOKENS=300",
+                "AI_MAX_OUTPUT_TOKENS=500",
                 "OPENAI_LIVE_TEST_BUDGET_CENTS=25",
                 "AI_TIMEOUT_SECONDS=60",
             )
@@ -221,6 +224,85 @@ def test_start_script_reports_missing_live_key_safely(tmp_path):
     assert result.returncode == 2
     assert "requires OPENAI_API_KEY" in result.stderr
     assert "OPENAI_API_KEY=" not in result.stderr
+
+
+def _run_openai_cap_profile(tmp_path, cap: int):
+    env_file = tmp_path / f"cap-{cap}.env"
+    env_file.write_text(
+        "\n".join(
+            (
+                "AI_PROVIDER=openai",
+                "OPENAI_ENABLE_LIVE_TESTS=true",
+                "OPENAI_API_KEY=fake-local-test-key",
+                "OPENAI_MODEL=gpt-5.4-nano",
+                "OPENAI_LIVE_TEST_BUDGET_CENTS=25",
+            )
+        ),
+        encoding="utf-8",
+    )
+    return subprocess.run(
+        [
+            "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT),
+            "-EnvFile", str(env_file), "-Provider", "openai", "-MaxOutputTokens", str(cap),
+            "-CheckRuntimeProfile",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_start_script_accepts_openai_local_live_cap_boundaries(tmp_path):
+    for cap in (500, 1000):
+        result = _run_openai_cap_profile(tmp_path, cap)
+        assert result.returncode == 0, result.stderr or result.stdout
+        assert f"Max output tokens: {cap}" in result.stdout
+        assert "fake-local-test-key" not in result.stdout
+
+
+def test_start_script_rejects_openai_local_live_caps_outside_range(tmp_path):
+    for cap in (499, 1001):
+        result = _run_openai_cap_profile(tmp_path, cap)
+        output = (result.stdout or "") + (result.stderr or "")
+        assert result.returncode == 2
+        assert "AI_MAX_OUTPUT_TOKENS must be between 500 and 1000 for local live mode." in output
+        assert "between 1 and 300" not in output
+
+
+def test_start_script_mock_remains_offline_with_inherited_live_values(tmp_path):
+    env_file = tmp_path / "mock.env"
+    env_file.write_text(
+        "\n".join(
+            (
+                "# preserve this comment",
+                "AI_PROVIDER=openai",
+                "OPENAI_ENABLE_LIVE_TESTS=true",
+                "OPENAI_API_KEY=fake-local-test-key",
+                "OPENAI_MODEL=gpt-5.4-nano",
+                "AI_MAX_OUTPUT_TOKENS=1000",
+                "OPENAI_LIVE_TEST_BUDGET_CENTS=25",
+            )
+        ),
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        [
+            "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT),
+            "-EnvFile", str(env_file), "-Provider", "mock", "-CheckRuntimeProfile",
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert "Provider: mock" in result.stdout
+    assert "Model: mock-basic" in result.stdout
+    assert "Live tests enabled: false" in result.stdout
+    assert "Max output tokens: 1000" in result.stdout
+    assert "fake-local-test-key" not in result.stdout
 
 
 def test_start_script_explicit_mock_override_and_safe_default_initialization(tmp_path):

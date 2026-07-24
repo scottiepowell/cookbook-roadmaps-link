@@ -1,5 +1,14 @@
 # AI Implementation Backlog
 
+## 0033H: Local Live Output Token Cap Correction
+
+Status: complete, script/tests/docs-only.
+
+The local product launcher now defaults OpenAI live mode to 500 output tokens,
+accepts 500..1000 inclusive, and fails before startup outside that range.
+Mock/offline behavior, the `gpt-5.4-nano` local model gate, live opt-in,
+budget guard, redaction, and separate smoke/eval/importer caps are unchanged.
+
 ## 0033F: Ads, Sponsors, and Monetization ADR
 
 Status: complete, docs/research-only.

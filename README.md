@@ -93,7 +93,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 Then add `OPENAI_API_KEY` only to local ignored `.env` (or the process
 environment). The launcher imports that file into its own server process,
 redacts the key in its summary, and permits only `gpt-5.4-nano` with a
-1–300 output-token cap. Precedence is explicit script arguments, existing
+500–1000 output-token cap in local live mode; 500 is the recommended default
+and 1000 is the explicit ceiling. Precedence is explicit script arguments, existing
 process environment, local `.env`, then script defaults. To force the free
 deterministic path, use `-Provider mock`; that explicit override also disables
 inherited live enablement and uses `mock-basic` for the child process.
@@ -101,7 +102,7 @@ inherited live enablement and uses `mock-basic` for the child process.
 For a one-off explicit live override:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 300 -LiveTestBudgetCents 25 -Port 8001
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider openai -EnableLiveTests -OpenAIModel gpt-5.4-nano -MaxOutputTokens 500 -LiveTestBudgetCents 25 -Port 8001
 ```
 
 Full local RAG manual importer launch:
@@ -111,7 +112,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
   -Provider openai `
   -EnableLiveTests `
   -OpenAIModel gpt-5.4-nano `
-  -MaxOutputTokens 300 `
+  -MaxOutputTokens 500 `
   -LiveTestBudgetCents 25 `
   -AiTimeoutSeconds 60 `
   -RecipeDatasetDir recipe-dataset `

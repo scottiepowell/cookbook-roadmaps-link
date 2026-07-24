@@ -91,7 +91,7 @@ try {
             OPENAI_ENABLE_LIVE_TESTS = "false"
             OPENAI_MODEL = "gpt-5.4-nano"
             OPENAI_FALLBACK_MODEL = "gpt-5.4-mini"
-            AI_MAX_OUTPUT_TOKENS = "300"
+            AI_MAX_OUTPUT_TOKENS = "500"
             AI_TIMEOUT_SECONDS = "60"
             OPENAI_LIVE_TEST_BUDGET_CENTS = "25"
             AI_PROVIDER_CALLS_ENABLED = "true"
@@ -117,7 +117,7 @@ try {
         if ($Content -match "AI_PROVIDER=openai") {
             throw "Existing AI_PROVIDER value was overwritten."
         }
-        if ($Content -notmatch "AI_MAX_OUTPUT_TOKENS=300") {
+        if ($Content -notmatch "AI_MAX_OUTPUT_TOKENS=500") {
             throw "Missing defaults were not appended."
         }
         if ($Content -match "OPENAI_API_KEY") {

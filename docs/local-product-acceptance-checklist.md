@@ -54,6 +54,9 @@
 - Live OpenAI is available only with explicit opt-in, an approved
   `gpt-5.4-nano` configuration, and existing budget limits; browser selection
   alone never enables a live call.
+- Local live product mode defaults to 500 output tokens and accepts an explicit
+  500..1000 inclusive; 1000 is a ceiling, not the recommended default. Values
+  below 500 or above 1000 fail before startup.
 - Product and readiness content must not expose secrets, prompts, provider
   responses, environment values, or local paths.
 - Direct Windows pytest may fail on the known `pytest-of-scott` Temp ACL issue;

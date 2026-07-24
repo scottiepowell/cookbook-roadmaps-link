@@ -64,7 +64,8 @@ Add the key only to ignored `.env` or the process environment, then use the
 normal start command. Required profile values are `AI_PROVIDER=openai`,
 `OPENAI_ENABLE_LIVE_TESTS=true`, `OPENAI_MODEL=gpt-5.4-nano`,
 `AI_MODEL=gpt-5.4-nano`,
-`AI_MAX_OUTPUT_TOKENS=300`, and `OPENAI_LIVE_TEST_BUDGET_CENTS=1..25`.
+`AI_MAX_OUTPUT_TOKENS=500..1000`, and `OPENAI_LIVE_TEST_BUDGET_CENTS=1..25`.
+The local live launcher defaults to 500; 1000 is an explicit ceiling.
 Arguments override process environment, which overrides `.env`, which
 overrides launcher defaults.
 
@@ -84,7 +85,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
   -Provider openai `
   -EnableLiveTests `
   -OpenAIModel gpt-5.4-nano `
-  -MaxOutputTokens 300 `
+  -MaxOutputTokens 500 `
   -LiveTestBudgetCents 25 `
   -AiTimeoutSeconds 60 `
   -RecipeDatasetDir recipe-dataset `
@@ -96,8 +97,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.
 environment. The start script does not prompt for or print it; it only reports
 `redacted-present` or `missing`. The child Uvicorn process inherits the key
 server-side, while the browser sends only a safe mode/model preference.
-OpenAI mode permits only `gpt-5.4-nano`, defaults to a 300-token cap and a
-25-cent budget, and retains existing server-side budget gating.
+OpenAI mode permits only `gpt-5.4-nano`, defaults to a 500-token cap, allows
+500..1000 inclusive, and retains existing server-side budget gating. Values
+outside that range fail before startup; the 25-cent budget remains unchanged.
 
 For live smoke and live eval wrappers, you can keep the live settings in an ignored local `.env` file and load it explicitly:
 

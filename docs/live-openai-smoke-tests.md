@@ -141,7 +141,9 @@ Skip/fail behavior:
 - `AI_PROVIDER=mock` in `.env`: exits `0` with a skip message until the file is edited to `AI_PROVIDER=openai`;
 - the Python smoke helpers do not auto-read `repo_root/.env`; use `-EnvFile` or export variables explicitly so live mode stays opt-in;
 - missing, invalid, or greater-than-25-cent budget: exits non-zero before live calls;
-- `AI_MAX_OUTPUT_TOKENS` above `300`: exits non-zero before live calls;
+- local product launcher `AI_MAX_OUTPUT_TOKENS` below `500` or above `1000`:
+  exits non-zero before startup with the local-live range error; 500 is the
+  recommended default and 1000 is the explicit ceiling;
 - unavailable model, rate limit, quota, or provider error: exits non-zero with a clear provider failure.
 
 The script must not print API keys, key prefixes, authorization headers, raw `.env` content, raw provider config, or cloud secret names.
