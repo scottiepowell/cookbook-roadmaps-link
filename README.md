@@ -41,6 +41,7 @@ Demo and evidence links:
 - [SSO and BYOS identity/storage architecture ADR](docs/sso-byos-identity-storage-architecture-adr.md)
 - [Traffic analytics and behavior tracking ADR](docs/traffic-analytics-behavior-tracking-adr.md)
 - [Website marketing and community outreach ADR](docs/website-marketing-community-outreach-adr.md)
+- [Ads, sponsors, and monetization ADR](docs/ads-sponsors-monetization-adr.md)
 - [AI sidecar logging](docs/ai-sidecar-logging.md)
 - [AI live demo runbook](docs/ai-live-demo-runbook.md)
 - [Live OpenAI demo evals](docs/live-openai-demo-evals.md)

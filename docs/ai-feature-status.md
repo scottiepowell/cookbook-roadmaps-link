@@ -17,6 +17,15 @@ privacy/consent, retention/deletion, and staged aggregate measurement. No
 analytics collection, vendor, cookie, script, pixel, beacon, public route, or
 tracking implementation exists; normal validation remains mock/offline.
 
+## Ads, sponsors, and monetization
+
+Proposed, docs/research-only: [Ads, Sponsors, and Monetization ADR](ads-sponsors-monetization-adr.md)
+defines cost-recovery goals, commercial options, disclosure and privacy
+boundaries, recipe-workflow protections, and staged experiments. No ads,
+affiliate links, sponsorships, payment, subscriptions, tracking, third-party
+scripts, or runtime monetization exists; paid access remains a separate future
+ADR.
+
 ## SSO and BYOS identity/storage
 
 Proposed, docs/research-only: [SSO and BYOS Identity/Storage Architecture ADR](sso-byos-identity-storage-architecture-adr.md)

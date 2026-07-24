@@ -107,3 +107,13 @@ transparent marketing and the cooking-video transcript/comment idea without
 approving scraping, automation, mass commenting, fake engagement,
 impersonation, or undisclosed promotion. Safer owned-content and human creator
 outreach options remain the preferred exploration path.
+
+## 0033F monetization ADR emphasis
+
+The [Ads, Sponsors, and Monetization ADR](ads-sponsors-monetization-adr.md)
+keeps monetization focused on bounded cost recovery, transparent disclosures,
+privacy-aware measurement, recipe-content trust, and future SSO/BYOS data
+ownership. It evaluates ads, sponsorships, partner placements, affiliate-style
+links, donations, supporter options, newsletters, and creator partnerships
+without implementing any of them. Payment, subscriptions, premium access,
+third-party scripts, and ad-network evaluation remain separately gated.

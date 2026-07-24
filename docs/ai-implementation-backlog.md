@@ -1,5 +1,16 @@
 # AI Implementation Backlog
 
+## 0033F: Ads, Sponsors, and Monetization ADR
+
+Status: complete, docs/research-only.
+
+The ADR defines cost-recovery goals and cost drivers, evaluates display ads,
+sponsorships, partner placements, affiliate-style links, donations,
+supporter/premium options, newsletter sponsorships, and creator partnerships,
+and sets disclosure, privacy, analytics, recipe-trust, SSO/BYOS, and AI-budget
+boundaries. It defines staged experiments while keeping payment, tracking,
+third-party scripts, and monetization runtime out of scope.
+
 ## 0033E: Website Marketing and Community Outreach ADR
 
 Status: complete, docs/research-only.
