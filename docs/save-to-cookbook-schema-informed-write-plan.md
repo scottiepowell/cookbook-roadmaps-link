@@ -274,6 +274,11 @@ It is not a native upstream API adapter and does not replace the 0033Q
 DB/uploads backup/restore harness; any disposable SQLite caller must retain
 those guards around the store boundary.
 
+0033S's browser panel is only a local review surface over the 0033N dry-run
+and 0033R in-memory service. It cannot establish native ownership or prove a
+database write; the 0033Q harness remains the approved DB/uploads backup and
+restore path.
+
 ## Explicit non-goals
 
 This plan does not implement a write harness, Save-to-Cookbook button, commit

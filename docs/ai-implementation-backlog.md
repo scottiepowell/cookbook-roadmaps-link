@@ -74,6 +74,19 @@ serialization rules, returns opaque local IDs and safe status envelopes, and
 prevents duplicate/idempotency conflicts. No HTTP route or production/native
 write path was added.
 
+## 0033S: Local Save-to-Cookbook UI MVP
+
+Status: complete, local/internal-only; production and native API support remain
+unimplemented.
+
+Added the importer review panel and disabled-by-default local routes for dry-run
+and in-memory commit. The UI labels drafts unsaved, supports title/description
+review, requires local dry-run plus explicit confirmation, surfaces safe errors
+and idempotency status, and refuses exposed/non-loopback targets. The 0033Q
+harness remains the disposable DB/write proof. No product production button,
+native upstream write, public route, migration, auth, or provider work was
+added.
+
 ## 0033M: AI Importer Save Adapter Fixture Contract
 
 Status: complete, fixture-only/local; future dry-run and write phases remain

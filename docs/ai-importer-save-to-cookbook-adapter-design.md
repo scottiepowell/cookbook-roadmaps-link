@@ -392,6 +392,17 @@ safe errors. No route is exposed. The native authenticated upstream create path
 remains future work because its auth/session and side-effect boundary is not a
 safe sidecar integration contract.
 
+## 0033S local UI MVP
+
+The demo workspace now provides a local/internal review panel around the
+existing dry-run operation and 0033R service. It keeps drafts visibly unsaved,
+allows bounded title/description review, requires a successful local dry-run
+and explicit confirmation, and shows safe statuses only. The two adapter
+routes are disabled by default and reject exposed/non-loopback targets. They
+do not call the native upstream API or replace the 0033Q disposable readiness
+harness. A future native core-app adapter and any production UI remain
+separate approved work.
+
 ## 0033Q local readiness evidence
 
 The separate 0033Q task adds `scripts/test-save-to-cookbook-local-readiness.ps1`

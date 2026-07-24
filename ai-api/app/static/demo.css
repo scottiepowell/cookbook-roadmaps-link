@@ -355,6 +355,38 @@ pre {
   padding: 12px;
 }
 
+.save-panel {
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 10px;
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.save-panel h3 {
+  margin: 0 0 8px;
+}
+
+.save-panel label {
+  display: block;
+  font-weight: 700;
+  margin: 10px 0 5px;
+}
+
+.save-panel input[type="text"],
+.save-panel textarea {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.checkbox-label {
+  font-size: 0.9rem;
+}
+
+.checkbox-label input {
+  margin-right: 6px;
+}
+
 .question-card h3 {
   font-size: 0.95rem;
   margin: 0 0 6px;

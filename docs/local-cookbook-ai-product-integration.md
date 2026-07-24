@@ -130,6 +130,35 @@ For a controlled live importer 503, use the approval-gated
 configuration, allows at most one `gpt-5.4-nano` importer call, and emits only
 safe category/guidance metadata; it never exposes provider internals.
 
+## Local Save-to-Cookbook UI MVP
+
+The importer in `/demo` now has a local-only review panel. A returned recipe is
+marked as an unsaved AI draft; the operator may review the title/description,
+run the local dry-run, inspect safe status/errors/warnings, and explicitly
+confirm a local commit attempt. The panel never claims production save support.
+
+The routes are internal and disabled by default:
+
+```text
+POST /adapter/recipes/import-candidate/dry-run
+POST /adapter/recipes/import-candidate/local-commit
+```
+
+For an intentional mock/local UI exercise, restart the sidecar with these
+non-secret settings and keep `COOKBOOK_TARGET_URL` loopback-only:
+
+```text
+AI_LOCAL_SAVE_ENABLED=true
+AI_LOCAL_SAVE_APPROVED=true
+AI_LOCAL_COOKBOOK_RUNTIME_VERIFIED=true
+COOKBOOK_TARGET_URL=http://127.0.0.1:3000/
+```
+
+The commit route exercises the 0033R in-memory local service only; it does not
+call the upstream native API or mutate SQLite/uploads. The 0033Q readiness
+harness remains the sole approved disposable DB/write proof. Exposed targets,
+non-loopback clients, tunnels, and production settings remain unavailable.
+
 ## Boundary before platform work
 
 This is a local operator experience and safe link handoff only. It is not a reverse proxy for a

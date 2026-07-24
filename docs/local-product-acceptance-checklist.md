@@ -57,6 +57,12 @@
   mock mode reports `mock/mock-basic`; an unconfigured Live OpenAI selection
   reports a safe unavailable message instead of a disguised mock response.
 
+- The importer Save-to-Cookbook panel labels the result as an unsaved AI draft.
+  It stays unavailable unless the three explicit local gate settings are
+  enabled and the target is loopback `cookbook-local`; it never calls the
+  native upstream recipe API. Use the 0033Q readiness harness for disposable
+  DB/write evidence, not the UI panel.
+
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the
   Compose recovery instruction.

@@ -10,10 +10,20 @@ from app.ai_mode_routing import resolve_ai_mode
 from app.ai_invite_sessions import invite_router, require_demo_workflow_access
 from app.ai_operator_gate import check_operator_gate
 from app.ai_usage_report import AiUsageReport, build_ai_usage_report
+from app.cookbook_import_adapter import FakeCookbookAdapter
+from app.cookbook_import_commit import (
+    LocalCommitGuard,
+    LocalCommitRequest,
+    LocalCommitResult,
+    LocalCookbookCommitService,
+    validate_local_commit_guard,
+)
+from app.cookbook_import_dry_run import CookbookImportDryRunOperationResponse, dry_run_import_candidate_operation
 from app.config import (
     get_ai_settings,
     get_cookbook_target_url,
     get_invite_session_settings,
+    get_local_save_settings,
     get_operator_gate_settings,
     get_provider_config,
     get_recipe_dataset_dir,
@@ -54,6 +64,9 @@ app.include_router(invite_router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+_local_save_service = LocalCookbookCommitService()
+_local_dry_run_adapter = FakeCookbookAdapter()
 
 
 @app.get("/demo", include_in_schema=False)
@@ -267,6 +280,57 @@ def import_recipe(payload: RecipeImportRequest, request: Request) -> RecipeImpor
     except RecipeImportValidationError as exc:
         log_ai_workflow("recipe.import", request, status="error", safe_error_type=exc.__class__.__name__)
         raise HTTPException(status_code=502, detail="Recipe importer returned an invalid draft.") from exc
+
+
+def _local_save_guard(request: Request) -> LocalCommitGuard:
+    settings = get_local_save_settings()
+    target = get_cookbook_target_url()
+    return LocalCommitGuard(
+        enabled=settings.enabled,
+        approved=settings.approved,
+        runtime_verified=settings.runtime_verified,
+        target_url=target,
+    )
+
+
+def _local_request_guard_error(request: Request) -> list:
+    host = request.client.host if request.client else None
+    if host not in {"127.0.0.1", "localhost", "::1", "testclient"}:
+        return [{"field": "request", "code": "local_only", "message": "This local-only operation is unavailable from this client."}]
+    return []
+
+
+@app.post("/adapter/recipes/import-candidate/dry-run", response_model=CookbookImportDryRunOperationResponse, include_in_schema=False)
+def local_import_candidate_dry_run(payload: LocalCommitRequest, request: Request) -> CookbookImportDryRunOperationResponse:
+    guard = _local_save_guard(request)
+    guard_errors = _local_request_guard_error(request) + [error.model_dump() for error in validate_local_commit_guard(guard)]
+    if guard_errors:
+        return CookbookImportDryRunOperationResponse(
+            status="unavailable",
+            contract_version="cookbook-import.v1",
+            schema_version="cookbook-recipe-candidate.v1",
+            errors=guard_errors,
+        )
+    return dry_run_import_candidate_operation(
+        payload.draft,
+        enabled=True,
+        adapter=_local_dry_run_adapter,
+        idempotency_key=payload.idempotency_key,
+    )
+
+
+@app.post("/adapter/recipes/import-candidate/local-commit", response_model=LocalCommitResult, include_in_schema=False)
+def local_import_candidate_commit(payload: LocalCommitRequest, request: Request) -> LocalCommitResult:
+    guard = _local_save_guard(request)
+    guard_errors = _local_request_guard_error(request) + [error.model_dump() for error in validate_local_commit_guard(guard)]
+    if guard_errors:
+        return LocalCommitResult(
+            status="unavailable",
+            contract_version="cookbook-import.v1",
+            schema_version="cookbook-recipe-candidate.v1",
+            errors=guard_errors,
+        )
+    return _local_save_service.commit(payload.draft, guard=guard, idempotency_key=payload.idempotency_key)
 
 
 @app.post("/ai/ask", response_model=AskResponse)

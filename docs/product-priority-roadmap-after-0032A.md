@@ -201,3 +201,11 @@ in-memory backend boundary with explicit approval, loopback, Compose, runtime,
 and synthetic-owner guards. It preserves the readiness harness evidence and
 does not expose a route or call the native authenticated upstream API. A future
 UI/native adapter task remains required before any broader save behavior.
+
+## 0033S local UI MVP
+
+The AI demo now includes a visibly local-only review/dry-run/commit panel for
+importer drafts. It requires explicit non-secret local gates, never calls the
+native upstream API, and exercises only the 0033R in-memory service. The 0033Q
+readiness harness remains the approved disposable DB/write path; production or
+exposed Save-to-Cookbook remains unimplemented.

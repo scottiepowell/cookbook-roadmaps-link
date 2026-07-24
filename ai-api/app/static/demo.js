@@ -62,10 +62,14 @@ const workflows = {
 };
 
 let activeRecipeSessionId = null;
+let activeImporterDraft = null;
+let lastSaveDryRun = null;
 
 document.getElementById("refresh-readiness").addEventListener("click", refreshReadiness);
 document.getElementById("refresh-usage-report").addEventListener("click", refreshUsageReport);
 document.querySelector(workflows.importer.button).addEventListener("click", runImporter);
+document.getElementById("save-cookbook-dry-run").addEventListener("click", runSaveDryRun);
+document.getElementById("save-cookbook-commit").addEventListener("click", runLocalCommit);
 document.querySelector('[data-action="session-start"]').addEventListener("click", startRecipeSession);
 document.querySelector('[data-action="session-message"]').addEventListener("click", sendRecipeSessionMessage);
 document.querySelector('[data-action="session-get"]').addEventListener("click", getRecipeSession);
@@ -182,7 +186,94 @@ async function runImporter() {
       dataset_limit: data.retrieval?.dataset_limit ?? "none",
     }),
     evidence: importerEvidenceSection,
+    onSuccess: prepareSavePanel,
   });
+}
+
+function prepareSavePanel(data) {
+  const draft = data?.draft;
+  activeImporterDraft = draft ? JSON.parse(JSON.stringify(draft)) : null;
+  lastSaveDryRun = null;
+  const title = document.getElementById("save-cookbook-title");
+  const description = document.getElementById("save-cookbook-description");
+  const confirm = document.getElementById("save-cookbook-confirm");
+  const dryRun = document.getElementById("save-cookbook-dry-run");
+  const commit = document.getElementById("save-cookbook-commit");
+  const status = document.getElementById("save-cookbook-status");
+  const result = document.getElementById("save-cookbook-result");
+  const hasDraft = Boolean(activeImporterDraft);
+  title.disabled = !hasDraft;
+  description.disabled = !hasDraft;
+  confirm.disabled = !hasDraft;
+  dryRun.disabled = !hasDraft;
+  commit.disabled = true;
+  title.value = activeImporterDraft?.title || "";
+  description.value = activeImporterDraft?.description || "";
+  confirm.checked = false;
+  status.textContent = hasDraft
+    ? "Unsaved AI draft loaded. Review the editable fields, then run the local dry-run."
+    : "No structured draft was returned. Any draft remains unsaved.";
+  result.className = "result empty";
+  result.textContent = "Local save is unavailable until explicit local gates are enabled.";
+}
+
+function reviewedImporterDraft() {
+  if (!activeImporterDraft) return null;
+  const draft = JSON.parse(JSON.stringify(activeImporterDraft));
+  draft.title = document.getElementById("save-cookbook-title").value.trim();
+  draft.description = document.getElementById("save-cookbook-description").value.trim() || null;
+  return draft;
+}
+
+async function runSaveDryRun() {
+  const draft = reviewedImporterDraft();
+  if (!draft) return;
+  const result = document.getElementById("save-cookbook-result");
+  result.className = "result";
+  result.textContent = "Checking local gates and candidate mapping...";
+  try {
+    const data = await requestJson("/adapter/recipes/import-candidate/dry-run", postOptions({draft, idempotency_key: "demo-local-save"}), "local-save-dry-run");
+    lastSaveDryRun = data;
+    renderLocalSaveResult(data);
+    document.getElementById("save-cookbook-commit").disabled = data.status !== "ready" || data.result?.status !== "valid";
+  } catch (error) {
+    renderLocalSaveResult({status: "unavailable", errors: [{field: "operation", message: error.message}]});
+  }
+}
+
+async function runLocalCommit() {
+  if (!lastSaveDryRun || lastSaveDryRun.result?.status !== "valid") {
+    renderLocalSaveResult({status: "unavailable", errors: [{field: "operation", message: "Run the local dry-run before confirming save."}]});
+    return;
+  }
+  if (!document.getElementById("save-cookbook-confirm").checked) {
+    renderLocalSaveResult({status: "unavailable", errors: [{field: "confirmation", message: "Explicit local save confirmation is required."}]});
+    return;
+  }
+  const draft = reviewedImporterDraft();
+  try {
+    const data = await requestJson("/adapter/recipes/import-candidate/local-commit", postOptions({draft, idempotency_key: "demo-local-save"}), "local-save-commit");
+    renderLocalSaveResult(data);
+    if (data.status === "committed" || data.status === "idempotent_replay" || data.status === "duplicate") {
+      document.getElementById("save-cookbook-status").textContent = "Local result received. This draft is not production-saved.";
+      document.getElementById("save-cookbook-commit").disabled = true;
+    }
+  } catch (error) {
+    renderLocalSaveResult({status: "unavailable", errors: [{field: "operation", message: error.message}]});
+  }
+}
+
+function renderLocalSaveResult(data) {
+  const target = document.getElementById("save-cookbook-result");
+  target.className = "result";
+  const lines = [`Status: ${data.status || "unavailable"}`];
+  for (const error of data.errors || data.result?.errors || []) {
+    lines.push(`${error.field || "operation"}: ${error.message || "Safe local validation error."}`);
+  }
+  for (const warning of data.warnings || data.result?.warnings || []) lines.push(`Warning: ${warning}`);
+  if (data.local_recipe_id) lines.push(`Local recipe id: ${data.local_recipe_id}`);
+  if (data.result?.idempotency?.key) lines.push("Idempotency metadata: present");
+  target.textContent = lines.join("\n");
 }
 
 async function startRecipeSession() {
@@ -337,6 +428,7 @@ async function runWorkflow(workflow, promise, view) {
   try {
     const data = await promise;
     renderSuccess(target, data, view);
+    if (view.onSuccess) view.onSuccess(data);
   } catch (error) {
     renderError(target, error.message);
   } finally {
@@ -729,6 +821,9 @@ function resetWorkflow(workflow) {
   }
   if (workflow.card === "recipe-session") {
     activeRecipeSessionId = null;
+  }
+  if (workflow.card === "importer") {
+    prepareSavePanel({});
   }
   const target = document.getElementById(workflow.result);
   target.className = "result empty";

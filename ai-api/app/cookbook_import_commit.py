@@ -44,6 +44,13 @@ class LocalCommitResult(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class LocalCommitRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    draft: dict[str, Any]
+    idempotency_key: str | None = None
+
+
 class LocalCommitGuard(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

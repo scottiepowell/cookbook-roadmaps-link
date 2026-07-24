@@ -65,6 +65,13 @@ class InviteSessionSettings:
     validation_errors: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class LocalSaveSettings:
+    enabled: bool
+    approved: bool
+    runtime_verified: bool
+
+
 DEFAULT_AI_PROVIDER = "mock"
 DEFAULT_AI_MODEL = "mock-basic"
 DEFAULT_AI_MAX_OUTPUT_TOKENS = 700
@@ -153,6 +160,16 @@ def get_cookbook_target_url() -> str:
 
     path = parsed.path or "/"
     return urlunsplit((parsed.scheme, parsed.netloc, path, "", ""))
+
+
+def get_local_save_settings() -> LocalSaveSettings:
+    """Return explicit non-secret gates for the local-only save MVP."""
+
+    return LocalSaveSettings(
+        enabled=_bool_env("AI_LOCAL_SAVE_ENABLED", False),
+        approved=_bool_env("AI_LOCAL_SAVE_APPROVED", False),
+        runtime_verified=_bool_env("AI_LOCAL_COOKBOOK_RUNTIME_VERIFIED", False),
+    )
 
 
 def get_recipe_dataset_dir() -> str:
