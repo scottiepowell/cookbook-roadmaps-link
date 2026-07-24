@@ -35,6 +35,7 @@ Demo and evidence links:
 - [AI portfolio showcase](docs/ai-portfolio-showcase.md)
 - [AI feature completion review](docs/ai-feature-completion-review.md)
 - [AI UI integration plan](docs/ai-ui-integration-plan.md)
+- [Local Cookbook AI product integration](docs/local-cookbook-ai-product-integration.md)
 - [Manual product integration usability validation](docs/manual-product-integration-usability-validation.md)
 - [Product priority roadmap after 0032A](docs/product-priority-roadmap-after-0032A.md)
 - [Application session timer and access exceptions ADR](docs/application-session-timer-access-exceptions-adr.md)

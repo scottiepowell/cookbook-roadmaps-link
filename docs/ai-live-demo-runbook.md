@@ -26,8 +26,15 @@ provider, model, and status; do not print the prompt, provider body, key, or
 environment values. The Playwright runner remains mock-only by design.
 
 - Open the local integrated product first at `http://127.0.0.1:8000/product`.
-  It links the external Vanilla Cookbook container and the existing AI workspace.
+  It links the configured external Vanilla Cookbook target and the existing AI workspace.
 The direct AI browser UI remains at `http://127.0.0.1:8000/demo`.
+
+For local operation, `/product/cookbook` defaults to
+`http://127.0.0.1:3000/`; start Docker Compose separately if that target is
+unavailable. For an exposed deployment, configure the non-secret
+`COOKBOOK_TARGET_URL` setting with the reachable Cookbook URL. The sidecar
+does not proxy or rewrite Vanilla Cookbook. `/product/ai` continues to route
+to `/demo`.
 
 Before a local product walkthrough, follow the [Local Product Acceptance Checklist](local-product-acceptance-checklist.md). It makes `/product` the first URL, verifies the upstream Cookbook and AI redirects, and keeps the demo mock/offline.
 - Open a terminal for logs.

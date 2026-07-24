@@ -1,5 +1,16 @@
 # AI Implementation Backlog
 
+## 0033I: Product Cookbook Link Target Correction
+
+Status: complete, local link/config/docs-only.
+
+The product shell no longer assumes that every deployment can reach
+`127.0.0.1:3000`. `/product/cookbook` uses validated non-secret
+`COOKBOOK_TARGET_URL` configuration, falling back to the local Compose target;
+the product page documents recovery when Compose is unavailable. `/product/ai`
+continues to redirect to `/demo`. No upstream proxy, AI routing change, or
+infrastructure work was added.
+
 ## 0033H: Local Live Output Token Cap Correction
 
 Status: complete, script/tests/docs-only.

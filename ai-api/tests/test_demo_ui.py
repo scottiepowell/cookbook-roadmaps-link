@@ -56,6 +56,24 @@ def test_local_product_shell_connects_cookbook_and_ai_workflows():
     assert client.get("/product/cookbook", follow_redirects=False).headers["location"] == "http://127.0.0.1:3000/"
 
 
+def test_product_cookbook_handoff_uses_safe_configured_target(monkeypatch):
+    monkeypatch.setenv("COOKBOOK_TARGET_URL", "https://cookbook.roadmaps.link")
+
+    response = TestClient(app).get("/product/cookbook", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "https://cookbook.roadmaps.link/"
+
+
+def test_product_shell_documents_recovery_when_cookbook_is_unavailable():
+    response = TestClient(app).get("/product")
+
+    assert response.status_code == 200
+    assert "Start Docker Compose and refresh" in response.text
+    assert "COOKBOOK_TARGET_URL" in response.text
+    assert "http://127.0.0.1:3000/" in response.text
+
+
 def test_demo_static_assets_load():
     client = TestClient(app)
 

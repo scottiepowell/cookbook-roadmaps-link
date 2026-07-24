@@ -10,7 +10,14 @@ from app.ai_mode_routing import resolve_ai_mode
 from app.ai_invite_sessions import invite_router, require_demo_workflow_access
 from app.ai_operator_gate import check_operator_gate
 from app.ai_usage_report import AiUsageReport, build_ai_usage_report
-from app.config import get_ai_settings, get_invite_session_settings, get_operator_gate_settings, get_provider_config, get_recipe_dataset_dir
+from app.config import (
+    get_ai_settings,
+    get_cookbook_target_url,
+    get_invite_session_settings,
+    get_operator_gate_settings,
+    get_provider_config,
+    get_recipe_dataset_dir,
+)
 from app.dataset_rag import DatasetAskProviderError, ask_dataset_recipes
 from app.dataset_retrieval import search_dataset_recipes
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
@@ -68,8 +75,9 @@ def local_product_ai() -> RedirectResponse:
 
 @app.get("/product/cookbook", include_in_schema=False)
 def local_product_cookbook() -> RedirectResponse:
-    # Vanilla Cookbook is an external local Docker image, not frontend code in this repository.
-    return RedirectResponse(url="http://127.0.0.1:3000/", status_code=307)
+    # Vanilla Cookbook is an external image; deployments may set a public
+    # target while local development falls back to the Compose port.
+    return RedirectResponse(url=get_cookbook_target_url(), status_code=307)
 
 
 @app.get("/demo/readiness", include_in_schema=False)

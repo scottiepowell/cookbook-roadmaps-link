@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.config import get_ai_settings
+from app.config import DEFAULT_COOKBOOK_TARGET_URL, get_ai_settings, get_cookbook_target_url
 from app.main import app
 
 
@@ -60,3 +60,29 @@ def test_ai_settings_reads_provider_debug_flag(monkeypatch):
     settings = get_ai_settings()
 
     assert settings.provider_debug is True
+
+
+def test_cookbook_target_defaults_to_local_compose(monkeypatch):
+    monkeypatch.delenv("COOKBOOK_TARGET_URL", raising=False)
+
+    assert get_cookbook_target_url() == DEFAULT_COOKBOOK_TARGET_URL
+
+
+def test_cookbook_target_accepts_public_http_or_https_url(monkeypatch):
+    monkeypatch.setenv("COOKBOOK_TARGET_URL", "https://cookbook.roadmaps.link")
+    assert get_cookbook_target_url() == "https://cookbook.roadmaps.link/"
+
+    monkeypatch.setenv("COOKBOOK_TARGET_URL", "http://cookbook.local/app")
+    assert get_cookbook_target_url() == "http://cookbook.local/app"
+
+
+def test_cookbook_target_rejects_unsafe_or_ambiguous_values(monkeypatch):
+    for value in (
+        "javascript:alert(1)",
+        "https://user:password@example.com/",
+        "https://example.com/?token=secret",
+        "https://example.com/#private",
+        "not-a-url",
+    ):
+        monkeypatch.setenv("COOKBOOK_TARGET_URL", value)
+        assert get_cookbook_target_url() == DEFAULT_COOKBOOK_TARGET_URL

@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 from decimal import Decimal
+from urllib.parse import urlsplit, urlunsplit
 
 
 @dataclass(frozen=True)
@@ -105,6 +106,7 @@ PROVIDER_ENV_VARS = {
 }
 
 DEFAULT_COOKBOOK_DB_PATH = "/data/cookbook-db/dev.db"
+DEFAULT_COOKBOOK_TARGET_URL = "http://127.0.0.1:3000/"
 
 
 def _is_configured(value: str | None) -> bool:
@@ -122,6 +124,35 @@ def get_provider_config() -> dict[str, ProviderAvailability]:
 
 def get_cookbook_db_path() -> str:
     return os.getenv("COOKBOOK_DB_PATH", DEFAULT_COOKBOOK_DB_PATH)
+
+
+def get_cookbook_target_url() -> str:
+    """Return a safe external Cookbook handoff target.
+
+    The target is an operator/deployment URL, not a secret. Invalid values
+    fail closed to the local Compose target and are never echoed to clients.
+    """
+    raw_value = os.getenv("COOKBOOK_TARGET_URL", "").strip()
+    if not raw_value:
+        return DEFAULT_COOKBOOK_TARGET_URL
+
+    try:
+        parsed = urlsplit(raw_value)
+    except ValueError:
+        return DEFAULT_COOKBOOK_TARGET_URL
+
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+    ):
+        return DEFAULT_COOKBOOK_TARGET_URL
+
+    path = parsed.path or "/"
+    return urlunsplit((parsed.scheme, parsed.netloc, path, "", ""))
 
 
 def get_recipe_dataset_dir() -> str:

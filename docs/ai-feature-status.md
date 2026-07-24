@@ -26,6 +26,14 @@ affiliate links, sponsorships, payment, subscriptions, tracking, third-party
 scripts, or runtime monetization exists; paid access remains a separate future
 ADR.
 
+## Product Cookbook handoff
+
+Complete, local link correction: [Local Cookbook AI Product Integration](local-cookbook-ai-product-integration.md)
+now uses the safe non-secret `COOKBOOK_TARGET_URL` setting for
+`/product/cookbook`, with `http://127.0.0.1:3000/` as the local fallback and
+the exposed Cookbook URL configurable per deployment. `/product/ai` remains a
+redirect to `/demo`; no upstream proxy or rewrite was added.
+
 ## SSO and BYOS identity/storage
 
 Proposed, docs/research-only: [SSO and BYOS Identity/Storage Architecture ADR](sso-byos-identity-storage-architecture-adr.md)

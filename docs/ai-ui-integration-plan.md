@@ -6,15 +6,20 @@
 
 The local integration pattern is a sidecar-served product shell, not a rewrite
 of Vanilla Cookbook. `GET /product` is the first local operator URL. It links
-to the external Vanilla Cookbook container at `GET /product/cookbook` and to
+to the configured external Vanilla Cookbook target at `GET /product/cookbook` and to
 the existing sidecar workspace at `GET /product/ai` (which redirects to
 `/demo`). This keeps the upstream image at `127.0.0.1:3000` and the AI sidecar
-at `127.0.0.1:8000` while presenting one local product entry point.
+at `127.0.0.1:8000` while presenting one local product entry point. The
+non-secret `COOKBOOK_TARGET_URL` setting can select an exposed Cookbook URL;
+unset or invalid values fall back to the local Compose target.
 
 The repository does not contain editable upstream Vanilla Cookbook frontend
 source, so direct navigation or panel integration in that app is deliberately
 out of scope. The shell reads only the existing safe readiness endpoint and
 does not proxy production traffic, expose secrets, or change public routing.
+When the local Cookbook container is unavailable, the product page tells the
+operator to start Compose and refresh; `/product/ai` remains an independent
+sidecar handoff to `/demo`.
 
 The first AI UI integration is served by the FastAPI AI sidecar at:
 

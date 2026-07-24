@@ -117,3 +117,12 @@ ownership. It evaluates ads, sponsorships, partner placements, affiliate-style
 links, donations, supporter options, newsletters, and creator partnerships
 without implementing any of them. Payment, subscriptions, premium access,
 third-party scripts, and ad-network evaluation remain separately gated.
+
+## 0033I product Cookbook link correction emphasis
+
+The [Local Cookbook AI Product Integration](local-cookbook-ai-product-integration.md)
+handoff now distinguishes the local Compose target from an exposed Cookbook
+URL through the safe non-secret `COOKBOOK_TARGET_URL` setting. The sidecar
+continues to own `/product` and `/demo`, `/product/ai` remains a redirect to
+`/demo`, and the upstream Cookbook remains an external link rather than a
+proxy or rewrite.

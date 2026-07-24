@@ -31,7 +31,10 @@
   separated; action buttons remain inside their cards with no horizontal scroll.
 - If a fixture is missing, restart `start-ai-demo-local.ps1`; do not add raw
   datasets to the repository.
-- **Open Cookbook** redirects to the local upstream app on port 3000.
+- **Open Cookbook** uses `COOKBOOK_TARGET_URL` when set; otherwise it redirects
+  to the local upstream app at `http://127.0.0.1:3000/`. If the local target is
+  unavailable, start Docker Compose and refresh the product page. An exposed
+  deployment should use its configured public Cookbook URL.
 - **Open AI Recipe Creator** opens `/demo`, where importer, Ask My Cookbook,
   Dataset, Meal Planner, and Recipe Session Alpha remain available.
 - Confirm the selected AI mode is carried into each generated workflow:
