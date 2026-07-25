@@ -1,7 +1,7 @@
 # Core-Owned Local Commit Adapter
 
-Status: implemented in the separate source-owned core workspace; local-only
-and explicitly gated.
+Status: implemented and service-level verified in the separate source-owned
+core workspace; local-only and explicitly gated.
 
 Date: 2026-07-25
 
@@ -9,10 +9,14 @@ Date: 2026-07-25
 
 The source remains outside this sidecar repository.
 
+0034A adds an opt-in real SQLite ownership/persistence verification with a
+synthetic core `AuthUser`; see [Core-Owned Local Auth Commit Verification](core-owned-local-auth-commit-verification.md).
+
 - Branch: `openclaw/0033Z-core-owned-local-commit-adapter`
 - Commit: `c8ee3ed8234135d5b889b84b2b14bd69397e4de3`
 - Route: `POST /api/adapter/recipes/import-candidate/commit`
-- Image: `local/vanilla-cookbook-adapter:0033z`
+- Image: `local/vanilla-cookbook-adapter:0033z` baseline; 0034A built
+  `local/vanilla-cookbook-adapter:0034a`
 
 No external source, image layer, database, upload, session, or credential was
 copied into this repository. The image is local-only and opt-in; the sidecar
@@ -75,14 +79,14 @@ mapping, exclusions, validation, replay/conflict, duplicate blocking,
 rollback, safe envelopes, and production/non-loopback refusal. Prisma
 generation, service-worker generation, and the Vite production build passed.
 
-The `local/vanilla-cookbook-adapter:0033z` image built successfully and was
-started through the sidecar's guarded local scripts. Only the app service ran;
-loopback returned HTTP 200 and the container was stopped afterward. A real
-authenticated runtime commit was not attempted because creating or exporting a
-session/cookie would violate the task boundary. The safe next step is a
-separately approved local session/ownership test strategy or core-owned test
-fixture, followed by disposable backup/restore verification. Production save
-and sidecar UI wiring remain unimplemented.
+The `0033z` image built successfully and was started through the sidecar's
+guarded local scripts. 0034A built `0034a`, and the sidecar scripts again
+started only the app service; loopback returned HTTP 200 and the container was
+stopped afterward. The service-level synthetic auth/ownership fixture and
+temporary SQLite backup/restore now prove a real disposable core commit.
+Route-level session verification remains intentionally blocked because
+creating or exporting a session/cookie would violate the task boundary.
+Production save and sidecar UI real-save wiring remain unimplemented.
 
 ## Explicit non-goals
 

@@ -100,6 +100,20 @@ runtime session was created or exported. The next task must separately approve
 disposable runtime ownership/session verification before sidecar UI real-save
 wiring; production save remains unimplemented.
 
+## 0034A: Core-owned local auth commit verification
+
+Status: complete, service-level disposable verification; route/UI wiring remains blocked.
+
+Added an explicitly opt-in integration test in the external core workspace. It
+creates a synthetic core `AuthUser` in a temporary schema-pushed SQLite DB,
+verifies one persisted recipe, safe read-after-write, replay/conflict,
+duplicate review, foreign-owner rollback, excluded relations, and pre-write
+backup/post-test restore. The test never creates or exports cookies, tokens,
+sessions, or real credentials. The `0034a` image was built and loopback-start
+verified. A future task must separately approve safe route-level ownership
+fixture handling before sidecar UI real-save wiring; production save remains
+unimplemented.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

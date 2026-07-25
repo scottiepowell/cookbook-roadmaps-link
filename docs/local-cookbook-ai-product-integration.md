@@ -183,8 +183,10 @@ that external workspace. The opt-in image is
 `local/vanilla-cookbook-adapter:0033y`; it is not the default image and has no
 commit behavior. 0033Z adds a separately gated authenticated commit adapter in
 the `0033z` image; it remains local-only and requires explicit confirmation.
-The next task must review safe disposable runtime session/ownership
-verification before sidecar UI real-save wiring.
+0034A now proves service-level core ownership and a real temporary SQLite commit
+with backup/restore using a synthetic `AuthUser`. Route-level session handling
+remains intentionally unverified, so sidecar UI real-save wiring is still not
+ready.
 
 ## Boundary before platform work
 

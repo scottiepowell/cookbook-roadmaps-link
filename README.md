@@ -446,8 +446,11 @@ separate local custom image; production save remains unimplemented.
 authenticated `POST /api/adapter/recipes/import-candidate/dry-run` route in
 the separate workspace. The opt-in image is
 `local/vanilla-cookbook-adapter:0033y`. 0033Z adds the separately gated local
-core commit adapter in `local/vanilla-cookbook-adapter:0033z`; runtime session
-verification and sidecar UI real-save wiring remain separately approved work.
+core commit adapter in `local/vanilla-cookbook-adapter:0033z`. 0034A now
+verifies one real service-level temporary SQLite commit with synthetic core
+ownership and backup/restore using `local/vanilla-cookbook-adapter:0034a`.
+Route-level session verification and sidecar UI real-save wiring remain
+separately approved work.
 The current production feature remains unimplemented: the source-owned core
 app now has a local-only commit boundary, but disposable runtime session/
 ownership verification and sidecar UI wiring remain separately approved work.
