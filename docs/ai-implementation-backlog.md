@@ -114,6 +114,17 @@ verified. A future task must separately approve safe route-level ownership
 fixture handling before sidecar UI real-save wiring; production save remains
 unimplemented.
 
+## 0034B: Sidecar real-save local wiring plan
+
+Status: complete, planning/gate-only; no wiring implemented.
+
+Added the [Sidecar Real-Save Local Wiring Plan](sidecar-real-save-local-wiring-plan.md).
+It records the 0034A service-level real SQLite evidence, evaluates the
+in-memory, core fixture, sidecar client, browser-session, and direct-DB paths,
+rejects credential export and direct writes, and recommends 0034C: a
+core-owned local dev-only synthetic auth fixture before any sidecar client or
+UI real-save wiring.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

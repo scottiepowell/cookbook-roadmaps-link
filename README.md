@@ -451,6 +451,9 @@ verifies one real service-level temporary SQLite commit with synthetic core
 ownership and backup/restore using `local/vanilla-cookbook-adapter:0034a`.
 Route-level session verification and sidecar UI real-save wiring remain
 separately approved work.
+0034B documents the safe bridge plan and recommends a core-owned dev-only
+ synthetic auth fixture as the next step; no sidecar client or real-save UI
+ wiring has been added.
 The current production feature remains unimplemented: the source-owned core
 app now has a local-only commit boundary, but disposable runtime session/
 ownership verification and sidecar UI wiring remain separately approved work.
