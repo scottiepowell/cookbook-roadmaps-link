@@ -181,8 +181,10 @@ Compose path still uses `jt196/vanilla-cookbook:stable`; use the opt-in
 authenticated `POST /api/adapter/recipes/import-candidate/dry-run` route in
 that external workspace. The opt-in image is
 `local/vanilla-cookbook-adapter:0033y`; it is not the default image and has no
-commit behavior. The next task must review an authenticated core commit
-boundary.
+commit behavior. 0033Z adds a separately gated authenticated commit adapter in
+the `0033z` image; it remains local-only and requires explicit confirmation.
+The next task must review safe disposable runtime session/ownership
+verification before sidecar UI real-save wiring.
 
 ## Boundary before platform work
 

@@ -228,7 +228,9 @@ the 0033V workspace plan is documented in
 0033X completed the external core-owned no-mutation dry-run adapter and 0033Y
 added the authenticated dry-run route, building and verifying the opt-in
 `0033y` image on loopback. The next task must review the authenticated commit
-boundary; production Save-to-Cookbook remains unimplemented.
+boundary; 0033Z then implemented the explicitly gated local core commit
+adapter and built the `0033z` image. Runtime authenticated session verification
+and production Save-to-Cookbook remain unimplemented.
 or adopt a verified upstream plugin/API hook with equivalent ownership and
 transaction guarantees. Direct sidecar DB writes and browser/session
 automation are rejected; production save remains unimplemented.

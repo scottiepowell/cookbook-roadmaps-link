@@ -440,14 +440,17 @@ The follow-up workspace/custom-image plan is documented in
 [Source-Owned Vanilla Cookbook Adapter Workspace Plan](docs/source-owned-vanilla-cookbook-adapter-workspace-plan.md).
 The 0033W bootstrap created the source checkout outside this repository and
 the opt-in local image `local/vanilla-cookbook-adapter:0033w`; the default
-Compose image remains unchanged. The core adapter is still not implemented.
+Compose image remains unchanged. The core adapter is implemented only in the
+separate local custom image; production save remains unimplemented.
 0033X now provides a core-owned no-mutation dry-run service and 0033Y adds the
 authenticated `POST /api/adapter/recipes/import-candidate/dry-run` route in
 the separate workspace. The opt-in image is
-`local/vanilla-cookbook-adapter:0033y`; commit/save remains a later approved
-boundary.
-The current feature remains prototype-only: a source-owned/forked core app or
-reviewed upstream plugin/API boundary is required before a real Cookbook save.
+`local/vanilla-cookbook-adapter:0033y`. 0033Z adds the separately gated local
+core commit adapter in `local/vanilla-cookbook-adapter:0033z`; runtime session
+verification and sidecar UI real-save wiring remain separately approved work.
+The current production feature remains unimplemented: the source-owned core
+app now has a local-only commit boundary, but disposable runtime session/
+ownership verification and sidecar UI wiring remain separately approved work.
 Direct sidecar DB writes and browser/session automation remain rejected.
 
 ## Status

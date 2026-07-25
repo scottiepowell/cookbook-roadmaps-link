@@ -73,7 +73,7 @@ dry-run adapter work in the separate workspace.
 
 ## 0033X: Core-owned local dry-run adapter
 
-Status: complete, separate-workspace/no-mutation; commit remains blocked.
+Status: complete, separate-workspace/no-mutation; local commit follows in 0033Z.
 
 Added the core-owned candidate validation and mapping service in the external
 workspace, with safe versioned response envelopes, fixture duplicate signals,
@@ -81,9 +81,24 @@ idempotency replay/conflict behavior, and focused tests. Built and locally
 verified `local/vanilla-cookbook-adapter:0033x` through the guarded loopback
 Compose path. No recipe mutation was added. 0033Y added the authenticated
 core-owned `POST /api/adapter/recipes/import-candidate/dry-run` route to the
-separate workspace and built the opt-in `0033y` image. The next task is a
-separate review/design of the authenticated core commit boundary; production
-save remains unimplemented.
+separate workspace and built the opt-in `0033y` image. 0033Z implements the
+separate authenticated core commit boundary; production save remains
+unimplemented.
+
+## 0033Z: Core-owned local commit adapter
+
+Status: complete in separate workspace; local-only and explicitly gated.
+
+Added the authenticated `POST /api/adapter/recipes/import-candidate/commit`
+route and transactional core service in the external workspace. It requires
+local enablement, loopback target, normal core authentication, explicit
+confirmation, and synthetic/first-scope mapping. Opaque idempotency metadata
+uses the existing recipe hash field, avoiding a migration; replay/conflict,
+duplicate review, and injected rollback are covered by focused tests. Built
+and locally started `local/vanilla-cookbook-adapter:0033z`; no authenticated
+runtime session was created or exported. The next task must separately approve
+disposable runtime ownership/session verification before sidecar UI real-save
+wiring; production save remains unimplemented.
 
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
