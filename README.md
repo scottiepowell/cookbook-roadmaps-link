@@ -434,6 +434,12 @@ requires Lucia-authenticated session ownership and has post-create side
 effects without a reviewed sidecar rollback boundary. No session values or
 native route calls are used by this repository.
 
+The core adapter path decision is documented in
+[Save-to-Cookbook Core Adapter Path Decision](docs/save-to-cookbook-core-adapter-path-decision.md).
+The current feature remains prototype-only: a source-owned/forked core app or
+reviewed upstream plugin/API boundary is required before a real Cookbook save.
+Direct sidecar DB writes and browser/session automation remain rejected.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

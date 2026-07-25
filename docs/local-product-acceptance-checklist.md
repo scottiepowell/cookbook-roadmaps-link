@@ -63,6 +63,11 @@
   native upstream recipe API. Use the 0033Q readiness harness for disposable
   DB/write evidence, not the UI panel.
 
+- Treat Save-to-Cookbook as prototype-only. A real recipe appearing in the
+  normal Cookbook app is blocked until the core-adapter path decision is
+  implemented through a source-owned/forked core or reviewed upstream hook.
+  Do not substitute browser/session automation or direct sidecar DB writes.
+
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the
   Compose recovery instruction.

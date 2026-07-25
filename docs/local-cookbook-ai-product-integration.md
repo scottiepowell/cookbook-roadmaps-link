@@ -165,6 +165,12 @@ effects are not a safe sidecar contract under the current boundaries. The UI
 therefore remains an in-memory local simulation; no browser session, cookie, or
 auth token is created or handled.
 
+The 0033U path decision recommends a source-owned/forked core workspace and
+custom local image, or a reviewed upstream plugin/API hook if one can provide
+the same ownership and transaction guarantees. Until then, the local UI is a
+prototype and the 0033Q harness is disposable evidence only. Production save
+support is not implemented.
+
 ## Boundary before platform work
 
 This is a local operator experience and safe link handoff only. It is not a reverse proxy for a

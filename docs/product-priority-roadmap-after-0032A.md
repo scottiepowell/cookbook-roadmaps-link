@@ -217,3 +217,11 @@ Lucia session ownership and has post-create image/embedding side effects
 without a safe adapter rollback contract. No session values or native route
 calls were used. The local UI simulation and disposable readiness harness stay
 the approved boundaries.
+
+## 0033U core adapter path decision
+
+Save-to-Cookbook remains prototype-only. The decision recommends 0033V prepare
+a source-owned/forked Vanilla Cookbook core workspace and custom local image,
+or adopt a verified upstream plugin/API hook with equivalent ownership and
+transaction guarantees. Direct sidecar DB writes and browser/session
+automation are rejected; production save remains unimplemented.
