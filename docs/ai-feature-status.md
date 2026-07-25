@@ -199,6 +199,7 @@ status=passed
 | Save-to-Cookbook local readiness evidence | Pass, local-only and disposable | `scripts/test-save-to-cookbook-local-readiness.ps1` plus focused offline tests | Explicit approval, loopback/Compose/mount guards, one synthetic recipe, deterministic text mapping, duplicate/idempotency evidence, injected rollback, read-after-write, and DB/uploads restore. Native adapter/UI and production write-back remain blocked. |
 | Save-to-Cookbook local commit service | Complete, disabled-by-default/local-only | `ai-api/app/cookbook_import_commit.py`, `test_cookbook_import_commit.py` | Explicit enablement/approval/runtime/loopback guards, schema-informed mapping, synthetic owner, in-memory commit result, duplicate/idempotency and rollback-safe errors. No route, native API integration, product button, or production write-back. |
 | Save-to-Cookbook local UI MVP | Complete, local/internal-only | `/demo`, local adapter routes, `test_local_save_ui.py` | Reviewable unsaved importer draft, local dry-run, explicit local confirmation, and gated in-memory commit result. No production claim, native API write, public route, migration, or live provider call. |
+| Save-to-Cookbook native local spike | Blocked, read-only review | `outbox/0033T-local-native-save-to-cookbook-spike-results.md` | Upstream create route requires Lucia-authenticated session state and has post-create image/embedding side effects without a safe adapter rollback envelope. Route was not called; native save remains unimplemented. |
 
 ## Demo Starting Points
 

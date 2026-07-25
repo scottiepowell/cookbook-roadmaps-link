@@ -403,6 +403,14 @@ do not call the native upstream API or replace the 0033Q disposable readiness
 harness. A future native core-app adapter and any production UI remain
 separate approved work.
 
+## 0033T native local spike
+
+The native local save spike is blocked after read-only review. The upstream
+create route requires Lucia-authenticated session ownership and performs
+post-create image/embedding work outside a reviewed sidecar transaction
+boundary. No cookie, token, session value, native route call, or UI wiring was
+added. The 0033S in-memory UI and 0033Q disposable harness remain separate.
+
 ## 0033Q local readiness evidence
 
 The separate 0033Q task adds `scripts/test-save-to-cookbook-local-readiness.ps1`

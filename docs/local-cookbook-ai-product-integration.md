@@ -159,6 +159,12 @@ call the upstream native API or mutate SQLite/uploads. The 0033Q readiness
 harness remains the sole approved disposable DB/write proof. Exposed targets,
 non-loopback clients, tunnels, and production settings remain unavailable.
 
+The 0033T native-save spike reviewed the upstream route but did not wire it:
+Lucia authentication/session ownership and post-create image/embedding side
+effects are not a safe sidecar contract under the current boundaries. The UI
+therefore remains an in-memory local simulation; no browser session, cookie, or
+auth token is created or handled.
+
 ## Boundary before platform work
 
 This is a local operator experience and safe link handoff only. It is not a reverse proxy for a

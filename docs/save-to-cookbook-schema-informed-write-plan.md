@@ -274,6 +274,11 @@ It is not a native upstream API adapter and does not replace the 0033Q
 DB/uploads backup/restore harness; any disposable SQLite caller must retain
 those guards around the store boundary.
 
+0033T confirms that the native upstream create route cannot yet replace this
+boundary: its Lucia session requirement and post-create side effects are not a
+safe sidecar adapter contract. Native save remains blocked until a reviewed
+synthetic local ownership/session or core-owned service boundary exists.
+
 0033S's browser panel is only a local review surface over the 0033N dry-run
 and 0033R in-memory service. It cannot establish native ownership or prove a
 database write; the 0033Q harness remains the approved DB/uploads backup and

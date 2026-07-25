@@ -209,3 +209,11 @@ importer drafts. It requires explicit non-secret local gates, never calls the
 native upstream API, and exercises only the 0033R in-memory service. The 0033Q
 readiness harness remains the approved disposable DB/write path; production or
 exposed Save-to-Cookbook remains unimplemented.
+
+## 0033T native local save spike
+
+The native local save attempt remains blocked: the upstream create route needs
+Lucia session ownership and has post-create image/embedding side effects
+without a safe adapter rollback contract. No session values or native route
+calls were used. The local UI simulation and disposable readiness harness stay
+the approved boundaries.

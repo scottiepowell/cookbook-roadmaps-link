@@ -429,6 +429,11 @@ store; it is not authentication or production Save-to-Cookbook support. The
 fixture contract, dry-run operation, readiness harness, and future UI/native
 adapter remain separate boundaries.
 
+The native upstream Cookbook save spike remains blocked because its route
+requires Lucia-authenticated session ownership and has post-create side
+effects without a reviewed sidecar rollback boundary. No session values or
+native route calls are used by this repository.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

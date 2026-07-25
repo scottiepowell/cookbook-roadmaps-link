@@ -194,6 +194,17 @@ stable sidecar contract. The first backend integration therefore uses an
 injected local-only store and keeps native authenticated API integration as a
 future core-owned adapter decision.
 
+## 0033T native save spike review
+
+The disposable upstream source was reviewed read-only. `POST /api/recipe`
+requires `requireAuth(locals)` and a Lucia-validated authenticated session;
+there is no anonymous or synthetic sidecar identity path. It accepts multipart
+form data, writes the Recipe row first, and may then process image URLs,
+uploads, and background embeddings. Because this task cannot create or handle
+auth cookies/session values or prove those side effects and rollback semantics,
+the native spike remains blocked. The route was not called and no local rows
+were changed.
+
 ## Explicit non-goals
 
 This report does not add a Save-to-Cookbook button, public route, commit

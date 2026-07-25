@@ -35,6 +35,17 @@ create/update/delete paths, and remaining serialization/transaction/rollback
 unknowns. No DB file, upload, migration, route, or adapter assumption was
 added.
 
+## 0033T: Local native Save-to-Cookbook spike
+
+Status: blocked after read-only local review.
+
+The upstream `POST /api/recipe` route requires Lucia-authenticated
+`locals.user`/session state, accepts multipart form data, writes before
+post-create image/embedding work, and has no adapter dry-run or rollback
+boundary. Creating or handling the required session cookie/token is outside
+the task safety boundary. The route was not called, no local rows changed, and
+the 0033S in-memory UI plus 0033Q readiness harness remain unchanged.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.
