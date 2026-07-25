@@ -232,7 +232,9 @@ boundary; 0033Z then implemented the explicitly gated local core commit
 adapter and built the `0033z` image. 0034A verified a real service-level
 temporary SQLite commit with synthetic ownership and backup/restore; route-level
 session verification, sidecar UI real-save wiring, and production
-Save-to-Cookbook remain unimplemented.
+Save-to-Cookbook remain unimplemented. 0034C now provides the core-process
+synthetic-auth fixture and disposable full-sequence evidence without changing
+that boundary.
 or adopt a verified upstream plugin/API hook with equivalent ownership and
 transaction guarantees. Direct sidecar DB writes and browser/session
 automation are rejected; production save remains unimplemented.

@@ -1,6 +1,7 @@
 # Sidecar Real-Save Local Wiring Plan
 
-Status: planning/gate only. No sidecar real-save wiring is implemented.
+Status: planning/gate only. The recommended core fixture is complete; no
+sidecar real-save wiring is implemented.
 
 Date: 2026-07-25
 
@@ -16,7 +17,9 @@ The current boundary is deliberately split:
   synthetic `AuthUser`, read-after-write, replay/conflict, duplicate blocking,
   rollback, and pre-write backup/post-test restore.
 
-The approved external custom image is `local/vanilla-cookbook-adapter:0034a`.
+The approved external custom image is
+`local/vanilla-cookbook-adapter:0034c` for the dev fixture; `0034a` remains the
+service-level verification image.
 The sidecar local runtime remains app-only, `cookbook-local`, and bound to
 `http://127.0.0.1:3000/`. The sidecar product remains at
 `http://127.0.0.1:8000/product` and `/demo`.
@@ -142,14 +145,25 @@ Compose behavior must not be changed by the future wiring task. Production
 Save-to-Cookbook requires a separate reviewed auth, API, privacy, deployment,
 and rollback decision; this plan does not authorize it.
 
+## 0034C result and next task
+
+0034C completed the core-process fixture with synthetic in-process ownership,
+dry-run-before-commit, explicit gates, real temporary SQLite persistence,
+read-after-write, replay/conflict, duplicate review, rollback, and DB/uploads
+restore. It does not establish a safe sidecar HTTP transport or browser
+session, so the sidecar UI remains deferred.
+
+The next implementation task, if approved, must define a narrow
+sidecar-to-core transport using this safe local boundary without exporting
+identity or credentials. It must not enable production or exposed targets.
+
 ## Next task
 
-Recommend **0034C: implement a core-owned local dev-only adapter verification
-fixture** in the external Vanilla Cookbook workspace. It should provide
-synthetic in-process ownership, dry-run-before-commit, explicit approval,
-disposable DB/upload backup/restore, safe read-after-write, and no session,
-cookie, or token export. Only after 0034C passes should a later task plan
-sidecar client/UI wiring.
+Recommend a future sidecar-to-core local transport task only after reviewing
+the 0034C fixture evidence. It should call a narrow core-owned boundary,
+preserve dry-run-before-commit and explicit approval, and never export a
+session, cookie, token, or sidecar-owned identity. Production/exposed wiring
+must remain out of scope.
 
 ## Explicit non-goals
 

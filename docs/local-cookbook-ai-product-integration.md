@@ -186,7 +186,9 @@ the `0033z` image; it remains local-only and requires explicit confirmation.
 0034A now proves service-level core ownership and a real temporary SQLite commit
 with backup/restore using a synthetic `AuthUser`. Route-level session handling
 remains intentionally unverified, so sidecar UI real-save wiring is still not
-ready.
+ready. 0034C now provides a core-process dev-only fixture that verifies the
+full sequence without exporting credentials; it does not change that sidecar
+UI status.
 
 ## Boundary before platform work
 

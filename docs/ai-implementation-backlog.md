@@ -114,6 +114,18 @@ verified. A future task must separately approve safe route-level ownership
 fixture handling before sidecar UI real-save wiring; production save remains
 unimplemented.
 
+## 0034C: Core-owned dev-only synthetic auth fixture
+
+Status: complete, external core-process/local-only; sidecar UI wiring remains
+deferred.
+
+Added the fail-closed `verify-local-auth-commit.mjs` fixture in the separate
+core workspace. It requires explicit local approval, the `0034c` custom image,
+synthetic in-process ownership, and loopback target; runs dry-run before commit;
+verifies read-after-write, replay/conflict, duplicate review, rollback, and
+DB/uploads backup/restore; and emits safe status/UID output only. No cookies,
+tokens, sessions, real credentials, sidecar route, or UI wiring were added.
+
 ## 0034B: Sidecar real-save local wiring plan
 
 Status: complete, planning/gate-only; no wiring implemented.

@@ -66,7 +66,8 @@
 - Treat sidecar Save-to-Cookbook as prototype-only. 0034A proves a real
   core-service commit with synthetic ownership in a disposable SQLite test
   DB, but the sidecar UI is not authorized to call the core commit route yet.
-  Wait for the planned core-owned local fixture before wiring real UI saves.
+  The core-owned local fixture is now available, but sidecar transport remains
+  a separate gate before wiring real UI saves.
   Do not substitute browser/session automation, cookie/token export, or direct
   sidecar DB writes.
 

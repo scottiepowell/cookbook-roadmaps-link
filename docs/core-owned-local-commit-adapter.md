@@ -9,8 +9,9 @@ Date: 2026-07-25
 
 The source remains outside this sidecar repository.
 
-0034A adds an opt-in real SQLite ownership/persistence verification with a
-synthetic core `AuthUser`; see [Core-Owned Local Auth Commit Verification](core-owned-local-auth-commit-verification.md).
+0034A adds an opt-in real SQLite ownership/persistence verification and 0034C
+adds the guarded core-process fixture that runs the complete local sequence
+without sessions; see [Core-Owned Local Auth Commit Verification](core-owned-local-auth-commit-verification.md).
 
 - Branch: `openclaw/0033Z-core-owned-local-commit-adapter`
 - Commit: `c8ee3ed8234135d5b889b84b2b14bd69397e4de3`
@@ -84,7 +85,7 @@ guarded local scripts. 0034A built `0034a`, and the sidecar scripts again
 started only the app service; loopback returned HTTP 200 and the container was
 stopped afterward. The service-level synthetic auth/ownership fixture and
 temporary SQLite backup/restore now prove a real disposable core commit.
-Route-level session verification remains intentionally blocked because
+Sidecar route/session transport verification remains intentionally blocked because
 creating or exporting a session/cookie would violate the task boundary.
 Production save and sidecar UI real-save wiring remain unimplemented.
 

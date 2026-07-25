@@ -55,6 +55,8 @@ was stopped afterward.
 ## Route and UI readiness
 
 The real database proof is service-level with a synthetic core user context.
+0034C now adds a guarded core-process fixture that keeps synthetic auth
+in-process without exporting credentials.
 Route-level verification remains blocked by the explicit prohibition on
 creating or exporting a session/cookie/token. The commit route still requires
 the local gate, loopback target, normal `requireAuth(locals)`, and explicit
