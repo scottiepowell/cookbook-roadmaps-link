@@ -441,6 +441,9 @@ The follow-up workspace/custom-image plan is documented in
 The 0033W bootstrap created the source checkout outside this repository and
 the opt-in local image `local/vanilla-cookbook-adapter:0033w`; the default
 Compose image remains unchanged. The core adapter is still not implemented.
+0033X now provides a core-owned no-mutation dry-run service in the separate
+workspace and `local/vanilla-cookbook-adapter:0033x`; commit/save remains a
+later approved boundary.
 The current feature remains prototype-only: a source-owned/forked core app or
 reviewed upstream plugin/API boundary is required before a real Cookbook save.
 Direct sidecar DB writes and browser/session automation remain rejected.

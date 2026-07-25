@@ -168,12 +168,10 @@ backup, synthetic-data, and cleanup guards.
 
 ## Next implementation task
 
-Recommend **0033X: implement the core-owned local dry-run adapter in the
-separate source workspace**. 0033W completed provenance/license review,
-recursive checkout, pinning, and the app-only local image bootstrap. 0033X
-should implement only authenticated dry-run mapping, validation, idempotency,
-and core tests, stopping before production write-back or exposed deployment
-integration.
+0033X completed only authenticated-context dry-run mapping, validation,
+idempotency, and core tests, stopping before production write-back or exposed
+deployment integration. Recommend **0033Y: review and design the
+authenticated core commit boundary**.
 
 If the upstream project confirms an equivalent supported plugin/API hook before
 0033W begins, the task may choose that route instead of maintaining a fork,

@@ -121,11 +121,10 @@ artifacts into this repository.
 
 ## Next task
 
-Recommend **0033X: implement the core-owned local dry-run adapter in the
-separate source workspace**. It should add only authenticated dry-run mapping,
-validation, idempotency, and core tests. A local commit/transaction task should
-follow only after that dry-run contract is reviewed. Production Save-to-Cookbook
-remains unimplemented.
+0033X completed only authenticated-context dry-run mapping, validation,
+idempotency, and core tests in the separate workspace. Recommend **0033Y:
+review and design the authenticated core commit boundary** before any commit
+mutation or route exposure. Production Save-to-Cookbook remains unimplemented.
 
 ## Explicit non-goals
 

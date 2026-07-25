@@ -71,6 +71,17 @@ opt-in selector accepts only the default or the local adapter image namespace.
 No upstream source was vendored here. The next task is 0033X core-owned local
 dry-run adapter work in the separate workspace.
 
+## 0033X: Core-owned local dry-run adapter
+
+Status: complete, separate-workspace/no-mutation; commit remains blocked.
+
+Added the core-owned candidate validation and mapping service in the external
+workspace, with safe versioned response envelopes, fixture duplicate signals,
+idempotency replay/conflict behavior, and focused tests. Built and locally
+verified `local/vanilla-cookbook-adapter:0033x` through the guarded loopback
+Compose path. No route or recipe mutation was added. The next task is 0033Y:
+review and design the authenticated core commit boundary.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

@@ -20,6 +20,13 @@ migration, or production integration. Vanilla
 Cookbook remains the canonical owner, and the AI sidecar remains a candidate and
 dry-run producer.
 
+## 0033X update
+
+0033X now supplies the core-owned no-mutation dry-run mapping boundary in the
+separate source workspace. This does not alter the plan's requirement for a
+separately approved authenticated commit, transaction, rollback, and cleanup
+test before any recipe mutation.
+
 ## Schema-informed decisions
 
 0033O observed a Prisma/SQLite `Recipe` model with UUID `uid`, required
