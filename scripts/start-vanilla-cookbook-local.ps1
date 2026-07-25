@@ -1,5 +1,6 @@
 param(
-    [switch]$Check
+    [switch]$Check,
+    [string]$CookbookImage = "jt196/vanilla-cookbook:stable"
 )
 
 Set-StrictMode -Version Latest
@@ -10,6 +11,11 @@ Set-Location $RepoRoot
 $ComposeFile = Join-Path $RepoRoot "docker-compose.local.yml"
 $ComposeProject = "cookbook-local"
 $LocalRuntimeRoot = Join-Path $RepoRoot ".local\vanilla-cookbook"
+
+if ($CookbookImage -ne "jt196/vanilla-cookbook:stable" -and $CookbookImage -notmatch '^local/vanilla-cookbook-adapter:[A-Za-z0-9_.-]+$') {
+    [Console]::Error.WriteLine("CookbookImage must be the default stable image or a local/vanilla-cookbook-adapter:* tag.")
+    exit 2
+}
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     [Console]::Error.WriteLine("Docker is required for the local Vanilla Cookbook runtime.")
@@ -28,6 +34,16 @@ if (-not (Test-Path -LiteralPath $ComposeFile -PathType Leaf)) {
     exit 2
 }
 
+if ($CookbookImage -ne "jt196/vanilla-cookbook:stable") {
+    & $Docker image inspect $CookbookImage --format "{{.Id}}" 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        [Console]::Error.WriteLine("The selected local Cookbook image is not available locally. Build it first and retry.")
+        exit 4
+    }
+}
+
+$env:VANILLA_COOKBOOK_IMAGE = $CookbookImage
+
 New-Item -ItemType Directory -Force -Path (Join-Path $LocalRuntimeRoot "db") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $LocalRuntimeRoot "uploads") | Out-Null
 
@@ -39,6 +55,7 @@ if ($Check) {
 Write-Host "Starting local Vanilla Cookbook only."
 Write-Host "Compose project: $ComposeProject"
 Write-Host "Cookbook URL: http://127.0.0.1:3000/"
+Write-Host "Cookbook image mode: $CookbookImage"
 Write-Host "Local runtime data: .local\vanilla-cookbook\ (ignored)"
 Write-Host "Cloudflare Tunnel, AWS, GitHub Actions, and production .env are not required."
 & $Docker compose -p $ComposeProject -f $ComposeFile up -d app

@@ -224,6 +224,8 @@ Save-to-Cookbook remains prototype-only. The decision recommends a 0033W
 follow-up to bootstrap a source-owned/forked Vanilla Cookbook core workspace and custom local image;
 the 0033V workspace plan is documented in
 [Source-Owned Vanilla Cookbook Adapter Workspace Plan](source-owned-vanilla-cookbook-adapter-workspace-plan.md).
+0033W completed that external recursive checkout and local image bootstrap;
+0033X is the next core-owned dry-run adapter task.
 or adopt a verified upstream plugin/API hook with equivalent ownership and
 transaction guarantees. Direct sidecar DB writes and browser/session
 automation are rejected; production save remains unimplemented.

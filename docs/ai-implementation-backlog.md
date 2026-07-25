@@ -58,6 +58,19 @@ while preserving an upstream hook as a preferred alternative if verified.
 Vanilla Cookbook remains canonical; direct DB writes and browser/session
 automation are rejected.
 
+## 0033W: Source-owned Vanilla Cookbook workspace bootstrap
+
+Status: complete, separate-workspace/local-image bootstrap; adapter remains
+unimplemented.
+
+Created a recursive source checkout outside this repository, recorded the
+GPL-3.0 core license and MIT parser submodule lead, pinned the source and
+submodule, and built the local-only `local/vanilla-cookbook-adapter:0033w`
+image. The local Compose default remains `jt196/vanilla-cookbook:stable`; an
+opt-in selector accepts only the default or the local adapter image namespace.
+No upstream source was vendored here. The next task is 0033X core-owned local
+dry-run adapter work in the separate workspace.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

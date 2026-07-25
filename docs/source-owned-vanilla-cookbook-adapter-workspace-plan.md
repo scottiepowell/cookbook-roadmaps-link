@@ -36,11 +36,11 @@ Web-current provenance lead, not a local ownership fact:
   [installation documentation](https://vanilla-cookbook.readthedocs.io/en/stable/manual/installation/).
   That documentation describes cloning with a recursive submodule and using
   the `jt196/vanilla-cookbook` Docker image.
-- The applicable license must be reviewed directly from the upstream
-  [LICENSE file](https://github.com/jt196/vanilla-cookbook/blob/main/LICENSE)
+- The applicable GPL-3.0 license must be reviewed directly from the upstream
+  [LICENCE file](https://github.com/jt196/vanilla-cookbook/blob/main/LICENCE)
   before a fork, source checkout, or redistributed custom image is created.
-  This task does not assert a license type or grant permission based only on a
-  public image or repository URL.
+  This task records the local review result but does not grant permission for
+  redistribution of unreviewed dependencies.
 
 Required gates before source ownership:
 
@@ -73,10 +73,9 @@ documentation. Keep the core repository responsible for authenticated user
 ownership, recipe validation, persistence, transaction boundaries, and
 canonical recipe URLs.
 
-The source-owned workspace should not be copied into this repo. A future
-0033W implementation task should establish the workspace location, license
-record, exact upstream pin, patch queue, and image build before adding any
-adapter code.
+The source-owned workspace is now bootstrapped outside this repo by 0033W.
+The next task should maintain the workspace location, license record, exact
+upstream pin, patch queue, and image build without adding the checkout here.
 
 ## Core-owned adapter contract
 
@@ -110,7 +109,7 @@ First implementation scope:
 
 ## Future custom image and local workflow
 
-The future source-owned workspace should:
+The bootstrapped source-owned workspace and future adapter work should:
 
 1. Check out or fork the reviewed upstream source at a pinned commit outside
    this repository.
@@ -135,16 +134,16 @@ The future source-owned workspace should:
 The local two-terminal workflow remains:
 
 ```powershell
-# Terminal 1: future source-owned local core image
-docker compose -f docker-compose.local.yml -p cookbook-local up -d app
+# Terminal 1: source-owned local core image (opt-in)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-vanilla-cookbook-local.ps1 `
+  -CookbookImage local/vanilla-cookbook-adapter:0033w
 
 # Terminal 2: sidecar, offline by default
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-ai-demo-local.ps1 -Provider mock
 ```
 
-The current external image path remains the fallback until the custom image
-is separately approved. Production/exposed Cookbook behavior is separate and
-is not changed by this plan.
+The current external image path remains the default fallback. Production/exposed
+Cookbook behavior is separate and is not changed by this plan.
 
 ## Testing, security, and rollback boundaries
 
@@ -169,12 +168,12 @@ backup, synthetic-data, and cleanup guards.
 
 ## Next implementation task
 
-Recommend **0033W: bootstrap the source-owned Vanilla Cookbook workspace and
-custom local image**. It should complete provenance/license review, pin the
-upstream source, define the separate workspace and sync policy, build the
-app-only local image, and implement only the core-owned adapter contract and
-tests needed for a disposable local dry-run. It should stop before production
-write-back or exposed deployment integration.
+Recommend **0033X: implement the core-owned local dry-run adapter in the
+separate source workspace**. 0033W completed provenance/license review,
+recursive checkout, pinning, and the app-only local image bootstrap. 0033X
+should implement only authenticated dry-run mapping, validation, idempotency,
+and core tests, stopping before production write-back or exposed deployment
+integration.
 
 If the upstream project confirms an equivalent supported plugin/API hook before
 0033W begins, the task may choose that route instead of maintaining a fork,

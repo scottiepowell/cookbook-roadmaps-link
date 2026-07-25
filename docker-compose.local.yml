@@ -1,6 +1,6 @@
 services:
   app:
-    image: jt196/vanilla-cookbook:stable
+    image: ${VANILLA_COOKBOOK_IMAGE:-jt196/vanilla-cookbook:stable}
     ports:
       - "127.0.0.1:3000:3000"
     volumes:

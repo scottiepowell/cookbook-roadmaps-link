@@ -13,12 +13,11 @@ authenticated ownership, validates and serializes fields, commits within its
 transaction boundary, and returns a canonical recipe identifier. The AI
 sidecar remains the draft, dry-run, and candidate producer.
 
-The next concrete task is **0033W: bootstrap the reviewed source-owned Vanilla
-Cookbook workspace/custom image and core adapter contract**. The 0033V plan
-must establish source ownership, license/provenance review, a reproducible
-local image, the core adapter contract, synthetic local user setup, and a
-no-production test boundary. 0033W must not begin production write-back until
-those gates are separately approved.
+0033V recommended the 0033W bootstrap. That bootstrap has now established the
+reviewed external workspace, source pins, and a distinct local image. The next
+concrete task is **0033X: implement the core-owned local dry-run adapter in the
+separate source workspace**. It must not begin production write-back until the
+core dry-run and transaction gates are separately approved.
 
 Path C remains a preferred implementation variant if the upstream project
 offers a reviewed API/plugin hook with equivalent ownership and transaction
@@ -48,10 +47,10 @@ upstream repository as [Vanilla Cookbook on GitHub](https://github.com/jt196/van
 and documents cloning it with its recursive submodule plus the `jt196/vanilla-cookbook`
 Docker image in the [installation guide](https://vanilla-cookbook.readthedocs.io/en/stable/manual/installation/).
 These are provenance leads, not permission to copy source. The applicable
-license still requires a direct review of the upstream [LICENSE file](https://github.com/jt196/vanilla-cookbook/blob/main/LICENSE)
-before a fork or custom image is created. No external source was fetched,
-copied, vendored, or committed. This is an ownership/provenance gate for
-0033W, not evidence that no upstream source exists.
+license was reviewed in the upstream [LICENCE file](https://github.com/jt196/vanilla-cookbook/blob/main/LICENCE)
+before the separate checkout and custom image were created. No external source
+was fetched into or committed to this repository. The separate checkout is
+the 0033W workspace bootstrap result.
 
 The local image has the expected `jt196/vanilla-cookbook:stable` tag but no
 useful OCI source/license labels. Repository documentation likewise treats it
@@ -109,24 +108,27 @@ CSRF handling. It would also make read-after-write, retries, duplicate
 protection, and rollback dependent on UI timing. Direct DB writes would bypass
 the canonical app entirely. Neither path should be used to ship the feature.
 
-## Required follow-up deliverables
+## Bootstrap follow-up status
 
-Before implementation, the 0033W follow-up should produce:
+0033W produced the following outside this repository:
 
 1. source repository/fork location, license/provenance evidence, and a policy
    for syncing upstream changes;
 2. a reproducible local custom image that is separate from production and does
    not require production secrets;
-3. a core-owned adapter contract for draft, dry-run, confirmation, commit,
+
+The next task must produce:
+
+1. a core-owned adapter contract for draft, dry-run, confirmation, commit,
    canonical ID, duplicate/idempotency, and safe errors;
-4. a synthetic local user/ownership fixture that does not expose cookies,
+2. a synthetic local user/ownership fixture that does not expose cookies,
    tokens, or session values to the sidecar;
-5. transaction and rollback behavior covering Recipe and any related records;
-6. first-write exclusions for categories, media/uploads, remote image fetches,
+3. transaction and rollback behavior covering Recipe and any related records;
+4. first-write exclusions for categories, media/uploads, remote image fetches,
    and embeddings unless explicitly proven safe;
-7. local-only tests and a backup/restore harness that retains the 0033Q
+5. local-only tests and a backup/restore harness that retains the 0033Q
    evidence boundary;
-8. a go/no-go review before wiring the 0033S UI to a real core commit.
+6. a go/no-go review before wiring the 0033S UI to a real core commit.
 
 ## Status and non-goals
 

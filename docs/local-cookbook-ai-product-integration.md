@@ -173,6 +173,10 @@ support is not implemented. The 0033V workspace plan
 ([source-owned Vanilla Cookbook adapter workspace plan](source-owned-vanilla-cookbook-adapter-workspace-plan.md))
 sets the provenance, license, custom-image, and core-adapter gates for the
 0033W follow-up.
+0033W has now bootstrapped a separate recursive source checkout and the
+local-only `local/vanilla-cookbook-adapter:0033w` image. The default local
+Compose path still uses `jt196/vanilla-cookbook:stable`; use the opt-in
+`-CookbookImage` selector only with the approved local image namespace.
 
 ## Boundary before platform work
 
