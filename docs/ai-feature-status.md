@@ -50,13 +50,15 @@ Coder assets to reuse.
 
 ## SSO and BYOS identity/storage
 
-Proposed, docs/research-only: [SSO and BYOS Identity/Storage Architecture ADR](sso-byos-identity-storage-architecture-adr.md)
-keeps sign-in identity separate from user-owned cloud storage authorization.
-It favors portable JSON/Markdown exports, least-privilege app-folder scopes,
-server-side token custody, explicit disconnect/revocation handling, and local
-offline fallback. No SSO, OAuth/OIDC, email registration, storage client,
-provider SDK, migration, secret, or production route is implemented; normal
-validation remains mock/offline.
+Proposed, docs/research-only: [Google-first OIDC and future storage
+authorization ADR](google-first-oidc-storage-auth-architecture.md), alongside
+the earlier [SSO and BYOS Identity/Storage Architecture ADR](sso-byos-identity-storage-architecture-adr.md).
+Google is the first planned identity candidate; Google Drive consent is a
+separate later capability and Microsoft/OneDrive is next to evaluate. Core
+owns AuthUser/session/provider links and storage grants; the sidecar owns none.
+No SSO, OAuth/OIDC, email registration, storage client, provider SDK,
+migration, secret, or production route is implemented; normal validation
+remains mock/offline.
 
 ## Current product-validation focus
 

@@ -40,6 +40,7 @@ Demo and evidence links:
 - [Product priority roadmap after 0032A](docs/product-priority-roadmap-after-0032A.md)
 - [Application session timer and access exceptions ADR](docs/application-session-timer-access-exceptions-adr.md)
 - [SSO and BYOS identity/storage architecture ADR](docs/sso-byos-identity-storage-architecture-adr.md)
+- [Google-first OIDC and future storage authorization ADR](docs/google-first-oidc-storage-auth-architecture.md)
 - [Traffic analytics and behavior tracking ADR](docs/traffic-analytics-behavior-tracking-adr.md)
 - [Website marketing and community outreach ADR](docs/website-marketing-community-outreach-adr.md)
 - [Ads, sponsors, and monetization ADR](docs/ads-sponsors-monetization-adr.md)
@@ -118,6 +119,13 @@ check when avoiding `cloudflared`.
 The local disposable runtime is the prerequisite for `0033J` Save-to-Cookbook
 adapter schema discovery and later write/rollback tests. It does not enable
 Save to Cookbook or any production write-back.
+
+Identity/storage remains a core-owned future boundary. The [Google-first OIDC
+and future storage authorization ADR](docs/google-first-oidc-storage-auth-architecture.md)
+selects Google as the first planned sign-in provider, keeps Drive consent
+separate from login, and evaluates Microsoft/OneDrive next. The AI sidecar
+does not own identities, sessions, cookies, provider tokens, storage grants, or
+canonical recipe storage; production Save-to-Cookbook remains unimplemented.
 
 When ignored local `.env` contains valid live settings, this starts the sidecar
 in local OpenAI mode. Open `http://127.0.0.1:8000/product` first; `/demo`

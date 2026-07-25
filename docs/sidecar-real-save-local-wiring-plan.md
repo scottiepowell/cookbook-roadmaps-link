@@ -145,6 +145,13 @@ Compose behavior must not be changed by the future wiring task. Production
 Save-to-Cookbook requires a separate reviewed auth, API, privacy, deployment,
 and rollback decision; this plan does not authorize it.
 
+The Google-first identity/storage decision in [Google-first OIDC and Future
+Storage Authorization](google-first-oidc-storage-auth-architecture.md) keeps
+that future authorization in the Vanilla Cookbook core. A sidecar client must
+not become an OIDC session broker or receive Drive/OneDrive grants. Google
+sign-in and storage consent are separate future capabilities; 0034C's
+synthetic owner remains the safe local bridge.
+
 ## 0034C result and next task
 
 0034C completed the core-process fixture with synthetic in-process ownership,

@@ -126,6 +126,20 @@ verifies read-after-write, replay/conflict, duplicate review, rollback, and
 DB/uploads backup/restore; and emits safe status/UID output only. No cookies,
 tokens, sessions, real credentials, sidecar route, or UI wiring were added.
 
+## 0034D: Google-first OIDC and future storage authorization
+
+Status: complete, architecture/research-only; no auth or storage code.
+
+Added the [Google-first OIDC and Future Storage Authorization ADR](google-first-oidc-storage-auth-architecture.md).
+It selects Google as the first planned core-owned identity provider, keeps
+Google Drive/other BYOS consent separate from sign-in, and identifies
+Microsoft identity plus OneDrive/Graph as the next provider to evaluate. It
+defines provider-neutral identity/storage contracts, core-owned account/session
+and grant data, least-privilege and verification gates, and the Save-to-
+Cookbook implications. The AI sidecar owns no identity, session, cookie,
+provider token, storage grant, or canonical recipe data. No provider client,
+route, migration, secret, token, or live OAuth flow was added.
+
 ## 0034B: Sidecar real-save local wiring plan
 
 Status: complete, planning/gate-only; no wiring implemented.

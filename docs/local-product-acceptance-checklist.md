@@ -71,6 +71,12 @@
   Do not substitute browser/session automation, cookie/token export, or direct
   sidecar DB writes.
 
+- The Google-first identity/storage ADR is planning-only. Any future Google
+  sign-in must be owned by Vanilla Cookbook core; Drive/OneDrive storage
+  consent must be a separate user action. The sidecar must not receive core
+  sessions, provider tokens, or storage grants, and production Save-to-Cookbook
+  remains unavailable.
+
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the
   Compose recovery instruction.

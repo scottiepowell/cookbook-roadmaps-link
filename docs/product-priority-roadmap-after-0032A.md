@@ -238,3 +238,14 @@ that boundary.
 or adopt a verified upstream plugin/API hook with equivalent ownership and
 transaction guarantees. Direct sidecar DB writes and browser/session
 automation are rejected; production save remains unimplemented.
+
+## 0034D Google-first identity and future storage authorization
+
+The [Google-first OIDC and Future Storage Authorization ADR](google-first-oidc-storage-auth-architecture.md)
+selects Google as the first planned external identity candidate in the
+Vanilla Cookbook core. Sign-in identity consent and Google Drive BYOS consent
+remain separate. Microsoft identity plus OneDrive/Graph is the next provider
+to evaluate through provider-neutral contracts. The AI sidecar does not own
+AuthUser, sessions, cookies, provider tokens, storage grants, or canonical
+recipe storage. This is documentation-only; production Save-to-Cookbook and
+all auth/storage implementation remain future work.

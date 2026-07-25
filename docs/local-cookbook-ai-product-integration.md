@@ -190,6 +190,13 @@ ready. 0034C now provides a core-process dev-only fixture that verifies the
 full sequence without exporting credentials; it does not change that sidecar
 UI status.
 
+Identity and storage are a separate future core boundary. The [Google-first
+OIDC and Future Storage Authorization ADR](google-first-oidc-storage-auth-architecture.md)
+selects Google as the first planned sign-in provider, keeps Drive consent
+separate from login, and identifies Microsoft/OneDrive as the next provider to
+evaluate. The sidecar does not own core sessions, cookies, provider tokens, or
+storage grants; production Save-to-Cookbook remains unimplemented.
+
 ## Boundary before platform work
 
 This is a local operator experience and safe link handoff only. It is not a reverse proxy for a
