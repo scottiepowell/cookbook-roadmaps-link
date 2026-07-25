@@ -68,7 +68,7 @@ GPL-3.0 core license and MIT parser submodule lead, pinned the source and
 submodule, and built the local-only `local/vanilla-cookbook-adapter:0033w`
 image. The local Compose default remains `jt196/vanilla-cookbook:stable`; an
 opt-in selector accepts only the default or the local adapter image namespace.
-No upstream source was vendored here. The next task is 0033X core-owned local
+No upstream source was vendored here. The next task was 0033X core-owned local
 dry-run adapter work in the separate workspace.
 
 ## 0033X: Core-owned local dry-run adapter
@@ -79,8 +79,11 @@ Added the core-owned candidate validation and mapping service in the external
 workspace, with safe versioned response envelopes, fixture duplicate signals,
 idempotency replay/conflict behavior, and focused tests. Built and locally
 verified `local/vanilla-cookbook-adapter:0033x` through the guarded loopback
-Compose path. No route or recipe mutation was added. The next task is 0033Y:
-review and design the authenticated core commit boundary.
+Compose path. No recipe mutation was added. 0033Y added the authenticated
+core-owned `POST /api/adapter/recipes/import-candidate/dry-run` route to the
+separate workspace and built the opt-in `0033y` image. The next task is a
+separate review/design of the authenticated core commit boundary; production
+save remains unimplemented.
 
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 

@@ -121,10 +121,11 @@ artifacts into this repository.
 
 ## Next task
 
-0033X completed only authenticated-context dry-run mapping, validation,
-idempotency, and core tests in the separate workspace. Recommend **0033Y:
-review and design the authenticated core commit boundary** before any commit
-mutation or route exposure. Production Save-to-Cookbook remains unimplemented.
+0033X completed authenticated-context dry-run mapping, validation, idempotency,
+and core tests in the separate workspace. 0033Y then added the authenticated
+dry-run route and built the opt-in `0033y` image; recommend a subsequent task
+to review and design the authenticated core commit boundary before any commit
+mutation. Production Save-to-Cookbook remains unimplemented.
 
 ## Explicit non-goals
 

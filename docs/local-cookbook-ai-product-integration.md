@@ -177,9 +177,12 @@ sets the provenance, license, custom-image, and core-adapter gates for the
 local-only `local/vanilla-cookbook-adapter:0033w` image. The default local
 Compose path still uses `jt196/vanilla-cookbook:stable`; use the opt-in
 `-CookbookImage` selector only with the approved local image namespace.
-0033X adds a core-owned no-mutation dry-run service in that external workspace
-and the `0033x` image. It has no route or commit behavior; the next task must
-review an authenticated core commit boundary.
+0033X adds a core-owned no-mutation dry-run service and 0033Y adds the
+authenticated `POST /api/adapter/recipes/import-candidate/dry-run` route in
+that external workspace. The opt-in image is
+`local/vanilla-cookbook-adapter:0033y`; it is not the default image and has no
+commit behavior. The next task must review an authenticated core commit
+boundary.
 
 ## Boundary before platform work
 

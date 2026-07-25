@@ -1,6 +1,7 @@
 # Core-Owned Local Dry-Run Adapter
 
-Status: complete in the separate core workspace; dry-run only.
+Status: complete in the separate core workspace; authenticated local route
+available; dry-run only.
 
 Date: 2026-07-25
 
@@ -9,11 +10,14 @@ Date: 2026-07-25
 The implementation lives outside this sidecar repository in the source-owned
 Vanilla Cookbook checkout created by 0033W.
 
-- Branch: `openclaw/0033X-core-owned-dry-run-adapter`
-- Commit: `90c70c0 feat: add core-owned import dry-run adapter`
+- Service branch/commit: `openclaw/0033X-core-owned-dry-run-adapter` at
+  `90c70c0 feat: add core-owned import dry-run adapter`
+- Route branch/commit: `openclaw/0033Y-core-owned-local-dry-run-route` at
+  `a3d33924795d31e60ad587ac7960cae7ac7dc86d`
 - Source pin: `7d94160e90368ed8ceb55b2dccfbbb5de1fb7b2c`
 - Parser submodule pin: `6e8d1dff0c05f749b435c7e19b7f6627f60aa5d0`
-- Image: `local/vanilla-cookbook-adapter:0033x`
+- Images: `local/vanilla-cookbook-adapter:0033x` and
+  `local/vanilla-cookbook-adapter:0033y`
 
 No external source or source diff was copied into this repository. The custom
 image is local-only and opt-in; `docker-compose.local.yml` still defaults to
@@ -22,9 +26,10 @@ image is local-only and opt-in; `docker-compose.local.yml` still defaults to
 ## Adapter shape
 
 The core workspace adds a pure service module at
-`src/lib/server/importAdapter.js` and focused Vitest coverage. It intentionally
-does not add an HTTP route in this task. A future route must use the normal
-core authentication boundary and must be separately reviewed before exposure.
+`src/lib/server/importAdapter.js` and the separately reviewed route
+`POST /api/adapter/recipes/import-candidate/dry-run`. The route uses the normal
+core authentication boundary and is available only through the opt-in local
+custom image. It is not a production or exposed deployment route.
 
 The service accepts a reviewed candidate plus the core app's current user
 context. It does not import Prisma, filesystem, uploads, network clients, or
@@ -79,7 +84,7 @@ authenticated duplicate lookup only after its read boundary is reviewed.
 
 ## Evidence and remaining gap
 
-The external focused suite passes 7/7 tests, covering mapping, required fields,
+The external focused suite passes 12/12 tests, covering mapping, required fields,
 unsafe URLs, unknown/provider-like fields, version mismatch, exclusions,
 duplicate signals, replay/conflict, and no-persistence/leakage behavior. The
 core build path also passed Prisma generation, service-worker generation, and

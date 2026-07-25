@@ -168,10 +168,12 @@ backup, synthetic-data, and cleanup guards.
 
 ## Next implementation task
 
-0033X completed only authenticated-context dry-run mapping, validation,
-idempotency, and core tests, stopping before production write-back or exposed
-deployment integration. Recommend **0033Y: review and design the
-authenticated core commit boundary**.
+0033X completed authenticated-context dry-run mapping, validation, idempotency,
+and core tests, and 0033Y added the authenticated no-mutation dry-run route in
+the separate workspace. The opt-in `0033y` image was built and verified on
+loopback. Recommend a subsequent task to review and design the authenticated
+core commit boundary before any production write-back or exposed deployment
+integration.
 
 If the upstream project confirms an equivalent supported plugin/API hook before
 0033W begins, the task may choose that route instead of maintaining a fork,

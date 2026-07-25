@@ -225,8 +225,10 @@ follow-up to bootstrap a source-owned/forked Vanilla Cookbook core workspace and
 the 0033V workspace plan is documented in
 [Source-Owned Vanilla Cookbook Adapter Workspace Plan](source-owned-vanilla-cookbook-adapter-workspace-plan.md).
 0033W completed that external recursive checkout and local image bootstrap;
-0033X completed the external core-owned no-mutation dry-run adapter and built
-the `0033x` image; 0033Y must review the authenticated commit boundary.
+0033X completed the external core-owned no-mutation dry-run adapter and 0033Y
+added the authenticated dry-run route, building and verifying the opt-in
+`0033y` image on loopback. The next task must review the authenticated commit
+boundary; production Save-to-Cookbook remains unimplemented.
 or adopt a verified upstream plugin/API hook with equivalent ownership and
 transaction guarantees. Direct sidecar DB writes and browser/session
 automation are rejected; production save remains unimplemented.
