@@ -469,6 +469,14 @@ app now has a local-only commit boundary, but disposable runtime session/
 ownership verification and sidecar UI wiring remain separately approved work.
 Direct sidecar DB writes and browser/session automation remain rejected.
 
+0034E adds an offline Google-first identity foundation in the external core
+workspace. It normalizes identity-only claims and tests core-owned provider
+link mapping behind explicit local mock gates; it does not call Google, create
+sessions, handle cookies/tokens, add routes, request Drive scopes, or persist a
+provider link. The local image is opt-in as
+`local/vanilla-cookbook-adapter:0034e`. Real Google login, storage consent,
+production auth, and sidecar UI real-save wiring remain future work.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

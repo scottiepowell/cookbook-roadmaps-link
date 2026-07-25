@@ -126,6 +126,18 @@ verifies read-after-write, replay/conflict, duplicate review, rollback, and
 DB/uploads backup/restore; and emits safe status/UID output only. No cookies,
 tokens, sessions, real credentials, sidecar route, or UI wiring were added.
 
+## 0034E: Google-first core OIDC local auth spike
+
+Status: complete, external core/local mock foundation; real provider auth is
+not implemented.
+
+The external core workspace adds an identity-only Google descriptor, explicit
+loopback/dev mock gates, bounded OIDC profile normalization, core-owned
+provider-link mapping, replay/email-collision decisions, and offline tests.
+No route, provider call, token/cookie/session handling, Drive scope, durable
+migration, or sidecar identity ownership was added. The next task is a
+separate core security gate for real discovery/callback/session behavior.
+
 ## 0034D: Google-first OIDC and future storage authorization
 
 Status: complete, architecture/research-only; no auth or storage code.

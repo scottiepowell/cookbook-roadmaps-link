@@ -197,6 +197,11 @@ separate from login, and identifies Microsoft/OneDrive as the next provider to
 evaluate. The sidecar does not own core sessions, cookies, provider tokens, or
 storage grants; production Save-to-Cookbook remains unimplemented.
 
+0034E adds only an offline identity foundation in the separate core workspace.
+The Google descriptor is identity-only; Drive/BYOS consent is not requested.
+The sidecar still owns no core session, cookie, provider token, storage grant,
+or user identity, and production Save-to-Cookbook remains unavailable.
+
 ## Boundary before platform work
 
 This is a local operator experience and safe link handoff only. It is not a reverse proxy for a

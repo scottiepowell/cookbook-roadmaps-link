@@ -77,6 +77,10 @@
   sessions, provider tokens, or storage grants, and production Save-to-Cookbook
   remains unavailable.
 
+- The 0034E Google-first auth spike is mock/unit-test-only. Do not start a real
+  OAuth flow or add credentials. Google Drive/storage consent, production auth,
+  and sidecar UI real-save wiring remain separate future work.
+
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the
   Compose recovery instruction.

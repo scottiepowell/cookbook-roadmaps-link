@@ -244,10 +244,12 @@ core remains the canonical recipe owner and validation boundary.
 6. Evaluate Microsoft identity plus OneDrive/Graph as the next provider using
    the same contracts and least-privilege review.
 
-The next recommended task is **0034E: core-owned Google OIDC identity-only
-implementation/security gate**. It must remain in the core workspace, define
-no sidecar identity claims, and begin with mock/provider-contract and local
-configuration review rather than a live account flow.
+0034E completed the first offline identity foundation in the core workspace:
+Google identity-only descriptor/config guards, bounded claim normalization,
+and injected core-store provider-link mapping. It added no route, durable link,
+session, token, or provider call. The next recommended task is a separate core
+security implementation gate for real discovery/callback/session behavior; it
+must still define no sidecar identity claims.
 
 ## Explicit non-goals
 
