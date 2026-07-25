@@ -220,8 +220,10 @@ the approved boundaries.
 
 ## 0033U core adapter path decision
 
-Save-to-Cookbook remains prototype-only. The decision recommends 0033V prepare
-a source-owned/forked Vanilla Cookbook core workspace and custom local image,
+Save-to-Cookbook remains prototype-only. The decision recommends a 0033W
+follow-up to bootstrap a source-owned/forked Vanilla Cookbook core workspace and custom local image;
+the 0033V workspace plan is documented in
+[Source-Owned Vanilla Cookbook Adapter Workspace Plan](source-owned-vanilla-cookbook-adapter-workspace-plan.md).
 or adopt a verified upstream plugin/API hook with equivalent ownership and
 transaction guarantees. Direct sidecar DB writes and browser/session
 automation are rejected; production save remains unimplemented.

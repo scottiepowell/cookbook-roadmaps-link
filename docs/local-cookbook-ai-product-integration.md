@@ -169,7 +169,10 @@ The 0033U path decision recommends a source-owned/forked core workspace and
 custom local image, or a reviewed upstream plugin/API hook if one can provide
 the same ownership and transaction guarantees. Until then, the local UI is a
 prototype and the 0033Q harness is disposable evidence only. Production save
-support is not implemented.
+support is not implemented. The 0033V workspace plan
+([source-owned Vanilla Cookbook adapter workspace plan](source-owned-vanilla-cookbook-adapter-workspace-plan.md))
+sets the provenance, license, custom-image, and core-adapter gates for the
+0033W follow-up.
 
 ## Boundary before platform work
 

@@ -53,7 +53,7 @@ Status: complete, docs-only; implementation remains blocked.
 Added [Save-to-Cookbook Core Adapter Path Decision](save-to-cookbook-core-adapter-path-decision.md).
 It evaluates the external image prototype, source-owned/forked core adapter,
 reviewed upstream plugin/API, browser/session automation, and direct DB writes.
-It recommends 0033V to prepare a source-owned core workspace/custom image,
+It recommends a 0033W follow-up to bootstrap a source-owned core workspace/custom image,
 while preserving an upstream hook as a preferred alternative if verified.
 Vanilla Cookbook remains canonical; direct DB writes and browser/session
 automation are rejected.

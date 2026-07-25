@@ -13,11 +13,12 @@ authenticated ownership, validates and serializes fields, commits within its
 transaction boundary, and returns a canonical recipe identifier. The AI
 sidecar remains the draft, dry-run, and candidate producer.
 
-The next concrete task is **0033V: prepare a source-owned Vanilla Cookbook
-adapter workspace/custom image plan**. It should establish source ownership,
-license/provenance review, a reproducible local image, the core adapter
-contract, synthetic local user setup, and a no-production test boundary. It
-must not begin production write-back until those gates are separately approved.
+The next concrete task is **0033W: bootstrap the reviewed source-owned Vanilla
+Cookbook workspace/custom image and core adapter contract**. The 0033V plan
+must establish source ownership, license/provenance review, a reproducible
+local image, the core adapter contract, synthetic local user setup, and a
+no-production test boundary. 0033W must not begin production write-back until
+those gates are separately approved.
 
 Path C remains a preferred implementation variant if the upstream project
 offers a reviewed API/plugin hook with equivalent ownership and transaction
@@ -42,9 +43,15 @@ the image is not a source-owned adapter workspace.
 
 The source tree and image metadata inspected locally did not reveal a checked-in
 canonical repository URL or license/provenance record that this repository can
-safely adopt. No external source was fetched, copied, vendored, or committed.
-This is an ownership/provenance unknown for 0033V, not evidence that no upstream
-source exists.
+safely adopt. Public project documentation currently identifies the likely
+upstream repository as [Vanilla Cookbook on GitHub](https://github.com/jt196/vanilla-cookbook)
+and documents cloning it with its recursive submodule plus the `jt196/vanilla-cookbook`
+Docker image in the [installation guide](https://vanilla-cookbook.readthedocs.io/en/stable/manual/installation/).
+These are provenance leads, not permission to copy source. The applicable
+license still requires a direct review of the upstream [LICENSE file](https://github.com/jt196/vanilla-cookbook/blob/main/LICENSE)
+before a fork or custom image is created. No external source was fetched,
+copied, vendored, or committed. This is an ownership/provenance gate for
+0033W, not evidence that no upstream source exists.
 
 The local image has the expected `jt196/vanilla-cookbook:stable` tag but no
 useful OCI source/license labels. Repository documentation likewise treats it
@@ -102,9 +109,9 @@ CSRF handling. It would also make read-after-write, retries, duplicate
 protection, and rollback dependent on UI timing. Direct DB writes would bypass
 the canonical app entirely. Neither path should be used to ship the feature.
 
-## Required 0033V deliverables
+## Required follow-up deliverables
 
-Before implementation, the next task should produce:
+Before implementation, the 0033W follow-up should produce:
 
 1. source repository/fork location, license/provenance evidence, and a policy
    for syncing upstream changes;
