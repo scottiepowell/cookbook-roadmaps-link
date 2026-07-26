@@ -63,11 +63,11 @@
   native upstream recipe API. Use the 0033Q readiness harness for disposable
   DB/write evidence, not the UI panel.
 
-- Treat sidecar Save-to-Cookbook as prototype-only. 0034A proves a real
+- Treat sidecar Save-to-Cookbook as local synthetic only. 0034A proves a real
   core-service commit with synthetic ownership in a disposable SQLite test
-  DB, but the sidecar UI is not authorized to call the core commit route yet.
-  The core-owned local fixture is now available, but sidecar transport remains
-  a separate gate before wiring real UI saves.
+  DB, and 0034I verifies the local UI/API path through the core persistent
+  route with disposable cleanup. This is not real-user authentication or
+  production Save-to-Cookbook.
   Do not substitute browser/session automation, cookie/token export, or direct
   sidecar DB writes.
 
@@ -78,8 +78,9 @@
   remains unavailable.
 
 - The 0034E Google-first auth spike is mock/unit-test-only. Do not start a real
-  OAuth flow or add credentials. Google Drive/storage consent, production auth,
-  and sidecar UI real-save wiring remain separate future work.
+  OAuth flow or add credentials. 0034J recommends a core-local mock OIDC
+  session fixture before any manual Google credential task. Google
+  Drive/storage consent and production auth remain separate future work.
 
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the

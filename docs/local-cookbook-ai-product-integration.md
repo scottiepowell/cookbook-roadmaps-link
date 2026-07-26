@@ -184,11 +184,11 @@ that external workspace. The opt-in image is
 commit behavior. 0033Z adds a separately gated authenticated commit adapter in
 the `0033z` image; it remains local-only and requires explicit confirmation.
 0034A now proves service-level core ownership and a real temporary SQLite commit
-with backup/restore using a synthetic `AuthUser`. Route-level session handling
-remains intentionally unverified, so sidecar UI real-save wiring is still not
-ready. 0034C now provides a core-process dev-only fixture that verifies the
-full sequence without exporting credentials; it does not change that sidecar
-UI status.
+with backup/restore using a synthetic `AuthUser`. Route-level real-user session
+handling remains intentionally unverified. 0034C/0034G provide the core
+synthetic and persistent fixtures, and 0034I verifies the sidecar UI/API path
+through the persistent route without exporting credentials. Production
+Save-to-Cookbook still requires a real core session boundary.
 
 Identity and storage are a separate future core boundary. The [Google-first
 OIDC and Future Storage Authorization ADR](google-first-oidc-storage-auth-architecture.md)
@@ -201,6 +201,11 @@ storage grants; production Save-to-Cookbook remains unimplemented.
 The Google descriptor is identity-only; Drive/BYOS consent is not requested.
 The sidecar still owns no core session, cookie, provider token, storage grant,
 or user identity, and production Save-to-Cookbook remains unavailable.
+
+0034J records the next auth gate: a disabled-by-default core-local mock OIDC
+session fixture should exercise real Lucia session creation and `locals.user`
+before any manual Google credential task. The sidecar remains outside session,
+cookie, provider-token, and storage-grant ownership.
 
 ## Boundary before platform work
 

@@ -48,6 +48,11 @@ Observed in this repository:
 - The sidecar has no approved production identity, storage, provider-token, or
   session boundary. Production Save-to-Cookbook remains unimplemented.
 
+0034J recommends a core-local mock OIDC session fixture as the next
+implementation gate. It must exercise real core Lucia session creation and
+validation without contacting Google; a separate manual Google credential task
+comes only after that fixture passes.
+
 These are repository facts, not evidence that an external provider has been
 configured or that a real account has been used.
 

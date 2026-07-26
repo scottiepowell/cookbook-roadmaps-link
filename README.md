@@ -507,6 +507,13 @@ mock importer draft passes dry-run, explicit confirmation reaches the
 returned, and the disposable runtime is cleaned up. Browser observation in
 Vanilla Cookbook remains intentionally unavailable without a real session.
 
+0034J pauses synthetic-save expansion and records the next auth gate. The
+separate core workspace already owns Lucia sessions, `locals.user`, provider
+links, and OIDC callback plumbing, but 0034E did not exercise a real session
+cookie. The recommended next step is a disabled-by-default core-local mock
+OIDC session fixture, followed by a separately approved manual Google local
+credential task. No provider calls or credentials are used by this repository.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

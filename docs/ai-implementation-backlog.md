@@ -189,6 +189,18 @@ No real session is created, so browser observation inside Vanilla Cookbook is
 intentionally not part of the evidence. Production Save-to-Cookbook and real
 Google login remain unimplemented.
 
+## 0034J: Core real authenticated session plan
+
+Status: complete, security/design-only; next implementation is 0034K.
+
+The [Core Real Authenticated Session Plan](core-real-authenticated-session-plan.md)
+records the separate core workspace's Lucia session, `locals.user`, OIDC
+callback, cookie, provider-link, and migration facts. It recommends a
+disabled-by-default core-local mock OIDC session fixture to exercise real
+session creation and validation without external calls, followed by a separate
+manual Google local-credentials task. The sidecar remains outside identity,
+session, provider-token, and storage-grant ownership.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.
