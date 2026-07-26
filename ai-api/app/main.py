@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -19,6 +20,11 @@ from app.cookbook_import_commit import (
     validate_local_commit_guard,
 )
 from app.cookbook_import_dry_run import CookbookImportDryRunOperationResponse, dry_run_import_candidate_operation
+from app.cookbook_core_transport import (
+    CoreTransportSettings,
+    local_core_persistent_transport_guard,
+    send_core_local_persistent_commit,
+)
 from app.config import (
     get_ai_settings,
     get_cookbook_target_url,
@@ -99,6 +105,8 @@ def demo_readiness() -> dict[str, object]:
     invite_settings = get_invite_session_settings()
     recipe_count = _safe_recipe_count()
     dataset_available = Path(get_recipe_dataset_dir()).exists()
+    persistent_settings = _persistent_transport_settings()
+    persistent_reasons = local_core_persistent_transport_guard(persistent_settings, env=os.environ)
 
     return {
         "service": {"ok": True, "name": "ai-api"},
@@ -135,6 +143,14 @@ def demo_readiness() -> dict[str, object]:
             ),
             "allowed_workflows": list(invite_settings.allowed_workflows),
             "local_operator_create_enabled": invite_settings.local_operator_create_enabled,
+        },
+        "local_real_save": {
+            "available": not persistent_reasons,
+            "message": (
+                "Local/dev-only persistent save is enabled for the approved cookbook-local adapter runtime."
+                if not persistent_reasons
+                else "Local/dev-only persistent save is disabled; the in-memory review prototype remains available."
+            ),
         },
     }
 
@@ -293,6 +309,18 @@ def _local_save_guard(request: Request) -> LocalCommitGuard:
     )
 
 
+def _persistent_transport_settings() -> CoreTransportSettings:
+    settings = get_local_save_settings()
+    return CoreTransportSettings(
+        enabled=settings.enabled,
+        approved=settings.approved,
+        runtime_verified=settings.runtime_verified,
+        target_url=get_cookbook_target_url(),
+        image_marker=os.getenv("VANILLA_COOKBOOK_IMAGE", "").strip(),
+        compose_project=os.getenv("COOKBOOK_COMPOSE_PROJECT", "cookbook-local").strip() or "cookbook-local",
+    )
+
+
 def _local_request_guard_error(request: Request) -> list:
     host = request.client.host if request.client else None
     if host not in {"127.0.0.1", "localhost", "::1", "testclient"}:
@@ -331,6 +359,29 @@ def local_import_candidate_commit(payload: LocalCommitRequest, request: Request)
             errors=guard_errors,
         )
     return _local_save_service.commit(payload.draft, guard=guard, idempotency_key=payload.idempotency_key)
+
+
+@app.post("/adapter/recipes/import-candidate/local-persistent-commit", include_in_schema=False)
+def local_import_candidate_persistent_commit(payload: LocalCommitRequest, request: Request) -> dict[str, object]:
+    """Bridge the review UI to the disposable 0034g core fixture only."""
+
+    if not payload.confirm_local_save:
+        return {"status": "unavailable", "code": "explicit_confirmation_required"}
+    settings = _persistent_transport_settings()
+    guard_reasons = _local_request_guard_error(request) + local_core_persistent_transport_guard(settings, env=os.environ)
+    if guard_reasons:
+        return {
+            "status": "unavailable",
+            "code": "local_persistent_transport_blocked",
+            "reasons": guard_reasons,
+        }
+    return send_core_local_persistent_commit(
+        payload.draft,
+        idempotency_key=payload.idempotency_key,
+        approved=True,
+        settings=settings,
+        env=os.environ,
+    )
 
 
 @app.post("/ai/ask", response_model=AskResponse)

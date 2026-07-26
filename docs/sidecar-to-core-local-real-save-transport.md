@@ -1,6 +1,8 @@
 # Sidecar-to-Core Local Real-Save Transport
 
-Status: local/dev-only transport implemented; normal product UI wiring remains deferred.
+Status: local/dev-only transport implemented; 0034H wires the gated importer
+review UI to the persistent 0034G transport. Production UI wiring remains
+unimplemented.
 
 Date: 2026-07-25
 
@@ -63,7 +65,9 @@ user.
 
 ## UI and production status
 
-The existing sidecar UI remains the 0033S review/dry-run/in-memory prototype.
+Before 0034H, the existing sidecar UI was the 0033S review/dry-run/in-memory
+prototype. It now selects the persistent transport only when the exact local
+gates are enabled and otherwise preserves that prototype path.
 It does not call this transport and does not claim a recipe was saved in
 Cookbook. A later task may add a clearly local-only control only after the
 operator workflow, core auth boundary, and persistent local target are reviewed.

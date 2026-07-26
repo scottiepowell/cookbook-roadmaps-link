@@ -1,7 +1,8 @@
 # Core-Owned Local Persistent-User Auth Transport
 
-Status: verified local/dev-only persistent fixture; normal UI wiring and
-production Save-to-Cookbook remain unimplemented.
+Status: verified local/dev-only persistent fixture; 0034H now wires the
+gated importer UI to this transport; production Save-to-Cookbook remains
+unimplemented.
 
 Date: 2026-07-26
 
@@ -62,8 +63,9 @@ browser UI: the verification uses a synthetic core owner and restores the
 disposable storage, so no real authenticated browser session exists.
 
 This is persistent disposable-runtime evidence, not production authentication.
-Real Google OIDC, real sessions, storage consent, normal sidecar UI save
-wiring, and production Save-to-Cookbook remain separate work.
+Real Google OIDC, real sessions, storage consent, and production
+Save-to-Cookbook remain separate work. 0034H uses the transport from the
+sidecar review panel only when the same explicit local gates are enabled.
 
 ## Explicit non-goals
 

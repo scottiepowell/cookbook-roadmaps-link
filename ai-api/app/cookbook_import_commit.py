@@ -49,6 +49,7 @@ class LocalCommitRequest(BaseModel):
 
     draft: dict[str, Any]
     idempotency_key: str | None = None
+    confirm_local_save: bool = False
 
 
 class LocalCommitGuard(BaseModel):

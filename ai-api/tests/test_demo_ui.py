@@ -116,6 +116,10 @@ def test_demo_static_assets_load():
     assert "No draft was generated because one clarification is needed." in js_response.text
     assert "Existing draft and citations were reused" in js_response.text
     assert "does not write to production storage" in js_response.text
+    assert "/adapter/recipes/import-candidate/local-persistent-commit" in js_response.text
+    assert "confirm_local_save" in js_response.text
+    assert "Local/dev-only persistent save" in js_response.text
+    assert "Core local recipe UID" in js_response.text
     assert "Recipe session was not found or has expired." in js_response.text
     assert "Recoverable demo issue" in js_response.text
     assert "servings" in js_response.text

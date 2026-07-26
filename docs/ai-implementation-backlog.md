@@ -163,6 +163,20 @@ rejects credential export and direct writes, and recommends 0034C: a
 core-owned local dev-only synthetic auth fixture before any sidecar client or
 UI real-save wiring.
 
+## 0034H: Local UI real-save wiring
+
+Status: complete, local/dev-only and disabled by default; production remains
+unimplemented.
+
+The importer review panel now selects the existing 0034G persistent sidecar
+transport only when explicit local approval, loopback `cookbook-local`, runtime
+verification, and the exact opt-in adapter image marker are present. It
+requires per-save confirmation and otherwise keeps the 0033S in-memory
+prototype. The sidecar sends no identity/session/token/provider/storage values;
+core owns the synthetic user and commit authorization. Real Google login,
+normal authenticated user transport, and production Save-to-Cookbook remain
+future work.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

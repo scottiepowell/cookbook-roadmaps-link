@@ -493,6 +493,14 @@ states, and restore DB/uploads. The local fixture flags are passed as
 non-secret Compose settings but default off. No session, cookie, token, real
 credential, provider call, or normal UI real-save wiring is involved.
 
+0034H wires the importer review panel to the existing 0034G persistent
+transport only when explicit local gates, loopback `cookbook-local`, and the
+opt-in `local/vanilla-cookbook-adapter:0034g` marker are present. The UI keeps
+the 0033S in-memory prototype when those gates are disabled, requires a fresh
+local confirmation, and renders only safe core status/UID/link information.
+This is local/dev-only; production Save-to-Cookbook, real Google login, and
+authenticated normal-user transport remain unimplemented.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

@@ -32,6 +32,11 @@ def enabled_local(monkeypatch, target="http://127.0.0.1:3000/"):
     monkeypatch.setenv("COOKBOOK_TARGET_URL", target)
 
 
+def enabled_persistent_local(monkeypatch, target="http://127.0.0.1:3000/"):
+    enabled_local(monkeypatch, target)
+    monkeypatch.setenv("VANILLA_COOKBOOK_IMAGE", "local/vanilla-cookbook-adapter:0034g")
+
+
 def test_demo_ui_contains_local_review_panel_and_no_production_claims():
     response = TestClient(main.app).get("/demo")
 
@@ -96,3 +101,72 @@ def test_invalid_draft_returns_safe_field_errors_when_local_enabled(monkeypatch)
     assert response.json()["result"]["status"] == "invalid"
     assert {error["field"] for error in response.json()["result"]["errors"]} >= {"title", "instructions"}
     assert "provider body" not in response.text.lower()
+
+
+def test_persistent_local_route_is_disabled_without_exact_runtime_gate(monkeypatch):
+    enabled_local(monkeypatch)
+    called = []
+    monkeypatch.setattr(main, "send_core_local_persistent_commit", lambda *args, **kwargs: called.append(True))
+
+    response = TestClient(main.app).post(
+        "/adapter/recipes/import-candidate/local-persistent-commit",
+        json={"draft": draft(), "idempotency_key": "persistent-ui-test", "confirm_local_save": True},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "unavailable"
+    assert "approved_persistent_local_image_required" in response.json()["reasons"]
+    assert called == []
+
+
+def test_persistent_local_route_requires_confirmation_before_transport(monkeypatch):
+    enabled_persistent_local(monkeypatch)
+    called = []
+    monkeypatch.setattr(main, "send_core_local_persistent_commit", lambda *args, **kwargs: called.append(True))
+
+    response = TestClient(main.app).post(
+        "/adapter/recipes/import-candidate/local-persistent-commit",
+        json={"draft": draft(), "idempotency_key": "persistent-ui-test"},
+    )
+
+    assert response.json() == {"status": "unavailable", "code": "explicit_confirmation_required"}
+    assert called == []
+
+
+def test_persistent_local_route_sends_reviewed_candidate_only(monkeypatch):
+    enabled_persistent_local(monkeypatch)
+    observed = {}
+
+    def fake_transport(candidate, **kwargs):
+        observed["candidate"] = candidate
+        observed["kwargs"] = kwargs
+        return {
+            "status": "verified",
+            "verification": "local_persistent_synthetic_auth",
+            "recipe_uid": "opaque-local-uid",
+            "commit_status": "committed",
+            "read_after_write": "verified",
+            "replay_status": "replay",
+            "content_scope": "first_scope_only",
+        }
+
+    monkeypatch.setattr(main, "send_core_local_persistent_commit", fake_transport)
+    response = TestClient(main.app).post(
+        "/adapter/recipes/import-candidate/local-persistent-commit",
+        json={"draft": draft(), "idempotency_key": "persistent-ui-test", "confirm_local_save": True},
+    )
+
+    assert response.json()["status"] == "verified"
+    assert observed["kwargs"]["approved"] is True
+    assert observed["kwargs"]["settings"].image_marker == "local/vanilla-cookbook-adapter:0034g"
+    assert not any(key in observed["candidate"] for key in ("userId", "cookie", "session", "token", "provider_token", "storage_grant"))
+    assert "opaque-local-uid" in response.text
+    assert "OPENAI_API_KEY" not in response.text
+
+
+def test_readiness_reports_persistent_save_only_for_0034g_local_gates(monkeypatch):
+    enabled_persistent_local(monkeypatch)
+    response = TestClient(main.app).get("/demo/readiness")
+
+    assert response.json()["local_real_save"]["available"] is True
+    assert "0034g" not in response.text

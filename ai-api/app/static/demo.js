@@ -64,6 +64,7 @@ const workflows = {
 let activeRecipeSessionId = null;
 let activeImporterDraft = null;
 let lastSaveDryRun = null;
+let localPersistentSaveAvailable = false;
 
 document.getElementById("refresh-readiness").addEventListener("click", refreshReadiness);
 document.getElementById("refresh-usage-report").addEventListener("click", refreshUsageReport);
@@ -123,8 +124,16 @@ async function refreshReadiness() {
         data.invite_sessions?.available,
         data.invite_sessions?.available ? "Enabled" : "Disabled",
         data.invite_sessions?.message || "Invite-only demo sessions are disabled by default.",
+        ),
+      readinessCard(
+        "Local real save",
+        data.local_real_save?.available,
+        data.local_real_save?.available ? "Enabled" : "Prototype only",
+        data.local_real_save?.message || "The persistent local save path is disabled by default.",
       ),
     );
+    localPersistentSaveAvailable = Boolean(data.local_real_save?.available);
+    updateSavePanelGateStatus();
     document.getElementById("readiness-updated").textContent = "Checked just now";
   } catch (error) {
     grid.innerHTML = "";
@@ -211,10 +220,18 @@ function prepareSavePanel(data) {
   description.value = activeImporterDraft?.description || "";
   confirm.checked = false;
   status.textContent = hasDraft
-    ? "Unsaved AI draft loaded. Review the editable fields, then run the local dry-run."
+    ? `Unsaved AI draft loaded. Review the editable fields, then run the local dry-run. ${localPersistentSaveAvailable ? "A local/dev-only persistent save is available after confirmation." : "Persistent local save is unavailable; the in-memory prototype remains available."}`
     : "No structured draft was returned. Any draft remains unsaved.";
   result.className = "result empty";
   result.textContent = "Local save is unavailable until explicit local gates are enabled.";
+}
+
+function updateSavePanelGateStatus() {
+  const status = document.getElementById("save-cookbook-status");
+  if (!status || activeImporterDraft) return;
+  status.textContent = localPersistentSaveAvailable
+    ? "Local/dev-only persistent save is enabled for the disposable cookbook-local runtime; no production save is available."
+    : "Local persistent save is unavailable until explicit 0034g local gates are enabled; the in-memory prototype remains available.";
 }
 
 function reviewedImporterDraft() {
@@ -252,10 +269,17 @@ async function runLocalCommit() {
   }
   const draft = reviewedImporterDraft();
   try {
-    const data = await requestJson("/adapter/recipes/import-candidate/local-commit", postOptions({draft, idempotency_key: "demo-local-save"}), "local-save-commit");
+    const endpoint = localPersistentSaveAvailable
+      ? "/adapter/recipes/import-candidate/local-persistent-commit"
+      : "/adapter/recipes/import-candidate/local-commit";
+    const payload = {draft, idempotency_key: "demo-local-save"};
+    if (localPersistentSaveAvailable) payload.confirm_local_save = true;
+    const data = await requestJson(endpoint, postOptions(payload), "local-save-commit");
     renderLocalSaveResult(data);
-    if (data.status === "committed" || data.status === "idempotent_replay" || data.status === "duplicate") {
-      document.getElementById("save-cookbook-status").textContent = "Local result received. This draft is not production-saved.";
+    if (["committed", "idempotent_replay", "duplicate", "verified"].includes(data.status)) {
+      document.getElementById("save-cookbook-status").textContent = localPersistentSaveAvailable
+        ? "Local core result received. Production Save-to-Cookbook is not available."
+        : "Local prototype result received. This draft is not production-saved.";
       document.getElementById("save-cookbook-commit").disabled = true;
     }
   } catch (error) {
@@ -272,6 +296,11 @@ function renderLocalSaveResult(data) {
   }
   for (const warning of data.warnings || data.result?.warnings || []) lines.push(`Warning: ${warning}`);
   if (data.local_recipe_id) lines.push(`Local recipe id: ${data.local_recipe_id}`);
+  if (data.recipe_uid) lines.push(`Core local recipe UID: ${data.recipe_uid}`);
+  if (data.recipe_url) lines.push(`Core local canonical link: ${data.recipe_url}`);
+  for (const key of ["verification", "commit_status", "read_after_write", "replay_status", "conflict_status", "duplicate_status", "rollback_status"]) {
+    if (data[key]) lines.push(`${key.replaceAll("_", " ")}: ${data[key]}`);
+  }
   if (data.result?.idempotency?.key) lines.push("Idempotency metadata: present");
   target.textContent = lines.join("\n");
 }

@@ -94,7 +94,7 @@
         </div>
         <div id="import-result" class="result empty">Run this workflow to see a structured draft.</div>
         <div id="save-cookbook-panel" class="save-panel" aria-live="polite">
-          <p class="eyebrow">Local-only MVP</p>
+          <p class="eyebrow">Local/dev-only MVP</p>
           <h3>Save to Cookbook</h3>
           <p id="save-cookbook-status" class="hint">No importer draft is loaded. Unsaved AI draft content remains unsaved.</p>
           <label for="save-cookbook-title">Review title</label>
@@ -104,10 +104,10 @@
           <label class="checkbox-label"><input id="save-cookbook-confirm" type="checkbox" disabled> I reviewed this draft and approve a local-only save attempt.</label>
           <div class="button-row">
             <button id="save-cookbook-dry-run" type="button" disabled>Run local dry-run</button>
-            <button id="save-cookbook-commit" type="button" disabled>Confirm local save</button>
+          <button id="save-cookbook-commit" type="button" disabled>Confirm local/dev-only save</button>
           </div>
           <div id="save-cookbook-result" class="result empty">Local save is unavailable until explicit local gates are enabled.</div>
-          <p class="hint">This never saves production or exposed Cookbook data. Disposable DB/write proof remains the 0033Q readiness harness.</p>
+          <p class="hint">This never saves production or exposed Cookbook data. When the exact 0034g local gates are enabled, the sidecar calls the core-owned persistent local route; otherwise the in-memory prototype remains available. Disposable DB/write proof remains the 0033Q readiness harness.</p>
         </div>
       </section>
 
