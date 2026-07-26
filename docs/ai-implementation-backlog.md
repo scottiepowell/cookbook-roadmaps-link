@@ -177,6 +177,18 @@ core owns the synthetic user and commit authorization. Real Google login,
 normal authenticated user transport, and production Save-to-Cookbook remain
 future work.
 
+## 0034I: Local UI persistent-save E2E verification
+
+Status: complete, API-level local/disposable verification.
+
+The new local verifier starts `cookbook-local` with the exact 0034G image,
+starts an isolated mock sidecar, obtains a reviewed mock importer draft,
+exercises dry-run and explicit confirmation, verifies safe core UID,
+read-after-write, and idempotency evidence, and cleans up the sidecar/runtime.
+No real session is created, so browser observation inside Vanilla Cookbook is
+intentionally not part of the evidence. Production Save-to-Cookbook and real
+Google login remain unimplemented.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

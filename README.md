@@ -501,6 +501,12 @@ local confirmation, and renders only safe core status/UID/link information.
 This is local/dev-only; production Save-to-Cookbook, real Google login, and
 authenticated normal-user transport remain unimplemented.
 
+0034I verifies that wiring end-to-end through an API-level local run: the
+mock importer draft passes dry-run, explicit confirmation reaches the
+0034G persistent core route, safe UID/read-after-write/idempotency evidence is
+returned, and the disposable runtime is cleaned up. Browser observation in
+Vanilla Cookbook remains intentionally unavailable without a real session.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

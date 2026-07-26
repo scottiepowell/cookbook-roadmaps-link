@@ -53,6 +53,8 @@ SAFE_RESPONSE_KEYS = frozenset(
         "conflict_status",
         "duplicate_status",
         "rollback_status",
+        "restore_status",
+        "persistent_user_status",
         "content_scope",
         "code",
         "next_action",
