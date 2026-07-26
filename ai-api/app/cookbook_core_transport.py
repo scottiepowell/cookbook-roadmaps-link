@@ -24,6 +24,8 @@ from app.cookbook_import_adapter import (
 
 LOCAL_IMAGE = "local/vanilla-cookbook-adapter:0034f"
 LOCAL_ROUTE = "/api/adapter/dev-only/recipes/import-candidate/verify-local-commit"
+PERSISTENT_LOCAL_IMAGE = "local/vanilla-cookbook-adapter:0034g"
+PERSISTENT_LOCAL_ROUTE = "/api/adapter/dev-only/recipes/import-candidate/verify-local-persistent-commit"
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 FORBIDDEN_KEYS = frozenset(
     {
@@ -103,6 +105,32 @@ def local_core_transport_guard(
         reasons.append("cookbook_local_project_required")
     if settings.image_marker != LOCAL_IMAGE:
         reasons.append("approved_local_image_required")
+    if not _target_is_loopback(settings.target_url):
+        reasons.append("loopback_target_required")
+    if environment.get("NODE_ENV", "").lower() == "production":
+        reasons.append("production_mode")
+    if any(environment.get(name) for name in ("CI", "GITHUB_ACTIONS", "AWS_REGION", "CLOUDFLARE_TUNNEL_TOKEN", "TUNNEL_TOKEN")):
+        reasons.append("deployment_or_ci_context")
+    return reasons
+
+
+def local_core_persistent_transport_guard(
+    settings: CoreTransportSettings,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> list[str]:
+    environment = env or {}
+    reasons: list[str] = []
+    if not settings.enabled:
+        reasons.append("disabled")
+    if not settings.approved:
+        reasons.append("approval_required")
+    if not settings.runtime_verified:
+        reasons.append("runtime_verification_required")
+    if settings.compose_project != "cookbook-local":
+        reasons.append("cookbook_local_project_required")
+    if settings.image_marker != PERSISTENT_LOCAL_IMAGE:
+        reasons.append("approved_persistent_local_image_required")
     if not _target_is_loopback(settings.target_url):
         reasons.append("loopback_target_required")
     if environment.get("NODE_ENV", "").lower() == "production":
@@ -201,10 +229,60 @@ def send_core_local_commit(
     return safe or {"status": "unavailable", "code": "invalid_core_response"}
 
 
+def send_core_local_persistent_commit(
+    draft: Mapping[str, Any],
+    *,
+    idempotency_key: str | None = None,
+    approved: bool = False,
+    settings: CoreTransportSettings | None = None,
+    env: Mapping[str, str] | None = None,
+    opener: Callable[..., Any] = urlopen,
+) -> dict[str, Any]:
+    """Send one reviewed candidate to the persistent disposable core fixture."""
+
+    effective = settings or CoreTransportSettings()
+    reasons = local_core_persistent_transport_guard(effective, env=env)
+    if reasons:
+        return {"status": "unavailable", "code": "local_persistent_transport_blocked", "reasons": reasons}
+    if approved is not True:
+        return {"status": "unavailable", "code": "explicit_confirmation_required"}
+    if not isinstance(draft, Mapping) or _contains_forbidden_key(draft):
+        return {"status": "invalid", "code": "identity_assertion_rejected"}
+
+    result = map_import_draft_to_candidate(draft, idempotency_key=idempotency_key)
+    if result.status not in {"valid", "idempotent_replay"}:
+        return {
+            "status": "invalid",
+            "code": "candidate_validation_failed",
+            "field_errors": [error.model_dump() for error in result.errors],
+            "warnings": result.warnings,
+        }
+    candidate = _core_candidate(draft, result)
+    if candidate is None:
+        return {"status": "invalid", "code": "candidate_mapping_failed"}
+
+    body = json.dumps({"candidate": candidate, "approve_local_write": True}, separators=(",", ":")).encode("utf-8")
+    target = urlsplit(effective.target_url)
+    endpoint = urlunsplit((target.scheme, target.netloc, PERSISTENT_LOCAL_ROUTE, "", ""))
+    request = Request(endpoint, data=body, method="POST", headers={"Content-Type": "application/json"})
+    try:
+        with opener(request, timeout=90) as response:
+            raw = response.read()
+        parsed = json.loads(raw.decode("utf-8"))
+    except (OSError, URLError, ValueError, json.JSONDecodeError):
+        return {"status": "unavailable", "code": "core_persistent_transport_unavailable"}
+    safe = _safe_result(parsed)
+    return safe or {"status": "unavailable", "code": "invalid_core_response"}
+
+
 __all__ = [
     "CoreTransportSettings",
     "LOCAL_IMAGE",
     "LOCAL_ROUTE",
+    "PERSISTENT_LOCAL_IMAGE",
+    "PERSISTENT_LOCAL_ROUTE",
     "local_core_transport_guard",
+    "local_core_persistent_transport_guard",
     "send_core_local_commit",
+    "send_core_local_persistent_commit",
 ]

@@ -485,6 +485,14 @@ cookies, sessions, tokens, provider grants, or storage grants. The normal UI
 remains the in-memory prototype; production Save-to-Cookbook remains
 unimplemented.
 
+0034G verifies the next local-only step in the external core image:
+`local/vanilla-cookbook-adapter:0034g` can create or reuse one synthetic core
+`AuthUser`, commit one reviewed candidate in disposable `cookbook-local`
+storage, verify UID/read-after-write/replay/conflict/duplicate/rollback
+states, and restore DB/uploads. The local fixture flags are passed as
+non-secret Compose settings but default off. No session, cookie, token, real
+credential, provider call, or normal UI real-save wiring is involved.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

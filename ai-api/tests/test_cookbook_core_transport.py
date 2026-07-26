@@ -3,7 +3,9 @@ import json
 from app.cookbook_core_transport import (
     CoreTransportSettings,
     LOCAL_IMAGE,
+    PERSISTENT_LOCAL_IMAGE,
     local_core_transport_guard,
+    send_core_local_persistent_commit,
     send_core_local_commit,
 )
 
@@ -36,6 +38,19 @@ def settings(**overrides):
         "runtime_verified": True,
         "target_url": "http://127.0.0.1:3000/",
         "image_marker": LOCAL_IMAGE,
+        "compose_project": "cookbook-local",
+    }
+    value.update(overrides)
+    return CoreTransportSettings(**value)
+
+
+def persistent_settings(**overrides):
+    value = {
+        "enabled": True,
+        "approved": True,
+        "runtime_verified": True,
+        "target_url": "http://127.0.0.1:3000/",
+        "image_marker": PERSISTENT_LOCAL_IMAGE,
         "compose_project": "cookbook-local",
     }
     value.update(overrides)
@@ -141,3 +156,34 @@ def test_invalid_candidate_and_network_failure_are_safe():
     assert unavailable == {"status": "unavailable", "code": "core_transport_unavailable"}
     assert "/tmp" not in json.dumps(unavailable)
     assert "provider-output" not in json.dumps(unavailable)
+
+
+def test_persistent_transport_is_separately_gated_and_uses_persistent_route():
+    called = {}
+
+    def opener(request, timeout):
+        called["url"] = request.full_url
+        called["body"] = json.loads(request.data.decode("utf-8"))
+        return FakeResponse({
+            "status": "verified",
+            "verification": "local_persistent_synthetic_auth",
+            "recipe_uid": "opaque-persistent-uid",
+            "read_after_write": "verified",
+            "rollback_status": "verified",
+        })
+
+    blocked = send_core_local_persistent_commit(draft(), approved=True, settings=settings(), opener=opener)
+    result = send_core_local_persistent_commit(
+        draft(),
+        idempotency_key="persistent-1",
+        approved=True,
+        settings=persistent_settings(),
+        opener=opener,
+    )
+
+    assert blocked["status"] == "unavailable"
+    assert blocked["code"] == "local_persistent_transport_blocked"
+    assert result["recipe_uid"] == "opaque-persistent-uid"
+    assert called["url"].endswith("/api/adapter/dev-only/recipes/import-candidate/verify-local-persistent-commit")
+    assert "userId" not in called["body"]["candidate"]
+    assert "cookie" not in called["body"]["candidate"]

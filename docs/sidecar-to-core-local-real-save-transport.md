@@ -17,8 +17,9 @@ a production Save-to-Cookbook feature.
 
 The external core implementation is maintained outside this repository on
 branch `openclaw/0034F-sidecar-to-core-local-real-save-transport`, commit
-`99641db`. The local image is
-`local/vanilla-cookbook-adapter:0034f`; it is opt-in and is not pushed.
+`99641db`. The temporary fixture image is
+`local/vanilla-cookbook-adapter:0034f`; the persistent disposable verification
+is documented separately for `local/vanilla-cookbook-adapter:0034g`.
 
 ## Gates
 
@@ -54,10 +55,11 @@ provider bodies, and raw provider output are excluded. The client filters core
 responses to safe status, UID, relative URL, idempotency, duplicate, rollback,
 verification, and next-action fields.
 
-The core fixture returns a safe synthetic verification envelope. Its temporary
-database means this verification does not make a recipe appear in the normal
-persistent Cookbook UI. A future authenticated core-owned transport must be
-reviewed separately before UI wiring.
+The 0034F core fixture returns a safe synthetic verification envelope from a
+temporary database. 0034G separately verifies the same transport shape with
+the disposable persistent runtime and restores it afterward. Neither path
+creates a browser session or makes a recipe available to a real authenticated
+user.
 
 ## UI and production status
 
