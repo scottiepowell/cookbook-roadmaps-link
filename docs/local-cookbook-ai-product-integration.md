@@ -208,6 +208,12 @@ core-local mock OIDC session fixture exercises real Lucia session creation,
 before any manual Google credential task. The sidecar remains outside session,
 cookie, provider-token, and storage-grant ownership.
 
+0034L prepared the separate manual local Google OIDC gate with loopback,
+development, Google issuer, exact `openid email profile` scope, state, PKCE, and
+nonce checks. No local credentials were available and no provider call was made.
+The normal sidecar UI remains unchanged until safe authenticated-state evidence
+exists; Google Drive/storage consent remains a later BYOS step.
+
 ## Boundary before platform work
 
 This is a local operator experience and safe link handoff only. It is not a reverse proxy for a

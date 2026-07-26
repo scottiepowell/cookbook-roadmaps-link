@@ -109,6 +109,12 @@ custody, revocation, and any persistent-link migration. Before sidecar UI
 real-save wiring, a separate transport gate must define a core-owned session
 boundary without exporting credentials.
 
+0034L prepared that manual gate in the external core workspace. The generic OIDC
+path now has an explicit Google/loopback/identity-only configuration guard and
+binds a nonce to the existing short-lived HttpOnly handoff. No local Google
+credentials were available during this run, so no provider call or manual login
+was attempted. See [Manual Local Google OIDC Real Session](manual-local-google-oidc-real-session.md).
+
 ## Explicit non-goals
 
 No Google/Microsoft/provider call, OAuth route or callback, code exchange,

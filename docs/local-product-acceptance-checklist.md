@@ -83,6 +83,13 @@
   separately approved manual Google credential task. Google Drive/storage
   consent and production auth remain separate future work.
 
+- 0034L is prepared but not manually exercised: the external core requires a
+  loopback-only development configuration, Google issuer, ignored local
+  credentials, and exactly `openid email profile`, with state/PKCE/nonce checks.
+  No provider call or real login is part of normal validation. Do not proceed to
+  authenticated UI observation until an operator explicitly approves that local
+  credential gate and records only safe status evidence.
+
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the
   Compose recovery instruction.

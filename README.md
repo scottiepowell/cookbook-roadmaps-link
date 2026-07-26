@@ -515,6 +515,15 @@ cookie. The recommended next step is a disabled-by-default core-local mock
 OIDC session fixture, followed by a separately approved manual Google local
 credential task. No provider calls or credentials are used by this repository.
 
+0034L prepares the manual local Google OIDC gate in the external core workspace.
+It requires an explicitly approved loopback-only developer configuration with
+identity-only `openid email profile` scopes, and adds state/PKCE/nonce validation.
+No local credentials were available during validation, so no Google call or
+manual login was performed. See [Manual Local Google OIDC Real Session](docs/manual-local-google-oidc-real-session.md).
+Google Drive/storage consent, production authentication, and production
+Save-to-Cookbook remain unimplemented; the sidecar still owns no identity,
+session, cookie, token, or storage grant.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

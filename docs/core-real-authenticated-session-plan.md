@@ -105,10 +105,14 @@ disabled by default, has no public route, and does not call a provider. See
 [Core-Owned Mock OIDC Real-Session Fixture](core-owned-mock-oidc-real-session-fixture.md)
 and its outbox for evidence and limitations.
 
-## Next task: 0034L
+## 0034L result and manual gate
 
-Implement the manual local Google OIDC task in the external workspace. It
-should:
+0034L prepared the manual local Google OIDC task in the external workspace. The
+path now requires Google issuer, loopback origin, identity-only scopes, local
+credentials, and development-only context; it also binds and validates a nonce.
+No provider call was made because no ignored local credentials were present. The
+[0034L runbook](manual-local-google-oidc-real-session.md) contains the manual
+operator gate. It should:
 
 1. use an explicitly approved local Google app and ignored configuration;
 2. keep identity-only scopes and a loopback callback;

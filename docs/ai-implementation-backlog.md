@@ -214,6 +214,20 @@ The next gate is 0034L: manual local Google OIDC with ignored developer
 credentials and identity-only scopes. Production auth and production
 Save-to-Cookbook remain separate approvals.
 
+## 0034L: Manual local Google OIDC real session
+
+Status: complete for offline preparation; manual provider verification remains
+blocked pending explicit operator credentials and approval. The external core
+branch adds a fail-closed Google/loopback/identity-only configuration guard and
+nonce-bound generic OIDC callback validation. Focused tests and the local custom
+image passed, but no `.env`, Google OAuth client, provider call, browser login,
+cookie export, or session inspection occurred. See [Manual Local Google OIDC Real
+Session](manual-local-google-oidc-real-session.md).
+
+The next gate is 0034M: only after a safe manual local login can authenticated
+Save-to-Cookbook UI observation be considered. Drive/storage consent remains a
+separate future BYOS task.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

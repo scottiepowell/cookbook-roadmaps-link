@@ -54,6 +54,11 @@ implementation gate. It must exercise real core Lucia session creation and
 validation without contacting Google; a separate manual Google credential task
 comes only after that fixture passes.
 
+0034L now prepares that manual gate with loopback/development checks, exact
+identity-only scopes, and nonce-bound callback validation in the external core.
+It remains unexercised until an operator supplies ignored local credentials and
+explicit approval. No Drive/storage scope is requested.
+
 These are repository facts, not evidence that an external provider has been
 configured or that a real account has been used.
 
