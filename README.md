@@ -477,6 +477,14 @@ provider link. The local image is opt-in as
 `local/vanilla-cookbook-adapter:0034e`. Real Google login, storage consent,
 production auth, and sidecar UI real-save wiring remain future work.
 
+0034F adds a disabled-by-default sidecar transport for the separate core-owned
+local synthetic verification route. It only permits the opt-in
+`local/vanilla-cookbook-adapter:0034f` image at loopback, sends reviewed recipe
+candidate fields plus explicit local approval, and never forwards identity,
+cookies, sessions, tokens, provider grants, or storage grants. The normal UI
+remains the in-memory prototype; production Save-to-Cookbook remains
+unimplemented.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

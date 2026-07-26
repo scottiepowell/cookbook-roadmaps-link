@@ -1,7 +1,7 @@
 # Sidecar Real-Save Local Wiring Plan
 
-Status: planning/gate only. The recommended core fixture is complete; no
-sidecar real-save wiring is implemented.
+Status: local transport implemented; normal UI real-save wiring remains a
+planning/gate item.
 
 Date: 2026-07-25
 
@@ -151,6 +151,15 @@ that future authorization in the Vanilla Cookbook core. A sidecar client must
 not become an OIDC session broker or receive Drive/OneDrive grants. Google
 sign-in and storage consent are separate future capabilities; 0034C's
 synthetic owner remains the safe local bridge.
+
+## 0034F transport result
+
+0034F adds a pure sidecar client for the core-owned dev-only synthetic
+verification route. It is disabled by default, requires explicit local gates,
+the `cookbook-local` project, loopback, and the opt-in `0034f` image marker.
+It sends reviewed candidate fields and explicit approval only. It does not
+export identity, sessions, cookies, tokens, provider grants, or storage grants.
+The normal UI is intentionally not wired to this operator/test transport.
 
 ## 0034C result and next task
 
