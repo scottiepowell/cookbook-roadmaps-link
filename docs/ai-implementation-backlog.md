@@ -201,6 +201,19 @@ session creation and validation without external calls, followed by a separate
 manual Google local-credentials task. The sidecar remains outside identity,
 session, provider-token, and storage-grant ownership.
 
+## 0034K: Core-owned mock OIDC real-session fixture
+
+Status: complete in the separate core workspace; local/dev-only and disabled by
+default. Commit `d7ef5e7` adds a service/test boundary using synthetic claims,
+an in-memory cookie jar, real Lucia session creation and validation,
+core-derived `locals.user`/`requireAuth`, Save-to-Cookbook ownership, replay,
+logout, and invalidation. The local image is
+`local/vanilla-cookbook-adapter:0034k`; no source is vendored into this repo.
+
+The next gate is 0034L: manual local Google OIDC with ignored developer
+credentials and identity-only scopes. Production auth and production
+Save-to-Cookbook remain separate approvals.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.

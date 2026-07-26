@@ -96,8 +96,10 @@ verification.
 ## Boundaries and next steps
 
 Google Drive/BYOS storage scopes remain deferred and are not requested. The
-0034C synthetic-auth fixture remains valid and independent of real SSO. The
-Save-to-Cookbook adapter continues to derive ownership from core `AuthUser`;
+0034C synthetic-auth fixture remains valid and independent of real SSO.
+0034K now additionally proves a real Lucia session lifecycle in isolated local
+test state, while the Save-to-Cookbook adapter continues to derive ownership
+from core `AuthUser`;
 the sidecar owns none of the identity/session/token/storage values.
 
 Before real Google login, a separate security task must review provider

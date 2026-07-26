@@ -202,8 +202,9 @@ The Google descriptor is identity-only; Drive/BYOS consent is not requested.
 The sidecar still owns no core session, cookie, provider token, storage grant,
 or user identity, and production Save-to-Cookbook remains unavailable.
 
-0034J records the next auth gate: a disabled-by-default core-local mock OIDC
-session fixture should exercise real Lucia session creation and `locals.user`
+0034J recorded, and 0034K completed, the next auth gate: a disabled-by-default
+core-local mock OIDC session fixture exercises real Lucia session creation,
+`locals.user`, `requireAuth`, logout, and invalidation in isolated test state
 before any manual Google credential task. The sidecar remains outside session,
 cookie, provider-token, and storage-grant ownership.
 

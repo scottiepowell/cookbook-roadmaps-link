@@ -507,8 +507,9 @@ mock importer draft passes dry-run, explicit confirmation reaches the
 returned, and the disposable runtime is cleaned up. Browser observation in
 Vanilla Cookbook remains intentionally unavailable without a real session.
 
-0034J pauses synthetic-save expansion and records the next auth gate. The
-separate core workspace already owns Lucia sessions, `locals.user`, provider
+0034J paused synthetic-save expansion and recorded the next auth gate. 0034K
+now proves the core-owned mock OIDC session lifecycle with synthetic claims and
+an in-memory cookie jar. The separate core workspace already owns Lucia sessions, `locals.user`, provider
 links, and OIDC callback plumbing, but 0034E did not exercise a real session
 cookie. The recommended next step is a disabled-by-default core-local mock
 OIDC session fixture, followed by a separately approved manual Google local

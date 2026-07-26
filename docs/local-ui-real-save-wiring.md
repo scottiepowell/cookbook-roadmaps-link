@@ -62,9 +62,10 @@ transport, production Save-to-Cookbook, and a production-safe canonical link
 remain future architecture work. The 0034E identity foundation does not
 change this boundary, and Google Drive/storage consent remains separate.
 
-0034J recommends pausing further synthetic-save expansion for a core-local
-mock OIDC session fixture. Until that session gate passes, this UI remains a
-local synthetic transport demonstration and cannot claim browser-observable
+0034J recommended, and 0034K completed, a core-local mock OIDC session fixture.
+The fixture proves core session lifecycle in isolated test state but does not
+create a browser session for the sidecar. This UI remains a local synthetic
+transport demonstration and cannot claim browser-observable
 ownership of a saved recipe.
 
 ## Explicit non-goals

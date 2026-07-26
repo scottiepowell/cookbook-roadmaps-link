@@ -95,32 +95,30 @@ The feature is not blocked from planning: the core has a usable Lucia boundary
 and a durable account-link model. Real Google login is blocked from execution
 until a separate local credential task approves secrets and external calls.
 
-## Next task: 0034K
+## 0034K result
 
-Implement the core-local mock OIDC session fixture in the external workspace.
-The future task should:
+0034K completed in the separate core workspace at commit `d7ef5e7`. Its
+service/test fixture uses synthetic claims and an in-memory cookie jar to prove
+real Lucia session creation, request validation, `locals.user`, `requireAuth`,
+core-owned Save-to-Cookbook ownership, replay, logout, and invalidation. It is
+disabled by default, has no public route, and does not call a provider. See
+[Core-Owned Mock OIDC Real-Session Fixture](core-owned-mock-oidc-real-session-fixture.md)
+and its outbox for evidence and limitations.
 
-1. require a dev/test build, loopback target, explicit mock enablement, and an
-   explicit approval flag;
-2. reject production, CI, tunnel, AWS, Cloudflare, exposed targets, sidecar
-   identity/session/token fields, and real provider configuration;
-3. use synthetic claims containing issuer, subject, verified email, and bounded
-   display data only;
-4. map/link the subject through the existing core AuthAccount/AuthUser
-   service, with deterministic replay and verified-email collision behavior;
-5. create a real Lucia session inside the core and verify `locals.user` on a
-   protected test endpoint or core-owned adapter call;
-6. test logout/session invalidation and expired/invalid session behavior;
-7. test local HTTP cookie metadata without exposing cookie values;
-8. run the existing Save-to-Cookbook adapter with core-derived ownership,
-   using a disposable DB and backup/restore; and
-9. return only safe status, owner-state, link-state, and opaque recipe UID
-   fields.
+## Next task: 0034L
 
-The task must leave the normal sidecar UI unchanged. After 0034K succeeds,
-0034L can be a separately approved manual Google local-credentials task. Only
-after that evidence should normal sidecar UI real-save observation be
-considered.
+Implement the manual local Google OIDC task in the external workspace. It
+should:
+
+1. use an explicitly approved local Google app and ignored configuration;
+2. keep identity-only scopes and a loopback callback;
+3. redact logs and keep cookies/tokens in an in-memory local client only;
+4. verify the existing core callback, account linking, Lucia session, logout,
+   and Save-to-Cookbook ownership boundaries; and
+5. avoid Drive/storage scopes and all production/exposed targets.
+
+The task must leave the normal sidecar UI unchanged. Only after 0034L evidence
+should normal sidecar UI real-save observation be considered.
 
 ## Security and data boundaries
 

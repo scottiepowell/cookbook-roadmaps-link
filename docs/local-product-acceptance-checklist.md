@@ -77,10 +77,11 @@
   sessions, provider tokens, or storage grants, and production Save-to-Cookbook
   remains unavailable.
 
-- The 0034E Google-first auth spike is mock/unit-test-only. Do not start a real
-  OAuth flow or add credentials. 0034J recommends a core-local mock OIDC
-  session fixture before any manual Google credential task. Google
-  Drive/storage consent and production auth remain separate future work.
+- The 0034E Google-first auth spike is mock/unit-test-only. 0034K now proves
+  the core Lucia session lifecycle with synthetic claims and an in-memory test
+  cookie jar. Do not start a real OAuth flow or add credentials. 0034L is the
+  separately approved manual Google credential task. Google Drive/storage
+  consent and production auth remain separate future work.
 
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the
