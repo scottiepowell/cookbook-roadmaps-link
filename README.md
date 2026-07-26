@@ -524,6 +524,12 @@ Google Drive/storage consent, production authentication, and production
 Save-to-Cookbook remain unimplemented; the sidecar still owns no identity,
 session, cookie, token, or storage grant.
 
+0034M checked whether the external core had approved ignored local Google OAuth
+configuration and found none. No Google call or manual login was attempted, so
+real authenticated UI observation remains blocked. The required future setup is
+loopback-only with exactly `openid email profile`; credentials stay outside this
+repository and are never reported.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

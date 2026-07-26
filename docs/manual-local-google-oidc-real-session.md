@@ -77,6 +77,11 @@ manual login and records safe authenticated-state evidence without credentials o
 session values. Until then, UI observation of a saved recipe in Vanilla Cookbook
 remains blocked.
 
+0034M performed the availability gate and found no ignored `.env` or `.env.local`
+credentials in the external workspace. It therefore remains precisely blocked;
+no Google request or manual login result is claimed. See [0034M Manual Local
+Google OIDC Login Verification](manual-local-google-oidc-login-verification.md).
+
 Official references: [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect),
 [Google OAuth scopes](https://developers.google.com/identity/protocols/oauth2/scopes),
 [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html), and

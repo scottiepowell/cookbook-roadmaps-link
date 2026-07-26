@@ -90,6 +90,11 @@
   authenticated UI observation until an operator explicitly approves that local
   credential gate and records only safe status evidence.
 
+- 0034M remains blocked because no ignored local Google OAuth client was
+  available. Do not claim a real Lucia session or authenticated recipe view;
+  proceed only after an operator completes the loopback identity-only login and
+  records safe status evidence without cookies, tokens, or profile data.
+
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the
   Compose recovery instruction.

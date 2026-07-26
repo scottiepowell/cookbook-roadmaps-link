@@ -228,6 +228,15 @@ The next gate is 0034M: only after a safe manual local login can authenticated
 Save-to-Cookbook UI observation be considered. Drive/storage consent remains a
 separate future BYOS task.
 
+## 0034M: Manual local Google OIDC login verification
+
+Status: precisely blocked. The external workspace had no ignored `.env` or
+`.env.local` containing an approved developer-created Google OAuth client, so no
+Google request or manual login was attempted. The required setup remains a
+loopback callback with exactly `openid email profile`; Drive/storage scopes are
+not allowed. After safe authenticated-state evidence exists, a separate task may
+verify authenticated Save-to-Cookbook UI observation.
+
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
 Status: complete, design/test-plan-only; Phase 3 implementation remains blocked.
