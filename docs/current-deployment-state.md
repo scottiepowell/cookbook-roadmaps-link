@@ -40,3 +40,6 @@ route uses the Windows-hosted local connector documented in [Local Core
 Cloudflare Tunnel](local-core-cloudflare-tunnel.md); EC2 deployment verification
 remains separate and still requires the workflow sequence in the [First Deploy
 Guide](first-deploy-guide.md).
+
+The public Windows-hosted core currently runs the homepage/login image. Anonymous
+`/` returns HTTP 200 and presents login plus first-administrator setup links.

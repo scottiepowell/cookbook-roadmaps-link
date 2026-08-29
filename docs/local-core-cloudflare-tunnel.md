@@ -33,6 +33,11 @@ output.
 Safe verification result: `https://cookbook.roadmaps.link/api/health` returned
 HTTP 200 with both the core container and tunnel connector running.
 
+The public core now runs `local/vanilla-cookbook-adapter:homepage-login`. Its
+anonymous root page returns HTTP 200 with links for existing-user login and
+first-administrator setup; the existing Docker-managed database and upload
+volumes were retained during the container replacement.
+
 ## Cloudflare setup
 
 No Cloudflare control-plane change is currently required. If the route is ever
