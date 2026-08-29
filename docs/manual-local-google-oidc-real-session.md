@@ -72,17 +72,14 @@ production Save-to-Cookbook, and normal sidecar UI real-save wiring remain
 unimplemented. The 0034K synthetic real-session fixture remains valid and does
 not depend on Google.
 
-0034M may proceed only after an explicitly approved operator completes the local
-manual login and records safe authenticated-state evidence without credentials or
-session values. Until then, UI observation of a saved recipe in Vanilla Cookbook
-remains blocked.
-
-0034M performed the availability gate and found no ignored `.env` or `.env.local`
-configuration in the external workspace. A sidecar env file is not an approved
-core-local loopback configuration, and the local Docker engine is unavailable.
-It therefore remains precisely blocked; no Google request or manual login result
-is claimed. See [0034M Manual Local Google OIDC Login
+0034M completed the approved manual loopback login. Google returned through the
+hardened callback, the core accepted its Lucia session, and an authenticated
+settings page proved the core-owned user/authorization boundary. Replay and
+logout were not exercised in this run. See [0034M Manual Local Google OIDC Login
 Verification](manual-local-google-oidc-login-verification.md).
+
+Authenticated Save-to-Cookbook browser/UI observation is now the next separate
+task. Public Google authentication and Drive/storage consent remain separate.
 
 Official references: [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect),
 [Google OAuth scopes](https://developers.google.com/identity/protocols/oauth2/scopes),

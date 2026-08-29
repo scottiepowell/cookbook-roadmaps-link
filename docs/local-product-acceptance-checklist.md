@@ -90,12 +90,11 @@
   authenticated UI observation until an operator explicitly approves that local
   credential gate and records only safe status evidence.
 
-- 0034M remains blocked: the external core has no ignored local OAuth
-  configuration, the sidecar env file is not an approved core-local loopback
-  configuration, and Docker Desktop is unavailable. Do not claim a real Lucia
-  session or authenticated recipe view; proceed only after the core-local
-  loopback runtime is available and an operator completes the identity-only
-  login with safe status evidence only.
+- 0034M passed the manual loopback identity gate: Google returned to the core,
+  the core accepted its Lucia session, and an authenticated settings page proved
+  the core-owned user/authorization boundary. Replay and logout were not
+  exercised in that run. Authenticated Save-to-Cookbook browser observation is
+  now a separate next task; public Google auth remains unimplemented.
 
 - The local Cookbook container must be running for the handoff to be useful;
   if it is not, the sidecar remains healthy and the product page gives the

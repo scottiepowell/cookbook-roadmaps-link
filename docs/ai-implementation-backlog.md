@@ -224,18 +224,17 @@ image passed, but no `.env`, Google OAuth client, provider call, browser login,
 cookie export, or session inspection occurred. See [Manual Local Google OIDC Real
 Session](manual-local-google-oidc-real-session.md).
 
-The next gate is 0034M: only after a safe manual local login can authenticated
-Save-to-Cookbook UI observation be considered. Drive/storage consent remains a
-separate future BYOS task.
+0034M has now satisfied the safe manual local-login gate. Authenticated
+Save-to-Cookbook UI observation may be considered as a separate next task.
+Drive/storage consent remains a separate future BYOS task.
 
 ## 0034M: Manual local Google OIDC login verification
 
-Status: precisely blocked. The external workspace has no ignored `.env` or
-`.env.local` containing an approved developer-created Google OAuth client, so no
-Google request or manual login was attempted. The required setup remains a
-loopback callback with exactly `openid email profile`; Drive/storage scopes are
-not allowed. After safe authenticated-state evidence exists, a separate task may
-verify authenticated Save-to-Cookbook UI observation.
+Status: complete for manual loopback verification. Google returned through the
+hardened core callback, the core accepted its Lucia session, and an authenticated
+settings page proved the core-owned `locals.user` authorization boundary. The
+run used exactly `openid email profile`; Drive/storage scopes were not requested.
+A separate task may now verify authenticated Save-to-Cookbook UI observation.
 
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 

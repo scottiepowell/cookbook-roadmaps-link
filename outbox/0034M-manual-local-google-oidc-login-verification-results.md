@@ -2,12 +2,10 @@
 
 ## Outcome
 
-Manual local Google OIDC login is precisely blocked. The external core workspace
-is clean on the approved 0034L branch but has no `.env` or `.env.local` file.
-An ignored sidecar `.env` was found, but safe shape checks show it is not suitable
-as the core-local loopback configuration. The required local Docker engine is
-also unavailable, so `local/vanilla-cookbook-adapter:0034l` cannot be started.
-No Google request or manual login was attempted.
+Manual local Google OIDC login succeeded. The external core used ignored local
+configuration, the approved 0034L image, exactly `openid email profile`, and the
+loopback callback. The core callback returned and accepted a real core-owned
+authenticated session.
 
 ## Safe evidence
 
@@ -15,26 +13,26 @@ No Google request or manual login was attempted.
   callback and exactly `openid email profile`.
 - 0034L already added Google issuer, loopback, development, storage-scope, and
   state/PKCE/nonce guards in the core workspace.
-- Core-owned AuthUser/AuthAccount/session and `locals.user`/`requireAuth`
-  behavior remains covered by prior offline/mock evidence.
-- No real callback, Lucia session from Google, provider-account link, logout, or
-  invalidation result can honestly be reported for 0034M.
-- No secret, OAuth code, token, cookie, session value, profile data, browser
-  state, DB, upload, screenshot, trace, or log artifact was created or committed.
+- Google issuer, callback, state, PKCE, nonce, and identity-only scope checks
+  completed through the hardened core path.
+- The callback returned, the core accepted the Lucia session, and an
+  authenticated settings page proved the core `locals.user` authorization
+  boundary succeeded.
+- The core created or linked its own AuthUser/AuthAccount. Provider-link replay
+  was not exercised in this run.
+- Logout/invalidation was not exercised in this run; 0034K remains the evidence
+  for replay and invalidation behavior.
+- No secret, OAuth code, token, cookie, session value, profile data, screenshot,
+  trace, or browser artifact was recorded or committed.
 
-The exact blockers are missing ignored local Google OAuth configuration in the
-external core workspace, a non-loopback-safe sidecar configuration location, and
-an unavailable local Docker engine. After the core-local loopback configuration
-and Docker runtime are available, the approved manual login can record only safe
-boolean/opaque status evidence. The next product verification remains
-authenticated Save-to-Cookbook UI observation, but it must wait for that
-evidence.
+The next product verification is authenticated Save-to-Cookbook UI observation
+as a separate task. Public Google authentication, Drive/BYOS consent, and
+production Save-to-Cookbook remain separate approvals.
 
 ## Validation and non-goals
 
-This task is docs-only in the sidecar. Required static/repository and Compose
-validation follows after the documentation update. No live OpenAI, Google,
-Microsoft, OAuth, storage, or unrelated provider call was made.
+Required static/repository and Compose validation follows after the documentation
+update. No live OpenAI, Microsoft, storage, or unrelated provider call was made.
 
 Explicit non-goals: production authentication, production Save-to-Cookbook,
 Drive/BYOS consent, sidecar identity/session ownership, browser automation,

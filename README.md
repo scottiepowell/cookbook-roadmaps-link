@@ -524,13 +524,16 @@ Google Drive/storage consent, production authentication, and production
 Save-to-Cookbook remain unimplemented; the sidecar still owns no identity,
 session, cookie, token, or storage grant.
 
-0034M confirmed that the external core still has no approved ignored local Google
-OAuth configuration; a sidecar env file cannot serve as the core-local loopback
-configuration, and the local Docker engine is unavailable. No Google call or
-manual login was attempted, so real authenticated UI observation remains blocked.
-The required future setup is
-loopback-only with exactly `openid email profile`; credentials stay outside this
-repository and are never reported.
+0034M completed the manual loopback Google login through the hardened core path
+with exactly `openid email profile`. The callback returned, the core accepted a
+Lucia session, and an authenticated settings page proved the core-owned user and
+authorization boundary. No credentials, tokens, cookies, session values, or
+profile data were recorded. Authenticated Save-to-Cookbook browser observation
+is now the next separate task.
+
+The existing Cloudflare tunnel now also routes a dedicated Windows-hosted public
+core runtime at `cookbook.roadmaps.link`; no Cloudflare dashboard or DNS change
+was required. See [Local Core Cloudflare Tunnel](docs/local-core-cloudflare-tunnel.md).
 
 ## Status
 

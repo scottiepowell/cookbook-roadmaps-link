@@ -1,7 +1,6 @@
 # 0034M Manual Local Google OIDC Login Verification
 
-Status: precisely blocked pending core-local configuration and an available
-local custom-image runtime. No Google login was attempted.
+Status: complete. Manual loopback Google login succeeded on 2026-08-29.
 
 ## Verification scope
 
@@ -18,23 +17,24 @@ The only permitted redirect shape is a local callback such as
 0034L. Google Drive, storage, Gmail, calendar, broad API, and offline-storage
 scopes are forbidden. This task does not observe or save a recipe.
 
-## 2026-08-29 availability result
+## 2026-08-29 verification result
 
-Configuration was checked only for safe presence and shape; no values were
-read or recorded. The external core workspace has neither `.env` nor
-`.env.local`. An ignored sidecar `.env` exists, but it is not core-local, and
-its safe shape does not use the required `http://127.0.0.1:3000` origin. It
-therefore cannot be used for the approved core-owned loopback verification.
+The external core workspace had an ignored local configuration with the
+required client fields and exactly `openid email profile`. A temporary runtime
+override set the approved `http://127.0.0.1:3000` origin without changing or
+reporting private values. Docker Desktop and
+`local/vanilla-cookbook-adapter:0034l` were available.
 
-The required `local/vanilla-cookbook-adapter:0034l` runtime also could not be
-started because the local Docker engine is unavailable. No request was sent to
-Google, and no browser, cookie, OAuth code, token, profile, database, upload,
-or session artifact was created.
+The core OIDC start route reached Google, the callback returned to loopback, and
+the core accepted the authenticated session. The user reached an authenticated
+core settings page, proving the Lucia session populated `locals.user` through
+the core authorization boundary. The core created or linked its own account;
+the sidecar received no identity or session data. Replay and logout/invalidation
+were not exercised in this run and remain covered only by the 0034K fixture.
 
-This is a real blocker. The core needs its own ignored configuration with the
-approved loopback shape, and Docker Desktop must be running before the manual
-flow can begin. Do not weaken the 0034L guard or substitute a mock result;
-0034K already covers the mock/session lifecycle.
+Only safe boolean/opaque outcomes were observed. No client secret, OAuth code,
+token, cookie, session value, browser state, or profile data was recorded or
+committed.
 
 ## Safe operator procedure for a future approved run
 
@@ -70,10 +70,9 @@ OAuth, token, or storage-grant values. Google Drive/BYOS remains a separate late
 consent flow. Production authentication and production Save-to-Cookbook remain
 unimplemented.
 
-0034M remains blocked until the manual local login is completed under the stated
-guards. After safe authenticated-state evidence exists, a separate task may
-verify authenticated Save-to-Cookbook browser/UI observation. No such observation
-is claimed here.
+0034M is complete for manual loopback identity verification. A separate task may
+now verify authenticated Save-to-Cookbook browser/UI observation. No such
+observation is claimed here.
 
 Official references: [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect),
 [Google OAuth scopes](https://developers.google.com/identity/protocols/oauth2/scopes),

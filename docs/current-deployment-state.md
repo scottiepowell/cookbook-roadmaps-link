@@ -30,8 +30,13 @@ App directory: /opt/cookbook
 - [ ] GitHub Actions `start` works.
 - [ ] GitHub Actions `deploy` works with `stop_after_deploy=false`.
 - [ ] Local Compose verification passes.
-- [ ] Public Cloudflare route verification passes.
+- [x] Public Cloudflare route verification passes from the Windows-hosted local
+  connector (`/api/health` returned HTTP 200 on 2026-08-29).
 
 ## Notes
 
-The repository does not create cloud resources by itself. First deployment still requires operator-controlled AWS, GitHub, and Cloudflare configuration, followed by the workflow sequence in the [First Deploy Guide](first-deploy-guide.md).
+The repository does not create cloud resources by itself. The currently verified
+route uses the Windows-hosted local connector documented in [Local Core
+Cloudflare Tunnel](local-core-cloudflare-tunnel.md); EC2 deployment verification
+remains separate and still requires the workflow sequence in the [First Deploy
+Guide](first-deploy-guide.md).
