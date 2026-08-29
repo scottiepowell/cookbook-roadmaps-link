@@ -1,7 +1,7 @@
 # 0034N Public Homepage Login And Google OIDC Callback Results
 
-Status: implementation complete; final manual authenticated callback observation
-is pending an operator login retry.
+Status: blocked only on final operator-performed authenticated callback
+observation. The implementation and provider configuration are complete.
 
 ## Outcome
 
@@ -42,9 +42,15 @@ public callback were not automated. The operator should retry **Log in with
 Google** from `https://cookbook.roadmaps.link/login` and report only whether the
 browser returns to the public hostname and the core accepts the session.
 
+This same missing operator observation remained unavailable for three
+consecutive goal turns. No additional code, deployment, provider, or Cloudflare
+change can supply that evidence without selecting the operator's Google account.
+The safe unblock signal is exactly two booleans: public-hostname return succeeded
+and authenticated core session succeeded. No account name, email, profile,
+cookie, token, code, state, or session value is needed.
+
 ## Boundaries
 
 No Google Drive/storage or unrelated scopes were requested. No production
 Save-to-Cookbook, AWS, EC2, GitHub Actions, tunnel route, sidecar identity, role,
 session, cookie, or provider-account ownership was added.
-
