@@ -1,7 +1,7 @@
 # 0034M Manual Local Google OIDC Login Verification
 
-Status: precisely blocked pending an explicitly approved developer-created local
-Google OAuth client. No Google login was attempted.
+Status: precisely blocked pending core-local configuration and an available
+local custom-image runtime. No Google login was attempted.
 
 ## Verification scope
 
@@ -18,16 +18,22 @@ The only permitted redirect shape is a local callback such as
 0034L. Google Drive, storage, Gmail, calendar, broad API, and offline-storage
 scopes are forbidden. This task does not observe or save a recipe.
 
-## Availability result
+## 2026-08-29 availability result
 
-The external workspace `C:\Users\scott\projects\vanilla-cookbook-core` was
-checked without reading credential values. Neither `.env` nor `.env.local` was
-present, so there was no client ID/secret or operator approval material with
-which to run the manual flow. No request was sent to Google, and no browser,
-cookie, OAuth code, token, profile, database, upload, or session artifact was
-created.
+Configuration was checked only for safe presence and shape; no values were
+read or recorded. The external core workspace has neither `.env` nor
+`.env.local`. An ignored sidecar `.env` exists, but it is not core-local, and
+its safe shape does not use the required `http://127.0.0.1:3000` origin. It
+therefore cannot be used for the approved core-owned loopback verification.
 
-This is a real blocker. Do not weaken the 0034L guard or substitute a mock result;
+The required `local/vanilla-cookbook-adapter:0034l` runtime also could not be
+started because the local Docker engine is unavailable. No request was sent to
+Google, and no browser, cookie, OAuth code, token, profile, database, upload,
+or session artifact was created.
+
+This is a real blocker. The core needs its own ignored configuration with the
+approved loopback shape, and Docker Desktop must be running before the manual
+flow can begin. Do not weaken the 0034L guard or substitute a mock result;
 0034K already covers the mock/session lifecycle.
 
 ## Safe operator procedure for a future approved run

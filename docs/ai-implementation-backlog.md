@@ -230,7 +230,7 @@ separate future BYOS task.
 
 ## 0034M: Manual local Google OIDC login verification
 
-Status: precisely blocked. The external workspace had no ignored `.env` or
+Status: precisely blocked. The external workspace has no ignored `.env` or
 `.env.local` containing an approved developer-created Google OAuth client, so no
 Google request or manual login was attempted. The required setup remains a
 loopback callback with exactly `openid email profile`; Drive/storage scopes are
