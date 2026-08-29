@@ -1,7 +1,7 @@
 # 0034N Public Homepage Login And Google OIDC Callback Results
 
-Status: resumed after operator evidence; final authenticated callback retry is
-pending. The implementation and provider configuration are complete.
+Status: both local runtime defects are corrected; final operator account
+selection and authenticated callback observation are pending.
 
 ## Outcome
 
@@ -14,6 +14,13 @@ winning inside the process. Its Docker build context also did not exclude the
 ignored base `.env` file. The external core now excludes `.env` and `.env.*`
 from images, and the replacement public container applies the public HTTPS
 origin after the ignored developer environment file.
+
+Continued investigation found a second independent defect: the shared
+local-development client-secret value loaded by the public container was not a
+valid Google client secret. Google rejected that credential at the token
+endpoint with the safe `invalid_client` category. Public authentication now uses
+a dedicated Google Web application client and an ignored `.env.public` runtime
+file, leaving the loopback development client unchanged.
 
 ## Safe verification
 
@@ -35,6 +42,17 @@ origin after the ignored developer environment file.
   callback and the exact public HTTPS callback are saved.
 - New desktop and Android-style requests generated after that confirmation both
   reached the Google login surface without redirect mismatch.
+- The dedicated public client contains only the public HTTPS JavaScript origin
+  and exact public HTTPS callback.
+- The replacement credential was checked with a deliberately invalid OAuth code;
+  Google's `invalid_grant` response proved that the client ID/secret pair itself
+  was accepted without completing or recording an authentication.
+- A signed-in-browser authorization probe reached Google account selection with
+  no redirect mismatch or invalid-request response. No account was selected.
+- The first generated public secret became visible during provider-console
+  inspection and was disabled before deployment. The replacement secret was
+  transferred directly into the ignored runtime file without emitting or
+  committing its value.
 - The core image contained no ignored `.env` file.
 - Existing Docker-managed database and upload volumes were retained.
 
@@ -51,7 +69,8 @@ browser returns to the public hostname and the core accepts the session.
 
 This retry is entirely public and does not require access to the Windows host.
 It must begin from the Cookbook login page so the core generates a new state,
-PKCE challenge, nonce, and authorization request after provider propagation.
+PKCE challenge, nonce, and authorization request with the dedicated public
+client.
 The safe completion signal is exactly two booleans: public-hostname return
 succeeded and authenticated core session succeeded. No account name, email,
 profile, cookie, token, code, state, or session value is needed.

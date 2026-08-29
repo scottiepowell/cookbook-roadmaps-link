@@ -41,6 +41,8 @@ volumes were retained during the container replacement.
 0034N replaced that image with `local/vanilla-cookbook-adapter:0034n`. The image
 excludes ignored environment files, the container's effective origin is the
 public HTTPS hostname, and the existing database/upload volumes remain mounted.
+Public Google credentials are supplied separately through ignored
+`.env.public`; the loopback developer client remains isolated in `.env`.
 
 ## Cloudflare setup
 
@@ -59,10 +61,10 @@ that would refer to the connector itself.
 
 ## Authentication boundary
 
-0034N is the separately approved public Google identity-login task. The exact
-HTTPS callback is registered with Google, the public runtime generates that
-callback, and the authorization request retains identity-only scopes, state,
-PKCE, and nonce. Google accepted the corrected request without redirect URI
-mismatch. Final account selection and authenticated core callback/session
-observation remain manual. The tunnel still owns no identity, role, session,
-cookie, provider link, token, or storage grant.
+0034N is the separately approved public Google identity-login task. A dedicated
+Google Web client owns only the public HTTPS origin and exact callback; the
+public runtime generates that callback and retains identity-only scopes, state,
+PKCE, and nonce. Google accepted the corrected authorization request and the
+replacement token-client credentials. Final account selection and authenticated
+core callback/session observation remain manual. The tunnel still owns no
+identity, role, session, cookie, provider link, token, or storage grant.

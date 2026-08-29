@@ -540,8 +540,9 @@ which makes login the primary returning-user action and moves initial
 administrator creation behind an explicit homepage link. [Administrator And
 User Separation](docs/admin-user-separation-adr.md) defines the core-owned role
 and authorization boundary. 0034N also corrected the public Google OIDC origin,
-registered the exact HTTPS callback, and verified that Google accepts the
-identity-only authorization request without a redirect URI mismatch. Final
+separated public authentication into a dedicated Google Web client, registered
+the exact HTTPS callback, replaced an invalid runtime secret, and verified both
+redirect acceptance and token-endpoint client authentication. Final
 authenticated callback/session observation remains a manual operator retry.
 
 ## Status

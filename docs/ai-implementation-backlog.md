@@ -242,12 +242,13 @@ Status: homepage and callback implementation complete; final manual
 authenticated callback/session observation pending.
 
 0034N aligns the already delivered homepage and administrator/user separation
-ADR with the mailbox workflow. It also corrects the first public-login defect:
-the public container now uses the HTTPS origin, the built image excludes ignored
-environment files, and Google accepts the exact public callback with only
-`openid email profile`, state, PKCE, and nonce. The operator must retry Google
-login to confirm the final authenticated return without recording private auth
-state.
+ADR with the mailbox workflow. It corrects both public-login defects: the public
+container now uses the HTTPS origin, the built image excludes ignored
+environment files, and a dedicated public Google Web client replaces the invalid
+shared-development secret. Google accepts the exact callback and token-client
+credentials with only `openid email profile`, state, PKCE, and nonce. The
+operator must retry Google login to confirm the final authenticated return
+without recording private auth state.
 
 ## 0033P: Save-to-Cookbook Schema-Informed Write Plan
 
