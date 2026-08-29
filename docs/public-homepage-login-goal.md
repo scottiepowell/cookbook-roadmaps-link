@@ -2,6 +2,8 @@
 
 Status: complete and running at `cookbook.roadmaps.link`.
 
+Mailbox task: 0034N.
+
 ## Goal
 
 Make `cookbook.roadmaps.link` open on a useful public homepage instead of
@@ -38,6 +40,9 @@ production Docker build passed, and a private runtime smoke verified `/`,
 was replaced while retaining its Docker-managed data/upload volumes. External
 verification returned HTTP 200 with the landing title and both login/setup
 links present.
+
+0034N subsequently corrected the public Google OIDC origin/callback mismatch
+without changing the homepage authorization model.
 
 The broader upstream suite reported 661 passes, 3 skips, and 7 unrelated
 pre-existing/environment-sensitive failures in recipe parsing/conversion and a

@@ -535,10 +535,14 @@ The existing Cloudflare tunnel now also routes a dedicated Windows-hosted public
 core runtime at `cookbook.roadmaps.link`; no Cloudflare dashboard or DNS change
 was required. See [Local Core Cloudflare Tunnel](docs/local-core-cloudflare-tunnel.md).
 
-The next homepage goal is documented in [Public Homepage Login Goal](docs/public-homepage-login-goal.md).
-It makes login the primary returning-user action and moves initial administrator
-creation behind an explicit homepage link. [Administrator And User Separation](docs/admin-user-separation-adr.md)
-defines the core-owned role and authorization boundary.
+0034N records the completed [Public Homepage Login Goal](docs/public-homepage-login-goal.md),
+which makes login the primary returning-user action and moves initial
+administrator creation behind an explicit homepage link. [Administrator And
+User Separation](docs/admin-user-separation-adr.md) defines the core-owned role
+and authorization boundary. 0034N also corrected the public Google OIDC origin,
+registered the exact HTTPS callback, and verified that Google accepts the
+identity-only authorization request without a redirect URI mismatch. Final
+authenticated callback/session observation remains a manual operator retry.
 
 ## Status
 

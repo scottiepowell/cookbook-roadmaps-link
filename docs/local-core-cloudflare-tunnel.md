@@ -38,6 +38,10 @@ anonymous root page returns HTTP 200 with links for existing-user login and
 first-administrator setup; the existing Docker-managed database and upload
 volumes were retained during the container replacement.
 
+0034N replaced that image with `local/vanilla-cookbook-adapter:0034n`. The image
+excludes ignored environment files, the container's effective origin is the
+public HTTPS hostname, and the existing database/upload volumes remain mounted.
+
 ## Cloudflare setup
 
 No Cloudflare control-plane change is currently required. If the route is ever
@@ -55,9 +59,10 @@ that would refer to the connector itself.
 
 ## Authentication boundary
 
-This tunnel does not convert the 0034L local Google OIDC path into production
-authentication. The 0034L guard intentionally rejects exposed origins. Public
-Google login would require a separately reviewed production-auth task, an HTTPS
-callback registered with Google, production secret handling, and removal of the
-local-only restriction through reviewed core changes. None of that is claimed
-or implemented here.
+0034N is the separately approved public Google identity-login task. The exact
+HTTPS callback is registered with Google, the public runtime generates that
+callback, and the authorization request retains identity-only scopes, state,
+PKCE, and nonce. Google accepted the corrected request without redirect URI
+mismatch. Final account selection and authenticated core callback/session
+observation remain manual. The tunnel still owns no identity, role, session,
+cookie, provider link, token, or storage grant.

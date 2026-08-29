@@ -2,6 +2,8 @@
 
 Status: accepted.
 
+Mailbox task: 0034N.
+
 ## Context
 
 The first public Cookbook request previously redirected directly to `/setup`,
@@ -48,6 +50,7 @@ force.
 
 The public entry point is understandable for returning users without weakening
 initial bootstrap. Administrator creation is deliberate rather than automatic,
-and registration policy stays under administrator control. Public Google OIDC
-remains a separate production-auth decision; this ADR does not enable it or
-change provider scopes, secrets, callbacks, or token custody.
+and registration policy stays under administrator control. 0034N separately
+approved the public Google identity-only callback; that does not change this
+role model, grant administrative authority, add storage scopes, or move token
+and session custody outside the core.

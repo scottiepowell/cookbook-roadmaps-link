@@ -43,3 +43,7 @@ Guide](first-deploy-guide.md).
 
 The public Windows-hosted core currently runs the homepage/login image. Anonymous
 `/` returns HTTP 200 and presents login plus first-administrator setup links.
+0034N replaced it with `local/vanilla-cookbook-adapter:0034n`, excluded ignored
+environment files from the image, and corrected the effective public OIDC
+origin. Google accepts the exact public HTTPS callback with identity-only
+scopes; final authenticated return/session observation is a manual retry.
