@@ -1,7 +1,7 @@
 # 0034N Public Homepage Login And Google OIDC Callback Results
 
-Status: blocked only on final operator-performed authenticated callback
-observation. The implementation and provider configuration are complete.
+Status: resumed after operator evidence; final authenticated callback retry is
+pending. The implementation and provider configuration are complete.
 
 ## Outcome
 
@@ -28,6 +28,13 @@ origin after the ignored developer environment file.
   OAuth client.
 - Google accepted the authorization request without a redirect URI mismatch and
   returned its login surface.
+- An operator screenshot captured an earlier public-callback request that Google
+  rejected with a redirect URI mismatch; the app then returned safely to its
+  public login page with a generic OIDC failure.
+- A refreshed provider-client inspection confirmed both the loopback development
+  callback and the exact public HTTPS callback are saved.
+- New desktop and Android-style requests generated after that confirmation both
+  reached the Google login surface without redirect mismatch.
 - The core image contained no ignored `.env` file.
 - Existing Docker-managed database and upload volumes were retained.
 
@@ -42,12 +49,12 @@ public callback were not automated. The operator should retry **Log in with
 Google** from `https://cookbook.roadmaps.link/login` and report only whether the
 browser returns to the public hostname and the core accepts the session.
 
-This same missing operator observation remained unavailable for three
-consecutive goal turns. No additional code, deployment, provider, or Cloudflare
-change can supply that evidence without selecting the operator's Google account.
-The safe unblock signal is exactly two booleans: public-hostname return succeeded
-and authenticated core session succeeded. No account name, email, profile,
-cookie, token, code, state, or session value is needed.
+This retry is entirely public and does not require access to the Windows host.
+It must begin from the Cookbook login page so the core generates a new state,
+PKCE challenge, nonce, and authorization request after provider propagation.
+The safe completion signal is exactly two booleans: public-hostname return
+succeeded and authenticated core session succeeded. No account name, email,
+profile, cookie, token, code, state, or session value is needed.
 
 ## Boundaries
 
