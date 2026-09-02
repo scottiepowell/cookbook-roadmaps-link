@@ -1,5 +1,26 @@
 # AI Implementation Backlog
 
+## 0034O: Public authenticated AI recipe importer
+
+Status: complete and deployed; signed-in browser submission remains a manual
+product check.
+
+Adds the first narrow public integration: authenticated Cookbook users can
+submit pasted recipe text through a core-owned proxy to the private sidecar.
+The request is pinned to `gpt-5.4-nano`, rate/payload/budget limited, and
+returns a review-only draft. Broad sidecar routing, saved-recipe reads,
+automatic save, admin/invite/session endpoints, and sidecar identity ownership
+remain excluded.
+
+Safe acceptance evidence: the public health endpoint returned 200, anonymous
+`/ai` navigation redirected, anonymous proxy submission returned 401,
+core-to-sidecar health returned 200, no sidecar host port was published, and
+one funded synthetic live `gpt-5.4-nano` importer call returned a validated
+draft. The live call exercised the deployed private sidecar after the same
+gate/model/budget preflight used by the core proxy; unit coverage verifies the
+core authentication and pinned forwarding contract. No signed-in browser
+session was available for a final UI submission.
+
 ## 0033I: Product Cookbook Link Target Correction
 
 Status: complete, local link/config/docs-only.

@@ -34,6 +34,18 @@ now uses the safe non-secret `COOKBOOK_TARGET_URL` setting for
 the exposed Cookbook URL configurable per deployment. `/product/ai` remains a
 redirect to `/demo`; no upstream proxy or rewrite was added.
 
+## Public authenticated AI importer
+
+Complete and deployed: 0034O implements the first public product connection as an authenticated,
+core-owned `/ai` page and one narrow server-side importer proxy. The private
+sidecar remains network-only, uses `gpt-5.4-nano`, accepts only the importer
+workflow through its operator gate, and retains provider budget caps. No saved
+recipe read, canonical write, sidecar session ownership, or broad `/ai/*`
+public route is added. Public health, anonymous redirect/rejection, private
+core-to-sidecar reachability, and one funded synthetic live nano call passed.
+The available browser sessions were signed out, so the final signed-in UI
+submission remains an explicit manual product check.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

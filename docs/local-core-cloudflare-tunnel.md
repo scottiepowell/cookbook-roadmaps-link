@@ -68,3 +68,14 @@ PKCE, and nonce. Google accepted the corrected authorization request and the
 replacement token-client credentials. Final account selection and authenticated
 core callback/session observation remain manual. The tunnel still owns no
 identity, role, session, cookie, provider link, token, or storage grant.
+
+## Authenticated AI sidecar route
+
+0034O keeps the existing public hostname and `app:3000` tunnel target. Core
+provides the authenticated `/ai` page and one allowlisted importer proxy; the
+FastAPI sidecar stays private on the same Docker network with no host port.
+The 0034O Compose profile deliberately leaves the known-working connector
+running independently after a stale sidecar `.env` tunnel placeholder failed
+closed during replacement and the preserved connector restored HTTP 200. No
+Cloudflare control-plane or DNS change is required. See
+[Public Authenticated AI Recipe Importer](public-authenticated-ai-importer.md).

@@ -17,6 +17,15 @@ The 29/30 integrated regression harness reuses this review as a baseline and ass
 
 ## Current Boundary Summary
 
+0034O adds one deliberately narrow exception to the earlier future-only
+recommendation: authenticated users may reach the core-owned
+`POST /api/ai/import-recipe` proxy. The proxy, not Cloudflare or the browser,
+calls the private sidecar `POST /ai/import-recipe` route. Core enforces its
+Lucia session, payload and per-user rate limits, pins `gpt-5.4-nano`, and
+injects the operator token server-side. The sidecar remains unreachable from
+the public edge and has no host-published port. All other exposure
+recommendations below remain unchanged.
+
 - `GET /health` is the only route that is a realistic public candidate today.
 - `GET /demo` and `GET /demo/ai` are local demo entry points and may be public only if the demo UI is intentionally exposed later.
 - `GET /demo/readiness` is internal status and should stay private.
@@ -78,10 +87,12 @@ The 29/30 integrated regression harness reuses this review as a baseline and ass
 
 ## What Can Ever Be Public
 
-The current review says only the following are plausible public candidates:
+The current review allows the following public surfaces:
 
 - `GET /health`
 - `GET /demo` and `GET /demo/ai` if the demo UI is intentionally published later
+- the authenticated core-owned `POST /api/ai/import-recipe` proxy added by
+  0034O; the similarly named sidecar route remains private
 
 Everything else should stay local/private unless a future task explicitly stages public exposure with a tighter data boundary.
 

@@ -21,6 +21,7 @@ Completed AI workflows:
 - Bounded input quality: weak or vague input gets deterministic warnings or one clarification question, while empty or nonsensical input is rejected before provider calls.
 - Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows, including the local Recipe Session Alpha panel.
 - Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
+- Public authenticated importer: `/ai` in the custom core delegates one bounded recipe-draft workflow to the private sidecar using `gpt-5.4-nano`; no sidecar route is directly public.
 
 Validation proof:
 
@@ -36,6 +37,7 @@ Demo and evidence links:
 - [AI feature completion review](docs/ai-feature-completion-review.md)
 - [AI UI integration plan](docs/ai-ui-integration-plan.md)
 - [Local Cookbook AI product integration](docs/local-cookbook-ai-product-integration.md)
+- [Public authenticated AI recipe importer](docs/public-authenticated-ai-importer.md)
 - [Manual product integration usability validation](docs/manual-product-integration-usability-validation.md)
 - [Product priority roadmap after 0032A](docs/product-priority-roadmap-after-0032A.md)
 - [Application session timer and access exceptions ADR](docs/application-session-timer-access-exceptions-adr.md)
