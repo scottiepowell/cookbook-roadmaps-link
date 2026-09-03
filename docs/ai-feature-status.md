@@ -66,6 +66,13 @@ counts, allowlisted relevance/support labels, and no more than three citation
 titles. Retrieval queries, IDs, snippets, scores, paths, prompt context,
 provider output, and sidecar-only metadata remain private.
 
+0034S reuses the warmed deterministic index's source-document lookup during
+context packing instead of reparsing all 5,000 dataset records per request.
+The real-dataset warmed benchmark fell from approximately 781 ms to 94 ms
+while preserving 3 retrieved examples, 2 packed examples, and strong grounding.
+Startup index construction remains behind sidecar readiness and no persistent
+index, raw-data response, or retrieval-policy change was added.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

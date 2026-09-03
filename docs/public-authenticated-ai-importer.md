@@ -101,6 +101,14 @@ strongly grounded draft from one where local examples were merely reviewed.
 Warnings remain visible separately and continue to describe degraded dataset
 availability without exposing local filesystem details.
 
+0034S removes a redundant dataset scan from the warmed request path. The
+context packer now reads ingredients and instruction summaries from the same
+fingerprinted in-memory index already used for deterministic retrieval. The
+index owns a source-ID lookup built during startup, so repeated requests do not
+reparse and remap all 5,000 records. Existing cache TTL, file-fingerprint
+invalidation, record bounds, rankings, citations, and support policy remain in
+effect; no persistent index artifact is created.
+
 ## Excluded routes and data
 
 The proxy does not expose the sidecar demo, config, admin, invite,

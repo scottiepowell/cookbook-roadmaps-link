@@ -8,6 +8,7 @@ from app.rag_context import (
     DEFAULT_IMPORTER_CONTEXT_MAX_EXAMPLES,
     pack_importer_rag_context,
 )
+from app.retrieval_cache import reset_retrieval_cache
 from app.schemas import DatasetSearchProvenance, DatasetSearchResult, RecipeImportRequest
 
 
@@ -63,6 +64,37 @@ def test_context_packer_prefers_strong_examples_and_drops_weak(tmp_path):
     assert pack.weak_examples_included is False
     assert pack.context_budget_warning is None
     assert "Apple Crumble" not in pack.render_for_prompt()
+
+
+def test_context_packer_reuses_cached_index_documents(tmp_path, monkeypatch):
+    write_context_fixture_dataset(tmp_path)
+    reset_retrieval_cache()
+    results = [
+        make_result("strong-1", "Classic Baked Cheesecake", 120, "Strong cheesecake snippet", ["title"]),
+    ]
+
+    first = pack_importer_rag_context(
+        "classic baked cheesecake",
+        results,
+        dataset_dir=tmp_path,
+        dataset_limit=5000,
+    )
+
+    import app.dataset_index as dataset_index
+
+    def fail_if_dataset_is_read_again(*_args, **_kwargs):
+        raise AssertionError("a warm context pack must reuse the cached index documents")
+
+    monkeypatch.setattr(dataset_index, "iter_recipe_dataset_records", fail_if_dataset_is_read_again)
+    second = pack_importer_rag_context(
+        "classic baked cheesecake",
+        results,
+        dataset_dir=tmp_path,
+        dataset_limit=5000,
+    )
+
+    assert second.items == first.items
+    assert second.packed_ids == first.packed_ids
 
 
 def test_context_packer_includes_weak_examples_only_when_no_strong_exist(tmp_path):

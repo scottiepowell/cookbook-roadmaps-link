@@ -21,12 +21,22 @@ snippets, paths, prompts, and sidecar-only metadata private.
 
 ## 0034S: RAG context-packing latency
 
-Status: next.
+Status: complete and deployed.
 
 Measure and reduce the post-warmup importer retrieval/context-packing latency,
 currently dominated by rebuilding the record map used to pack examples. Keep
 the 5,000-record bound, in-memory/no-artifact policy, deterministic retrieval,
 and existing relevance/support assertions.
+
+## 0034T: Warm-index uncached-query retrieval latency
+
+Status: next.
+
+Measure and reduce the first-query scoring latency after the dataset index is
+already warm. The deployed 0034S process returned a repeated cached query in
+approximately 78 ms, but a new uncached query still required approximately
+9.4 seconds. Preserve deterministic ordering, relevance/support policy,
+fingerprint invalidation, the 5,000-record bound, and offline behavior.
 
 ## 0034P: Public AI transient provider recovery
 

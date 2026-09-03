@@ -1,5 +1,6 @@
 from collections import Counter
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from app.dataset_adapter import ExternalRecipeRecord, iter_recipe_dataset_records
 from app.dataset_normalization import extract_phrases, normalize_index_text, normalize_text, safe_tokenize
@@ -109,6 +110,7 @@ class RecipeIndexSummary:
 @dataclass(frozen=True)
 class RecipeDatasetIndex:
     documents: list[IndexedRecipeDocument]
+    documents_by_source_id: dict[str, IndexableRecipeDocument]
     summary: RecipeIndexSummary
 
 
@@ -163,7 +165,7 @@ def analyze_recipe_query(query: str) -> RecipeQueryAnalysis:
     )
 
 
-def build_index_from_dataset(dataset_dir: str | None = None, limit: int = 100) -> RecipeDatasetIndex:
+def build_index_from_dataset(dataset_dir: str | Path | None = None, limit: int = 100) -> RecipeDatasetIndex:
     index, _, _ = get_cached_dataset_index(
         dataset_dir=dataset_dir,
         record_limit=limit,
@@ -214,6 +216,7 @@ def build_recipe_index(records: list[ExternalRecipeRecord]) -> RecipeDatasetInde
 
     return RecipeDatasetIndex(
         documents=indexed,
+        documents_by_source_id={item.document.source_id: item.document for item in indexed},
         summary=RecipeIndexSummary(
             document_count=len(indexed),
             source_counts=dict(sorted(source_counts.items())),

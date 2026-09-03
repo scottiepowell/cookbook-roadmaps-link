@@ -4,8 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from app.dataset_adapter import ExternalRecipeRecord, iter_recipe_dataset_records
-from app.dataset_index import WEAK_MATCH_SCORE_THRESHOLD
+from app.dataset_index import IndexableRecipeDocument, WEAK_MATCH_SCORE_THRESHOLD, build_index_from_dataset
 from app.schemas import DatasetSearchResult
 
 
@@ -95,7 +94,7 @@ def pack_importer_rag_context(
             max_context_chars=max_context_chars,
         )
 
-    record_map = _record_map(dataset_dir, dataset_limit)
+    record_map = _cached_record_map(dataset_dir, dataset_limit)
     scored_candidates = [
         (
             result,
@@ -156,14 +155,14 @@ def pack_importer_rag_context(
     )
 
 
-def _record_map(
+def _cached_record_map(
     dataset_dir: str | Path | None,
     dataset_limit: int | None,
-) -> dict[str, ExternalRecipeRecord]:
+) -> dict[str, IndexableRecipeDocument]:
     if dataset_dir is None:
         return {}
-    records = iter_recipe_dataset_records(dataset_dir, limit=dataset_limit or 100)
-    return {record.source_id: record for record in records}
+    index = build_index_from_dataset(dataset_dir, limit=dataset_limit or 100)
+    return index.documents_by_source_id
 
 
 def _make_item(
@@ -171,7 +170,7 @@ def _make_item(
     rank: int,
     result: DatasetSearchResult,
     category: str,
-    record: ExternalRecipeRecord | None,
+    record: IndexableRecipeDocument | None,
     max_snippet_chars: int,
     max_ingredient_chars: int,
     max_instruction_chars: int,
