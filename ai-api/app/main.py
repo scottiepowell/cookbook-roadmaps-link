@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -62,7 +63,28 @@ from app.schemas import (
 )
 from app.search import search_recipes
 
-app = FastAPI(title="Cookbook AI API", version="0.1.0")
+
+def warm_recipe_dataset_on_start() -> None:
+    """Build the bounded in-memory dataset index before public readiness."""
+    enabled = os.getenv("AI_RECIPE_DATASET_WARM_ON_START", "false").strip().lower()
+    if enabled not in {"1", "true", "yes", "on"}:
+        return
+
+    try:
+        result = search_dataset_recipes("chicken recipe", limit=1)
+        if result.index.document_count < 1:
+            raise RuntimeError
+    except Exception:
+        raise RuntimeError("Recipe dataset warmup failed.") from None
+
+
+@asynccontextmanager
+async def app_lifespan(_app: FastAPI):
+    warm_recipe_dataset_on_start()
+    yield
+
+
+app = FastAPI(title="Cookbook AI API", version="0.1.0", lifespan=app_lifespan)
 configure_logging()
 app.middleware("http")(request_logging_middleware)
 app.include_router(recipe_session_router)

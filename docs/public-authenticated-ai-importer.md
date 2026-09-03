@@ -74,6 +74,19 @@ The existing Docker-managed `cookbook-public-core-db` and
 `cookbook-public-core-uploads` volumes are external and retained across
 replacement.
 
+The ignored host `recipe-dataset/` directory is mounted read-only at
+`/app/recipe-dataset` in the sidecar only. `RECIPE_DATASET_INDEX_LIMIT=5000`
+retains the documented meaningful-RAG profile while keeping retrieval bounded.
+Compose uses `create_host_path: false` so a missing dataset fails deployment
+instead of silently creating an empty directory and degrading to no-RAG
+drafting. No dataset file is copied into an image, committed, mounted into
+core, or exposed through the public edge.
+
+The public sidecar warms this bounded in-memory index before reporting healthy.
+Its health-check startup allowance is 120 seconds, keeping the approximately
+one-minute first index build out of the first user's request path. Normal tests
+and non-public runtimes leave warmup disabled by default.
+
 ## Excluded routes and data
 
 The proxy does not expose the sidecar demo, config, admin, invite,

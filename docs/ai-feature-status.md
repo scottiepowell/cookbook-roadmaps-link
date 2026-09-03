@@ -53,6 +53,13 @@ schema, payload, rate-limit, and authorization failures remain no-retry. The
 `0034p` deployment passed public health and a post-deployment funded nano-model
 recipe draft check.
 
+0034Q connects the ignored host recipe dataset to the public sidecar through a
+read-only, fail-fast bind mount and an explicit 5,000-record index limit. The
+dataset remains absent from core, container images, Git, and public routes.
+Startup warmup now completes before sidecar health; deployed verification
+returned three citations with strong relevance/support and RAG grounding, and
+the one permitted retry recovered an incomplete live response successfully.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

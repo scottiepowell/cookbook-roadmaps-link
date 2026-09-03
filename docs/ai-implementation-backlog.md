@@ -1,5 +1,33 @@
 # AI Implementation Backlog
 
+## 0034Q: Public AI RAG dataset runtime
+
+Status: complete and deployed.
+
+Mounts the existing ignored recipe dataset read-only into the private sidecar,
+sets an explicit container path, and retains the bounded 5,000-record
+meaningful-RAG profile. The task verifies retrieval through safe counts and
+categories only; no raw dataset content, canonical ingestion, persistent
+index, vector database, or broader route is added.
+
+## 0034R: Public AI RAG provenance UX
+
+Status: next.
+
+Return a bounded safe retrieval summary through the authenticated core proxy
+and show users when local examples grounded a draft. Expose counts, support and
+relevance labels, and a small citation-title list only; keep raw dataset rows,
+snippets, paths, prompts, and sidecar-only metadata private.
+
+## 0034S: RAG context-packing latency
+
+Status: queued after 0034R.
+
+Measure and reduce the post-warmup importer retrieval/context-packing latency,
+currently dominated by rebuilding the record map used to pack examples. Keep
+the 5,000-record bound, in-memory/no-artifact policy, deterministic retrieval,
+and existing relevance/support assertions.
+
 ## 0034P: Public AI transient provider recovery
 
 Status: complete and deployed.

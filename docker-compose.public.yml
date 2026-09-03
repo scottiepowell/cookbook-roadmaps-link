@@ -25,7 +25,7 @@ services:
   ai-api:
     build:
       context: ./ai-api
-    image: local/cookbook-ai-sidecar:0034p
+    image: local/cookbook-ai-sidecar:0034q
     container_name: cookbook-public-ai
     env_file:
       - ./.env
@@ -49,6 +49,16 @@ services:
       AI_OPERATOR_GATE_ENABLED: "true"
       AI_OPERATOR_GATE_LOCAL_BYPASS: "false"
       AI_OPERATOR_GATE_ALLOWED_WORKFLOWS: importer
+      AI_RECIPE_DATASET_WARM_ON_START: "true"
+      RECIPE_DATASET_DIR: /app/recipe-dataset
+      RECIPE_DATASET_INDEX_LIMIT: "5000"
+    volumes:
+      - type: bind
+        source: ./recipe-dataset
+        target: /app/recipe-dataset
+        read_only: true
+        bind:
+          create_host_path: false
     expose:
       - "8000"
     healthcheck:
@@ -60,7 +70,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
-      start_period: 10s
+      start_period: 120s
     networks:
       - cookbook-public-tunnel
     restart: unless-stopped
