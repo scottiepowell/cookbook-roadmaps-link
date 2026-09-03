@@ -12,7 +12,7 @@ index, vector database, or broader route is added.
 
 ## 0034R: Public AI RAG provenance UX
 
-Status: next.
+Status: complete and deployed.
 
 Return a bounded safe retrieval summary through the authenticated core proxy
 and show users when local examples grounded a draft. Expose counts, support and
@@ -21,7 +21,7 @@ snippets, paths, prompts, and sidecar-only metadata private.
 
 ## 0034S: RAG context-packing latency
 
-Status: queued after 0034R.
+Status: next.
 
 Measure and reduce the post-warmup importer retrieval/context-packing latency,
 currently dominated by rebuilding the record map used to pack examples. Keep

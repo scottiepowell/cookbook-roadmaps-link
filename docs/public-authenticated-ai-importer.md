@@ -87,6 +87,20 @@ Its health-check startup allowance is 120 seconds, keeping the approximately
 one-minute first index build out of the first user's request path. Normal tests
 and non-public runtimes leave warmup disabled by default.
 
+## Visible grounding provenance
+
+0034R adds a provenance panel below a successful AI draft. The authenticated
+core proxy returns only whether the draft met the strong grounding policy,
+bounded retrieved/used/citation counts, allowlisted relevance and support
+labels, and at most three deduplicated citation titles. The browser does not
+receive retrieval queries, record or source IDs, snippets, scores, paths,
+packed context, support reasons, prompts, provider responses, or index details.
+
+When the configured dataset is available, the panel lets a user distinguish a
+strongly grounded draft from one where local examples were merely reviewed.
+Warnings remain visible separately and continue to describe degraded dataset
+availability without exposing local filesystem details.
+
 ## Excluded routes and data
 
 The proxy does not expose the sidecar demo, config, admin, invite,

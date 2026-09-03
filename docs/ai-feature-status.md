@@ -60,6 +60,12 @@ Startup warmup now completes before sidecar health; deployed verification
 returned three citations with strong relevance/support and RAG grounding, and
 the one permitted retry recovered an incomplete live response successfully.
 
+0034R makes that grounding legible in the public AI draft UI. The core reduces
+sidecar retrieval output to a safe summary: a grounding boolean, bounded
+counts, allowlisted relevance/support labels, and no more than three citation
+titles. Retrieval queries, IDs, snippets, scores, paths, prompt context,
+provider output, and sidecar-only metadata remain private.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the
