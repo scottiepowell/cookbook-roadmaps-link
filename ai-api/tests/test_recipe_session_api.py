@@ -6,6 +6,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.importer import RecipeImportProviderError
+from app.providers.errors import ProviderCallError
+from app import recipe_session_routes
 from app.recipe_requirements import extract_recipe_requirements
 from app.recipe_session import default_recipe_session_store
 from app.retrieval_cache import reset_retrieval_cache
@@ -216,6 +219,39 @@ def test_general_recipe_follow_up_revises_current_draft(session_client):
     assert data["draft"] is not None
     assert data["revision_count"] == 1
     assert data["max_changes"] == 10
+
+
+def test_failed_recipe_change_does_not_mutate_draft_or_revision(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "green chile enchiladas with chicken", "provider_mode": "mock"},
+    ).json()
+
+    def fail_generation(*args, **kwargs):
+        del args, kwargs
+        provider_error = ProviderCallError(
+            "temporary provider failure",
+            failure_category="output_cap_or_incomplete_response",
+            exception_type="IncompleteResponseError",
+            safe_summary="provider output incomplete",
+        )
+        raise RecipeImportProviderError("Recipe importer provider failed.") from provider_error
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", fail_generation)
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "add mushrooms", "provider_mode": "mock"},
+    )
+    current = default_recipe_session_store.get_session(started["interaction_id"])
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["retryable"] is True
+    assert current is not None
+    assert current.revision_count == 0
+    assert current.draft.model_dump() == started["draft"]
+    assert "mushrooms" not in current.requirements.latest_user_text.lower()
+    _assert_safe_response(response.text, dataset_dir)
 
 
 def test_new_recipe_intent_requires_confirmation_without_replacing_draft(session_client):

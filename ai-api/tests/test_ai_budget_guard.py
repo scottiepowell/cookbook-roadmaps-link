@@ -445,6 +445,8 @@ def test_recipe_session_route_blocks_before_provider_when_budget_exhausted(tmp_p
     follow_up_data = follow_up.json()
     assert follow_up_data["response_state"] == "rejected"
     assert follow_up_data["draft"] is not None
+    assert follow_up_data["revision_count"] == 0
+    assert follow_up_data["requirements"] == start_data["requirements"]
     assert any("budget" in warning.lower() or "disabled" in warning.lower() for warning in follow_up_data["warnings"])
     assert fake_provider.calls == 1
     _assert_safe(follow_up.text)

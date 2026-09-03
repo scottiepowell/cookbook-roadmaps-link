@@ -21,7 +21,7 @@ Completed AI workflows:
 - Bounded input quality: weak or vague input gets deterministic warnings or one clarification question, while empty or nonsensical input is rejected before provider calls.
 - Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows, including the local Recipe Session Alpha panel.
 - Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
-- Public authenticated recipe chat: `/ai` in the custom core delegates a core-owned, ten-change recipe conversation to the private sidecar using `gpt-5.4-nano`, uses an optimized deterministic 5,000-record index for retrieval and context packing, confirms before replacing a recipe, and shows a bounded local-example grounding summary; no sidecar route is directly public.
+- Public authenticated recipe chat: `/ai` in the custom core delegates a core-owned, ten-successful-change recipe conversation to the private sidecar using `gpt-5.4-nano`, uses transactional revisions with one bounded transient retry, an optimized deterministic 5,000-record index for retrieval and context packing, confirmation before replacing a recipe, and a bounded local-example grounding summary; no sidecar route is directly public.
 
 Validation proof:
 
@@ -554,6 +554,14 @@ different dish pauses for explicit replacement confirmation, and the recipe,
 ingredients, instructions, and grounding panels can be collapsed. Core owns
 the public chat handle and user binding; the private sidecar still receives no
 Cookbook identity, cookie, OAuth artifact, or canonical write authority.
+
+0034V fixes failed follow-ups consuming change slots or contaminating later
+recipe context. Recipe requirements and the counter now commit only with a
+successfully validated draft. Retryable failures receive one identical bounded
+retry; a final failure restores the prompt for editing and leaves the current
+recipe unchanged. Full recipe revisions have a larger structured-output
+allowance, while `gpt-5.4-nano`, ten successful changes, and the existing cost
+ceilings remain enforced.
 
 ## Status
 

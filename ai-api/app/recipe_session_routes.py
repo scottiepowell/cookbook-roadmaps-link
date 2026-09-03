@@ -9,6 +9,7 @@ from app.ai_mode_routing import resolve_ai_mode
 from app.ai_invite_sessions import require_demo_workflow_access
 from app.importer import RecipeImportProviderError, RecipeImportValidationError, import_recipe_text
 from app.observability import log_ai_workflow
+from app.providers.errors import extract_provider_debug_details
 from app.recipe_requirements import (
     RecipeClarificationQuestion,
     RecipeFollowUpClassification,
@@ -170,15 +171,13 @@ def message_recipe_session(
         revised_requirements = previous_requirements.model_copy(deep=True)
         revised_requirements.latest_user_text = payload.text
         revised_requirements.revision_count += 1
-        session = default_recipe_session_store.update_session(interaction_id, revised_requirements)
-        if session is None:
-            raise _not_found()
         session = _generate_and_store_draft(
             session,
             _revision_generation_text(session.draft, payload.text),
             response_state=RecipeSessionResponseState.DRAFT_REVISED,
             budget_session_state=access_session,
             provider=provider,
+            requirements_state=revised_requirements,
         )
         log_ai_workflow(
             "recipe.session.message",
@@ -229,20 +228,13 @@ def message_recipe_session(
         if refresh.should_refresh_rag
         else RecipeSessionResponseState.DRAFT_REVISED
     )
-    session = default_recipe_session_store.update_session(
-        interaction_id,
-        updated_requirements,
-        response_state=response_state.value,
-        warnings=session.warnings,
-    )
-    if session is None:
-        raise _not_found()
     session = _generate_and_store_draft(
         session,
         _revision_generation_text(session.draft, payload.text),
         response_state=response_state,
         budget_session_state=access_session,
         provider=_resolve_session_provider(payload),
+        requirements_state=updated_requirements,
     )
     log_ai_workflow(
         "recipe.session.message",
@@ -315,15 +307,33 @@ def _generate_and_store_draft(
     source: str | None = None,
     budget_session_state: object | None = None,
     provider=None,
+    requirements_state: RecipeRequirementsState | None = None,
 ) -> RecipeSessionState:
     try:
         response = import_recipe_text(RecipeImportRequest(text=text, source=source), provider=provider, session_state=budget_session_state or session)
     except RecipeImportProviderError as exc:
-        raise HTTPException(status_code=503, detail="Recipe-session provider is not available.") from exc
+        raise HTTPException(status_code=503, detail=_safe_session_unavailable_detail(exc)) from exc
     except RecipeImportValidationError as exc:
         raise HTTPException(status_code=502, detail="Recipe-session provider returned an invalid draft.") from exc
 
-    requirements = session.requirements.model_copy(deep=True)
+    # Provider generation must succeed before requirements/revision state is
+    # committed. A failed request therefore leaves the current draft, context,
+    # and ten-change allowance untouched.
+    if response.draft is None and session.draft is not None:
+        unchanged = default_recipe_session_store.update_session(
+            session.interaction_id,
+            session.requirements,
+            response_state=RecipeSessionResponseState.REJECTED.value,
+            draft=session.draft,
+            citations=session.citations,
+            retrieval=session.retrieval,
+            warnings=response.warnings,
+        )
+        if unchanged is None:
+            raise _not_found()
+        return unchanged
+
+    requirements = (requirements_state or session.requirements).model_copy(deep=True)
     requirements.last_support_level = response.retrieval.support_level if response.retrieval else None
     requirements.last_citation_ids = [citation.id for citation in response.citations]
     requirements.last_retrieval_cache_key = response.retrieval.cache.retrieval_cache_key if response.retrieval else None
@@ -347,6 +357,30 @@ def _generate_and_store_draft(
     if updated is None:
         raise _not_found()
     return updated
+
+
+def _safe_session_unavailable_detail(exc: BaseException) -> dict[str, str | bool]:
+    details = extract_provider_debug_details(exc)
+    retryable_categories = {
+        "timeout",
+        "network",
+        "provider_call_failed",
+        "output_cap_or_incomplete_response",
+        "invalid_json",
+    }
+    category = details.category if details else "unexpected_safe_internal_block"
+    retryable = category in retryable_categories
+    guidance = (
+        "Cookbook AI could not complete this change. One bounded retry is allowed."
+        if retryable
+        else "Cookbook AI could not complete this recipe change."
+    )
+    return {
+        "status": "unavailable",
+        "safe_unavailable_category": category,
+        "safe_guidance": guidance,
+        "retryable": retryable,
+    }
 
 
 def _requirements_after_message(

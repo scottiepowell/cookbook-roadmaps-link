@@ -90,6 +90,15 @@ replacement confirmation. The recipe, ingredients, instructions, and grounding
 sections are collapsible. State is in-memory and lost on restart; no canonical
 recipe save, sidecar identity ownership, or public sidecar route is added.
 
+0034V makes every follow-up transactional. Requirements, draft state, and the
+ten-change count are committed together only after a provider response passes
+schema validation. Transient failures permit one core-owned identical retry;
+deterministic and budget failures do not. If both attempts fail, the UI removes
+the optimistic transcript entry, restores its text to the composer, and keeps
+the recipe and counter unchanged. Public revision output is capped at 1,800
+tokens, provider attempts at 21 for the initial draft plus retry capacity, and
+the existing nano model and cost ceilings remain unchanged.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

@@ -85,9 +85,13 @@ check_ai_api_tests() {
   fi
 
   "$venv_python" -m pip install --disable-pip-version-check -r ai-api/requirements.txt >/dev/null
-  PYTHONPATH=ai-api "$venv_python" -m pytest ai-api/tests
+  if ! PYTHONPATH=ai-api "$venv_python" -m pytest ai-api/tests; then
+    return 1
+  fi
   if [[ -f evals/ai_cookbook/run_evals.py ]]; then
-    PYTHONPATH=ai-api "$venv_python" evals/ai_cookbook/run_evals.py
+    if ! PYTHONPATH=ai-api "$venv_python" evals/ai_cookbook/run_evals.py; then
+      return 1
+    fi
   fi
 }
 

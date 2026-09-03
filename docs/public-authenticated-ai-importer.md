@@ -40,8 +40,8 @@ for comparison through its existing operator gate. The browser never sees it.
 
 The public Compose profile enables only the `importer` and `recipe_session`
 workflows and disables the local bypass. Live provider calls remain bounded to
-eleven calls per sidecar
-runtime budget context, 1,000 output tokens per call, 13,000 total estimated
+21 calls per sidecar runtime budget context, 1,800 output tokens per call,
+13,800 total estimated
 tokens per call, 0.05 USD estimated cost per call, and 0.25 USD per runtime
 budget context. The separate manual live-test ceiling remains 25 cents.
 
@@ -140,6 +140,22 @@ dish returns a confirmation state without mutating the draft. The browser can
 keep the current recipe or explicitly start a new chat from the proposed idea.
 Recipe, ingredient, instruction, and grounding panels use native collapsible
 controls with plus/minus indicators to keep long drafts manageable.
+
+0034V makes follow-up mutation transactional. The sidecar stages requirements
+and invokes the provider before committing any new requirements, draft, or
+revision count. A failed attempt therefore cannot consume a change or partially
+alter future context. Retryable timeout, network, temporary-provider, invalid
+JSON, and incomplete-output failures expose only a bounded classification to
+core and receive one identical retry. Authorization, quota, configuration,
+model, schema, payload, and budget failures are not retried.
+
+The UI treats its outgoing user bubble as optimistic. If the bounded request
+still fails, it removes that bubble and restores the request text in the
+composer. The current recipe remains visible and the successful-change counter
+does not advance. The 1,800-token output ceiling accommodates full structured
+recipe revisions; 21 allowed provider attempts cover one initial generation and
+one retry for each of ten changes, while the existing cost ceilings remain the
+final budget guard.
 
 ## Excluded routes and data
 

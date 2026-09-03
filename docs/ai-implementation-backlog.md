@@ -1,5 +1,16 @@
 # AI Implementation Backlog
 
+## 0034V: Transactional AI recipe revisions
+
+Status: complete and deployed.
+
+Failed provider attempts no longer mutate recipe requirements, replace the
+draft, or consume one of the ten successful changes. Core performs one bounded
+retry only when the sidecar classifies a failure as transient. The browser
+removes failed optimistic messages and restores their text for retry/editing.
+The structured-output allowance is sized for full recipe revisions while the
+nano-model and cost ceilings remain enforced.
+
 ## 0034U: Public AI recipe chat
 
 Status: complete and deployed.
