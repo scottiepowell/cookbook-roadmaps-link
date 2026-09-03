@@ -24,6 +24,7 @@ from app.recipe_requirements import (
     decide_clarification,
     decide_rag_refresh,
     extract_recipe_requirements,
+    suggests_new_recipe,
 )
 from app.recipe_session import (
     RecipeSessionState,
@@ -47,6 +48,7 @@ from app.schemas import (
 
 
 router = APIRouter(prefix="/ai/recipe-session", tags=["recipe-session-alpha"])
+MAX_RECIPE_CHANGES = 10
 
 
 def _resolve_session_provider(payload):
@@ -120,10 +122,37 @@ def message_recipe_session(
     previous_requirements = session.requirements
     classification = classify_follow_up(payload.text, current_state=previous_requirements)
 
-    if classification.label in {
-        RecipeFollowUpLabel.IRRELEVANT_CHATTER,
-        RecipeFollowUpLabel.FORMATTING_ONLY,
-    }:
+    if suggests_new_recipe(payload.text, previous_requirements):
+        classification = RecipeFollowUpClassification(
+            label=RecipeFollowUpLabel.NEW_RECIPE_SUGGESTED,
+            reason="The message appears to request a different recipe.",
+            clarification_may_be_needed=True,
+        )
+        decision = RecipeSessionDecision(
+            should_clarify=True,
+            question="That sounds like a different recipe. Do you want to start a new recipe and replace this draft?",
+            reason="A new recipe requires explicit confirmation before replacing the current draft.",
+            confidence_label=previous_requirements.confidence_label,
+        )
+        session = _update_session_metadata(
+            session,
+            response_state=RecipeSessionResponseState.NEW_RECIPE_CONFIRMATION,
+        )
+        return _session_response(
+            session,
+            classification=classification,
+            decision=decision,
+            previous_requirements=previous_requirements,
+        )
+
+    if session.revision_count >= MAX_RECIPE_CHANGES and classification.label != RecipeFollowUpLabel.IRRELEVANT_CHATTER:
+        session = _update_session_metadata(
+            session,
+            response_state=RecipeSessionResponseState.CHANGE_LIMIT_REACHED,
+        )
+        return _session_response(session, classification=classification)
+
+    if classification.label == RecipeFollowUpLabel.IRRELEVANT_CHATTER:
         session = _update_session_metadata(session, response_state=RecipeSessionResponseState.NO_MATERIAL_CHANGE)
         log_ai_workflow("recipe.session.message", request, status="no_material_change", warning_count=0)
         return _session_response(session, classification=classification, previous_requirements=previous_requirements)
@@ -133,11 +162,20 @@ def message_recipe_session(
         log_ai_workflow("recipe.session.message", request, status="ready_to_finalize", warning_count=0)
         return _session_response(session, classification=classification, previous_requirements=previous_requirements)
 
-    if classification.label == RecipeFollowUpLabel.REGENERATE_WITHOUT_NEW_REQUIREMENTS:
+    if classification.label in {
+        RecipeFollowUpLabel.REGENERATE_WITHOUT_NEW_REQUIREMENTS,
+        RecipeFollowUpLabel.FORMATTING_ONLY,
+    }:
         provider = _resolve_session_provider(payload)
+        revised_requirements = previous_requirements.model_copy(deep=True)
+        revised_requirements.latest_user_text = payload.text
+        revised_requirements.revision_count += 1
+        session = default_recipe_session_store.update_session(interaction_id, revised_requirements)
+        if session is None:
+            raise _not_found()
         session = _generate_and_store_draft(
             session,
-            _generation_text(previous_requirements),
+            _revision_generation_text(session.draft, payload.text),
             response_state=RecipeSessionResponseState.DRAFT_REVISED,
             budget_session_state=access_session,
             provider=provider,
@@ -201,7 +239,7 @@ def message_recipe_session(
         raise _not_found()
     session = _generate_and_store_draft(
         session,
-        _generation_text(updated_requirements),
+        _revision_generation_text(session.draft, payload.text),
         response_state=response_state,
         budget_session_state=access_session,
         provider=_resolve_session_provider(payload),
@@ -323,7 +361,12 @@ def _requirements_after_message(
         now=datetime.now(UTC),
     )
     updated.original_user_text = previous.original_user_text
-    updated.revision_count = previous.revision_count + 1
+    # Answering an open question completes the pending request; it is not an
+    # additional recipe change. This also keeps pre-draft clarification at
+    # revision zero so users still receive all ten post-draft changes.
+    updated.revision_count = previous.revision_count + (
+        0 if classification.label == RecipeFollowUpLabel.CLARIFICATION_ANSWER else 1
+    )
     updated.last_retrieval_summary = previous.last_retrieval_summary
     updated.last_retrieval_cache_key = previous.last_retrieval_cache_key
     updated.last_support_level = previous.last_support_level
@@ -374,6 +417,22 @@ def _generation_text(requirements: RecipeRequirementsState) -> str:
     if len(text) <= 190:
         return text
     return text[:190].rsplit(" ", 1)[0].strip()
+
+
+def _revision_generation_text(draft, message: str) -> str:
+    if draft is None:
+        return message.strip()
+    ingredients = "; ".join(
+        " ".join(str(value) for value in (item.quantity, item.unit, item.name, item.note) if value)
+        for item in draft.ingredients
+    )
+    instructions = "; ".join(item.text for item in draft.instructions)
+    return (
+        f"Revise this current recipe only. Title: {draft.title}. "
+        f"Description: {draft.description or ''}. Servings: {draft.servings or 4}. "
+        f"Ingredients: {ingredients}. Instructions: {instructions}. "
+        f"Requested change: {message.strip()}. Preserve everything not requested to change."
+    )[:8000]
 
 
 def _update_session_metadata(

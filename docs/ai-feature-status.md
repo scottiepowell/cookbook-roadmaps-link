@@ -37,11 +37,11 @@ redirect to `/demo`; no upstream proxy or rewrite was added.
 ## Public authenticated AI importer
 
 Complete and deployed: 0034O implements the first public product connection as an authenticated,
-core-owned `/ai` page and one narrow server-side importer proxy. The private
-sidecar remains network-only, uses `gpt-5.4-nano`, accepts only the importer
-workflow through its operator gate, and retains provider budget caps. No saved
-recipe read, canonical write, sidecar session ownership, or broad `/ai/*`
-public route is added. Public health, anonymous redirect/rejection, private
+core-owned `/ai` page and narrow server-side AI proxies. The private sidecar
+remains network-only, uses `gpt-5.4-nano`, accepts only the importer and recipe
+session workflows through its operator gate, and retains provider budget caps.
+No saved recipe read, canonical write, sidecar identity ownership, or broad
+`/ai/*` public route is added. Public health, anonymous redirect/rejection, private
 core-to-sidecar reachability, and one funded synthetic live nano call passed.
 The available browser sessions were signed out, so the final signed-in UI
 submission remains an explicit manual product check.
@@ -79,6 +79,16 @@ millions of linear token-prefix checks with equivalent set and binary-search
 lookups stored in the in-memory index. The real-dataset warm novel-query
 benchmark fell from approximately 9.4 seconds to 0.28 seconds while the
 retrieval/RAG regression corpus retained its prior ranking and support results.
+
+0034U transforms the public draft page into a bounded recipe conversation.
+Core owns an opaque chat handle bound to the authenticated user and maps it to
+the private sidecar session for one hour. The initial request may ask a
+clarifying question; once a draft exists, follow-ups revise that current draft
+and preserve unspecified details. Ten post-draft changes are allowed. A likely
+different-recipe request leaves the draft untouched and asks for explicit
+replacement confirmation. The recipe, ingredients, instructions, and grounding
+sections are collapsible. State is in-memory and lost on restart; no canonical
+recipe save, sidecar identity ownership, or public sidecar route is added.
 
 ## Local Vanilla Cookbook Docker runtime
 

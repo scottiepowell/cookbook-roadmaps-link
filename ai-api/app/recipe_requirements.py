@@ -36,6 +36,8 @@ class RecipeSessionResponseState(StrEnum):
     REJECTED = "rejected"
     NOT_FOUND = "not_found"
     EXPIRED = "expired"
+    NEW_RECIPE_CONFIRMATION = "new_recipe_confirmation"
+    CHANGE_LIMIT_REACHED = "change_limit_reached"
 
 
 class RecipeFollowUpLabel(StrEnum):
@@ -47,6 +49,7 @@ class RecipeFollowUpLabel(StrEnum):
     REGENERATE_WITHOUT_NEW_REQUIREMENTS = "regenerate_without_new_requirements"
     SAVE_OR_FINALIZE_REQUEST = "save_or_finalize_request"
     UNKNOWN = "unknown"
+    NEW_RECIPE_SUGGESTED = "new_recipe_suggested"
 
 
 class RecipeRequirementField(BaseModel):
@@ -347,6 +350,30 @@ def classify_follow_up(
     )
 
 
+def suggests_new_recipe(message: str, current_state: RecipeRequirementsState | None = None) -> bool:
+    normalized = normalize_text(message)
+    explicit = (
+        "new recipe",
+        "different recipe",
+        "scrap this recipe",
+        "scrape this recipe",
+        "start over",
+        "start a new",
+        "start over with",
+        "switch to",
+        "go with a different",
+    )
+    if any(_contains_phrase(normalized, phrase) for phrase in explicit):
+        return True
+    if not _contains_any(normalized, {"instead", "rather"}):
+        return False
+    if not _contains_any(normalized, {"make", "want", "do", "cook", "recipe"}):
+        return False
+    candidate = _extract_dish_intent(normalized)
+    current = str(_field_value(current_state.dish_intent) or "") if current_state else ""
+    return bool(candidate and normalize_text(str(candidate.value)) != normalize_text(current))
+
+
 def decide_rag_refresh(
     previous_state: RecipeRequirementsState,
     current_state: RecipeRequirementsState,
@@ -411,7 +438,20 @@ def _extract_dish_intent(normalized: str) -> RecipeRequirementField | None:
     for pattern, value in DISH_PATTERNS:
         if _contains_phrase(normalized, pattern):
             return RecipeRequirementField(value=value, source=RecipeRequirementSource.USER_PROVIDED)
-    return None
+    candidate = re.split(r"\b(?:with|without|serves?|for|using|use|in under)\b", normalized, maxsplit=1)[0]
+    candidate = re.sub(
+        r"^(?:please\s+)?(?:make|create|cook|give me|i want|i would like|can you make)\s+",
+        "",
+        candidate,
+    ).strip()
+    candidate = re.sub(r"\b(?:instead|rather)$", "", candidate).strip()
+    tokens = safe_tokenize(candidate)
+    if not tokens or set(tokens) <= GENERIC_DISH_TERMS or tokens[0] in {"it", "this", "that"}:
+        return None
+    if len(tokens) > 7:
+        tokens = tokens[:7]
+    value = " ".join(tokens)
+    return RecipeRequirementField(value=value, source=RecipeRequirementSource.USER_PROVIDED)
 
 
 def _extract_serving_count(text: str) -> RecipeRequirementField | None:

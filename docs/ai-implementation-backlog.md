@@ -1,5 +1,16 @@
 # AI Implementation Backlog
 
+## 0034U: Public AI recipe chat
+
+Status: complete and deployed.
+
+Transforms the authenticated one-shot recipe draft into a core-owned,
+one-recipe conversation. Users can answer clarifications and request up to ten
+post-draft changes; likely replacement requests pause for explicit confirmation.
+The UI retains the prompt and conversation and adds collapsible recipe,
+ingredient, instruction, and grounding sections. State is bounded, in-memory,
+and one-hour expiring; canonical save remains separate.
+
 ## 0034Q: Public AI RAG dataset runtime
 
 Status: complete and deployed.

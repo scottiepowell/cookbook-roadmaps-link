@@ -20,8 +20,10 @@ alias. The sidecar exposes port 8000 only inside that network.
 ## Public feature
 
 Authenticated users see **AI recipe assistant** in desktop and mobile
-navigation. `/ai` accepts pasted recipe text plus an optional source note and
-shows a structured draft for review. This first slice does not save the draft.
+navigation. `/ai` accepts a recipe idea plus an optional source note, asks a
+clarifying question when needed, and shows a structured draft for review. The
+same composer remains available for natural-language changes to that draft.
+This flow does not save the draft.
 
 Core exposes only `POST /api/ai/import-recipe`. It checks the real core session,
 limits input to 12,000 characters, permits three requests per user per five
@@ -36,8 +38,9 @@ distinct random value for both `AI_SIDECAR_OPERATOR_TOKEN` and
 sidecar. Core injects the first name server-side; the sidecar hashes the second
 for comparison through its existing operator gate. The browser never sees it.
 
-The public Compose profile enables only the `importer` workflow and disables
-the local bypass. Live provider calls remain bounded to ten calls per sidecar
+The public Compose profile enables only the `importer` and `recipe_session`
+workflows and disables the local bypass. Live provider calls remain bounded to
+eleven calls per sidecar
 runtime budget context, 1,000 output tokens per call, 13,000 total estimated
 tokens per call, 0.05 USD estimated cost per call, and 0.25 USD per runtime
 budget context. The separate manual live-test ceiling remains 25 cents.
@@ -117,10 +120,31 @@ All 5,000 bounded documents are still scored deterministically. A real-dataset
 warm novel query fell from approximately 9.4 seconds to approximately 0.28
 seconds; repeated retrieval-cache hits remain faster still.
 
+## Bounded recipe conversation
+
+0034U exposes only the recipe-session start and message operations through two
+authenticated core routes. Core creates an opaque public chat UUID, binds it to
+the current core user, and keeps the sidecar interaction ID server-side. Both
+maps expire after one hour and are intentionally in-memory, so deployment or
+process restart ends active chats.
+
+The initial request can return a deterministic clarification question without
+consuming one of the ten post-draft changes. Each revision sends the current
+bounded draft and latest requested change through the same importer, nano-model,
+RAG, operator-gate, and budget path. At ten changes, both the sidecar and public
+response refuse further revisions. Social chatter and replacement confirmation
+do not consume a change.
+
+A follow-up that explicitly asks to start over or appears to name a different
+dish returns a confirmation state without mutating the draft. The browser can
+keep the current recipe or explicitly start a new chat from the proposed idea.
+Recipe, ingredient, instruction, and grounding panels use native collapsible
+controls with plus/minus indicators to keep long drafts manageable.
+
 ## Excluded routes and data
 
-The proxy does not expose the sidecar demo, config, admin, invite,
-recipe-session, dataset, search, Ask My Cookbook, meal-plan, or local-save
+The core does not expose the sidecar demo, config, admin, invite, arbitrary
+recipe-session IDs, dataset, search, Ask My Cookbook, meal-plan, or local-save
 routes. The sidecar receives no Cookbook database/upload mount, so this slice
 cannot read another user's saved recipes or write canonical data.
 

@@ -13,11 +13,21 @@ from app.recipe_requirements import (
     decide_clarification,
     decide_rag_refresh,
     extract_recipe_requirements,
+    suggests_new_recipe,
 )
 
 
 def values(fields):
     return [field.value for field in fields]
+
+
+def test_general_recipe_intent_and_new_recipe_detection():
+    state = extract_recipe_requirements("green chile enchiladas with chicken")
+    assert state.dish_intent.value == "green chile enchilada"
+    assert state.confidence_label in {RecipeRequirementConfidence.MEDIUM, RecipeRequirementConfidence.HIGH}
+    assert suggests_new_recipe("make lasagna instead", state) is True
+    assert suggests_new_recipe("make it spicier instead", state) is False
+    assert suggests_new_recipe("start over", state) is True
 
 
 def test_extracts_cheesecake_requirements():

@@ -52,7 +52,7 @@
     "start_text": "omelette for 4 with eggs cheddar onions butter folded in a skillet",
     "message_text": "make it shorter",
     "expected_start_state": "draft_generated",
-    "expected_message_states": ["no_material_change"],
+    "expected_message_states": ["draft_revised"],
     "expected_delta_label": "formatting_only",
     "expect_rag_refreshed": false,
     "expected_changed_fields": []

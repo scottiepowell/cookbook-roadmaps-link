@@ -198,23 +198,89 @@ def test_message_no_bake_refreshes_rag_and_revises_draft(session_client):
     assert any(term in (data["retrieval"]["query"] or "").lower() for term in ("no-bake", "no bake"))
 
 
-def test_message_chatter_and_formatting_do_not_refresh(session_client):
+def test_general_recipe_follow_up_revises_current_draft(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "green chile enchiladas with chicken", "provider_mode": "mock"},
+    ).json()
+    assert started["draft"] is not None
+
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "add avocado and lime", "provider_mode": "mock"},
+    )
+    data = response.json()
+    _assert_safe_response(response.text, dataset_dir)
+    assert response.status_code == 200
+    assert data["draft"] is not None
+    assert data["revision_count"] == 1
+    assert data["max_changes"] == 10
+
+
+def test_new_recipe_intent_requires_confirmation_without_replacing_draft(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "omelette for 4 with eggs cheddar onions butter folded in a skillet"},
+    ).json()
+
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "make lasagna instead"},
+    )
+    data = response.json()
+    _assert_safe_response(response.text, dataset_dir)
+    assert data["response_state"] == "new_recipe_confirmation"
+    assert "start a new recipe" in data["clarification_question"].lower()
+    assert data["draft"] == started["draft"]
+    assert data["revision_count"] == 0
+
+
+def test_ten_change_limit_blocks_another_revision(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "omelette for 4 with eggs cheddar onions butter folded in a skillet"},
+    ).json()
+    session = default_recipe_session_store.get_session(started["interaction_id"])
+    limited_requirements = session.requirements.model_copy(update={"revision_count": 10}, deep=True)
+    default_recipe_session_store.update_session(started["interaction_id"], limited_requirements)
+
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "add mushrooms"},
+    )
+    data = response.json()
+    _assert_safe_response(response.text, dataset_dir)
+    assert data["response_state"] == "change_limit_reached"
+    assert data["revision_count"] == 10
+    assert data["draft"] == started["draft"]
+
+
+def test_message_chatter_reuses_draft_and_formatting_creates_revision(session_client):
     client, dataset_dir = session_client
     started = client.post(
         "/ai/recipe-session/start",
         json={"text": "carbonara pasta for 4 with spaghetti eggs parmesan pancetta black pepper no heavy cream"},
     ).json()
 
-    for text in ("thanks", "make it shorter"):
-        response = client.post(f"/ai/recipe-session/{started['interaction_id']}/message", json={"text": text})
-        assert response.status_code == 200
-        data = response.json()
-        _assert_safe_response(response.text, dataset_dir)
-        assert data["response_state"] == "no_material_change"
-        assert data["rag_refreshed"] is False
-        assert data["changed_fields"] == []
-        assert data["requirement_diff"]["changed_fields"] == []
-        assert "existing draft and citations were reused" in data["revision_summary"]
+    chatter = client.post(f"/ai/recipe-session/{started['interaction_id']}/message", json={"text": "thanks"})
+    chatter_data = chatter.json()
+    _assert_safe_response(chatter.text, dataset_dir)
+    assert chatter_data["response_state"] == "no_material_change"
+    assert chatter_data["revision_count"] == 0
+
+    formatting = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "make it shorter"},
+    )
+    formatting_data = formatting.json()
+    _assert_safe_response(formatting.text, dataset_dir)
+    assert formatting_data["response_state"] == "draft_revised"
+    assert formatting_data["rag_refreshed"] is False
+    assert formatting_data["revision_count"] == 1
+    assert formatting_data["draft"] is not None
 
 
 def test_repeated_no_refresh_messages_keep_existing_draft_without_refresh(session_client):
@@ -316,6 +382,8 @@ def test_clarification_answer_updates_session_and_generates(session_client):
     assert data["requirements"]["dish_intent"]["value"] == "cheesecake"
     assert data["requirements"]["resolved_questions"]
     assert data["draft"] is not None
+    assert data["revision_count"] == 0
+    assert data["max_changes"] == 10
 
 
 def test_clarification_answer_no_bake_cheesecake_preserves_method_in_draft(session_client):

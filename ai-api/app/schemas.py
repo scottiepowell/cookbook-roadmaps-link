@@ -327,6 +327,7 @@ class RecipeSessionApiResponse(BaseModel):
     provider: str | None = None
     model: str | None = None
     revision_count: int = 0
+    max_changes: int = 10
     expires_at: str | None = None
     warnings: list[str] = Field(default_factory=list)
 

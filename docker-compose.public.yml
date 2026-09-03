@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0034r}
+    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0034u}
     container_name: cookbook-public-core
     env_file:
       - ${PUBLIC_CORE_ENV_FILE:?Set PUBLIC_CORE_ENV_FILE to the ignored core .env path}
@@ -25,7 +25,7 @@ services:
   ai-api:
     build:
       context: ./ai-api
-    image: local/cookbook-ai-sidecar:0034t
+    image: local/cookbook-ai-sidecar:0034u
     container_name: cookbook-public-ai
     env_file:
       - ./.env
@@ -40,7 +40,7 @@ services:
       AI_PROVIDER_CALLS_ENABLED: "true"
       AI_PROVIDER_GLOBAL_DISABLE: "false"
       AI_PROVIDER_BUDGET_MODE: enforce
-      AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION: "10"
+      AI_PROVIDER_MAX_CALLS_PER_DEMO_SESSION: "11"
       AI_PROVIDER_MAX_INPUT_TOKENS_PER_CALL: "12000"
       AI_PROVIDER_MAX_OUTPUT_TOKENS_PER_CALL: "1000"
       AI_PROVIDER_MAX_TOTAL_TOKENS_PER_CALL: "13000"
@@ -48,7 +48,7 @@ services:
       AI_PROVIDER_MAX_ESTIMATED_COST_USD_PER_CALL: "0.05"
       AI_OPERATOR_GATE_ENABLED: "true"
       AI_OPERATOR_GATE_LOCAL_BYPASS: "false"
-      AI_OPERATOR_GATE_ALLOWED_WORKFLOWS: importer
+      AI_OPERATOR_GATE_ALLOWED_WORKFLOWS: importer,recipe_session
       AI_RECIPE_DATASET_WARM_ON_START: "true"
       RECIPE_DATASET_DIR: /app/recipe-dataset
       RECIPE_DATASET_INDEX_LIMIT: "5000"
