@@ -1,7 +1,13 @@
 import sqlite3
 
 from app.dataset_adapter import ExternalRecipeRecord, iter_recipe_dataset_records
-from app.dataset_index import build_index_from_dataset, build_recipe_index, search_recipe_index
+from app.dataset_index import (
+    _indexed_token_matches,
+    _normalized_phrase_matches,
+    build_index_from_dataset,
+    build_recipe_index,
+    search_recipe_index,
+)
 
 
 def test_dataset_record_reader_streams_bounded_csv_records(tmp_path):
@@ -115,6 +121,27 @@ def test_recipe_index_search_handles_empty_and_no_match_queries():
     assert search_recipe_index(index, "", limit=10) == []
     assert search_recipe_index(index, "chocolate", limit=10) == []
     assert search_recipe_index(index, "beans", limit=0) == []
+
+
+def test_normalized_phrase_matcher_uses_whole_phrases_without_renormalizing():
+    assert _normalized_phrase_matches("green chile", "chicken green chile enchilada") is True
+    assert _normalized_phrase_matches("green chile", "green chilesauce") is False
+    assert _normalized_phrase_matches("", "green chile") is False
+
+
+def test_indexed_token_matcher_preserves_bidirectional_prefix_matching():
+    field_tokens = frozenset({"bean", "chicken", "enchilada"})
+    sorted_tokens = tuple(sorted(field_tokens))
+
+    for query_token in ("bean", "beans", "chick", "enchiladas", "rice"):
+        prefixes = tuple(query_token[:length] for length in range(1, len(query_token) + 1))
+        expected = any(
+            field_token == query_token
+            or field_token.startswith(query_token)
+            or query_token.startswith(field_token)
+            for field_token in field_tokens
+        )
+        assert _indexed_token_matches(query_token, prefixes, field_tokens, sorted_tokens) is expected
 
 
 def test_build_index_from_dataset_uses_generated_fixture_without_artifacts(tmp_path):

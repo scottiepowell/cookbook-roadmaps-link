@@ -21,7 +21,7 @@ Completed AI workflows:
 - Bounded input quality: weak or vague input gets deterministic warnings or one clarification question, while empty or nonsensical input is rejected before provider calls.
 - Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows, including the local Recipe Session Alpha panel.
 - Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
-- Public authenticated importer: `/ai` in the custom core delegates one bounded recipe-draft workflow to the private sidecar using `gpt-5.4-nano`, reuses its warmed 5,000-record index for context packing, and shows a bounded local-example grounding summary; no sidecar route is directly public.
+- Public authenticated importer: `/ai` in the custom core delegates one bounded recipe-draft workflow to the private sidecar using `gpt-5.4-nano`, uses an optimized deterministic 5,000-record index for retrieval and context packing, and shows a bounded local-example grounding summary; no sidecar route is directly public.
 
 Validation proof:
 

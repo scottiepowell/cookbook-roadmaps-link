@@ -1,3 +1,4 @@
+from bisect import bisect_left
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -93,6 +94,8 @@ class IndexedRecipeDocument:
     document: IndexableRecipeDocument
     normalized_fields: dict[str, str]
     normalized_field_tokens: dict[str, list[str]]
+    normalized_field_token_sets: dict[str, frozenset[str]]
+    normalized_field_tokens_sorted: dict[str, tuple[str, ...]]
     normalized_field_phrases: dict[str, list[str]]
     original_index: int
 
@@ -202,6 +205,12 @@ def build_recipe_index(records: list[ExternalRecipeRecord]) -> RecipeDatasetInde
             "instructions": normalize_index_text(" ".join(document.instructions)).phrases,
             "source": normalize_index_text(" ".join(value for value in (document.source_file, document.source_table or "") if value)).phrases,
         }
+        normalized_field_token_sets = {
+            field: frozenset(tokens) for field, tokens in normalized_field_tokens.items()
+        }
+        normalized_field_tokens_sorted = {
+            field: tuple(sorted(token_set)) for field, token_set in normalized_field_token_sets.items()
+        }
         token_count += sum(len(tokens) for tokens in normalized_field_tokens.values())
         source_counts[document.source_file] += 1
         indexed.append(
@@ -209,6 +218,8 @@ def build_recipe_index(records: list[ExternalRecipeRecord]) -> RecipeDatasetInde
                 document=document,
                 normalized_fields=normalized_fields,
                 normalized_field_tokens=normalized_field_tokens,
+                normalized_field_token_sets=normalized_field_token_sets,
+                normalized_field_tokens_sorted=normalized_field_tokens_sorted,
                 normalized_field_phrases=normalized_field_phrases,
                 original_index=original_index,
             )
@@ -233,9 +244,14 @@ def search_recipe_index(index: RecipeDatasetIndex, query: str, limit: int = 10) 
     if not analysis.tokens or limit <= 0:
         return []
 
+    normalized_anchors = [normalized for anchor in analysis.anchors if (normalized := normalize_text(anchor))]
+    token_prefixes = {
+        token: tuple(token[:length] for length in range(1, len(token) + 1)) for token in analysis.tokens
+    }
+
     scored: list[tuple[RecipeIndexSearchResult, int]] = []
     for indexed in index.documents:
-        result = _score_indexed_document(indexed, analysis)
+        result = _score_indexed_document(indexed, analysis, normalized_anchors, token_prefixes)
         if result is not None:
             scored.append((result, indexed.original_index))
 
@@ -262,6 +278,8 @@ def normalize_external_record(record: ExternalRecipeRecord) -> IndexableRecipeDo
 def _score_indexed_document(
     indexed: IndexedRecipeDocument,
     analysis: RecipeQueryAnalysis,
+    normalized_anchors: list[str],
+    token_prefixes: dict[str, tuple[str, ...]],
 ) -> RecipeIndexSearchResult | None:
     score = 0.0
     matched_fields: list[str] = []
@@ -269,12 +287,14 @@ def _score_indexed_document(
     broad_token_hits = 0
     specific_token_hits = 0
 
-    for field, tokens in indexed.normalized_field_tokens.items():
+    for field in indexed.normalized_field_tokens:
         field_score = 0.0
         normalized_field_text = indexed.normalized_fields[field]
         field_phrases = indexed.normalized_field_phrases[field]
+        field_token_set = indexed.normalized_field_token_sets[field]
+        field_tokens_sorted = indexed.normalized_field_tokens_sorted[field]
         for phrase in analysis.phrases:
-            if not phrase or not _phrase_matches(phrase, normalized_field_text):
+            if not phrase or not _normalized_phrase_matches(phrase, normalized_field_text):
                 continue
             if phrase in field_phrases:
                 field_score += 2.5
@@ -285,7 +305,12 @@ def _score_indexed_document(
             if field not in matched_fields:
                 matched_fields.append(field)
         for token in analysis.tokens:
-            if not _token_matches(token, tokens):
+            if not _indexed_token_matches(
+                token,
+                token_prefixes[token],
+                field_token_set,
+                field_tokens_sorted,
+            ):
                 continue
             if token in BROAD_QUERY_TERMS:
                 field_score += 0.35
@@ -301,12 +326,9 @@ def _score_indexed_document(
             snippet = _make_snippet(_field_text(indexed.document, field), analysis.tokens)
 
     anchor_bonus = 0.0
-    for anchor in analysis.anchors:
-        normalized_anchor = normalize_text(anchor)
-        if not normalized_anchor:
-            continue
+    for normalized_anchor in normalized_anchors:
         for field, field_text in indexed.normalized_fields.items():
-            if not _phrase_matches(normalized_anchor, field_text):
+            if not _normalized_phrase_matches(normalized_anchor, field_text):
                 continue
             anchor_bonus += ANCHOR_FIELD_BONUS[field]
             if field == "title" and normalized_anchor == field_text:
@@ -355,11 +377,10 @@ def _field_text(document: IndexableRecipeDocument, field: str) -> str:
     return ""
 
 
-def _phrase_matches(phrase: str, text: str) -> bool:
-    if not phrase or not text:
+def _normalized_phrase_matches(normalized_phrase: str, normalized_text: str) -> bool:
+    """Match already-normalized values without repeating normalization per document."""
+    if not normalized_phrase or not normalized_text:
         return False
-    normalized_phrase = normalize_text(phrase)
-    normalized_text = normalize_text(text)
     return f" {normalized_phrase} " in f" {normalized_text} "
 
 
@@ -469,13 +490,16 @@ def _dedupe_preserve_order(items: list[str]) -> list[str]:
     return deduped
 
 
-def _token_matches(query_token: str, field_tokens: list[str]) -> bool:
-    return any(
-        field_token == query_token
-        or field_token.startswith(query_token)
-        or query_token.startswith(field_token)
-        for field_token in field_tokens
-    )
+def _indexed_token_matches(
+    query_token: str,
+    query_prefixes: tuple[str, ...],
+    field_token_set: frozenset[str],
+    field_tokens_sorted: tuple[str, ...],
+) -> bool:
+    position = bisect_left(field_tokens_sorted, query_token)
+    if position < len(field_tokens_sorted) and field_tokens_sorted[position].startswith(query_token):
+        return True
+    return any(prefix in field_token_set for prefix in query_prefixes)
 
 
 def _make_snippet(value: str, query_tokens: list[str]) -> str:

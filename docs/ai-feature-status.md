@@ -73,6 +73,13 @@ while preserving 3 retrieved examples, 2 packed examples, and strong grounding.
 Startup index construction remains behind sidecar readiness and no persistent
 index, raw-data response, or retrieval-policy change was added.
 
+0034T optimizes the remaining warm-index first-query scorer without candidate
+pruning or score changes. It normalizes anchors once per query and replaces
+millions of linear token-prefix checks with equivalent set and binary-search
+lookups stored in the in-memory index. The real-dataset warm novel-query
+benchmark fell from approximately 9.4 seconds to 0.28 seconds while the
+retrieval/RAG regression corpus retained its prior ranking and support results.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

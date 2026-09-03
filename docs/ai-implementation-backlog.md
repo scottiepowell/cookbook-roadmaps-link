@@ -30,7 +30,7 @@ and existing relevance/support assertions.
 
 ## 0034T: Warm-index uncached-query retrieval latency
 
-Status: next.
+Status: complete and deployed.
 
 Measure and reduce the first-query scoring latency after the dataset index is
 already warm. The deployed 0034S process returned a repeated cached query in

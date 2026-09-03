@@ -109,6 +109,14 @@ reparse and remap all 5,000 records. Existing cache TTL, file-fingerprint
 invalidation, record bounds, rankings, citations, and support policy remain in
 effect; no persistent index artifact is created.
 
+0034T removes two more sources of repeated scoring work without pruning the
+candidate set or changing the scoring formula. Query anchors are normalized
+once per search rather than once per document, and each indexed field keeps
+exact token set/sort structures for equivalent bidirectional prefix matching.
+All 5,000 bounded documents are still scored deterministically. A real-dataset
+warm novel query fell from approximately 9.4 seconds to approximately 0.28
+seconds; repeated retrieval-cache hits remain faster still.
+
 ## Excluded routes and data
 
 The proxy does not expose the sidecar demo, config, admin, invite,
