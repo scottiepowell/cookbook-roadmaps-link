@@ -1,5 +1,15 @@
 # AI Implementation Backlog
 
+## 0034P: Public AI transient provider recovery
+
+Status: complete and deployed.
+
+Classifies safe sidecar provider failures and permits one core-owned retry only
+for transient, timeout, network, or incomplete-output failures. The retry uses
+the same operator gate and provider budget guard. Deterministic failures are
+never retried. Versioned `0034p` core and sidecar images are live, public
+health is 200, and the post-deployment funded nano check passed.
+
 ## 0034O: Public authenticated AI recipe importer
 
 Status: complete and deployed; signed-in browser submission remains a manual

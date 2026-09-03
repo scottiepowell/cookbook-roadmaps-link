@@ -42,6 +42,17 @@ runtime budget context, 1,000 output tokens per call, 13,000 total estimated
 tokens per call, 0.05 USD estimated cost per call, and 0.25 USD per runtime
 budget context. The separate manual live-test ceiling remains 25 cents.
 
+## Transient provider recovery
+
+0034P distinguishes retryable provider failures from deterministic failures.
+Timeouts, network errors, temporary provider failures, and incomplete
+structured output permit exactly one core-owned retry. The second call passes
+through the same sidecar operator gate and provider budget check, so it counts
+against the configured call and cost caps. Account/quota, authentication,
+model, schema, payload, rate-limit, and authorization failures are never
+retried. If the retry also fails, the UI reports that one bounded retry was
+used without exposing provider internals.
+
 ## Runtime
 
 Set the two environment variables to the ignored core files before using the

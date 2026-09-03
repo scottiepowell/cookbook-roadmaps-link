@@ -311,7 +311,8 @@ def test_import_endpoint_returns_controlled_error_for_unsupported_provider(monke
         "detail": {
             "status": "unavailable",
             "safe_unavailable_category": "unexpected_safe_internal_block",
-            "safe_guidance": "The bounded live importer call was unavailable. No retry was attempted.",
+            "safe_guidance": "The AI recipe importer is temporarily unavailable.",
+            "retryable": False,
         }
     }
 
@@ -328,9 +329,28 @@ def test_importer_unavailable_detail_maps_timeout_without_provider_internals():
 
     assert detail["status"] == "unavailable"
     assert detail["safe_unavailable_category"] == "provider_timeout"
-    assert "No retry was attempted." in detail["safe_guidance"]
+    assert detail["retryable"] is True
+    assert "One bounded retry" in detail["safe_guidance"]
     assert "sk-proj-secret" not in str(detail)
     assert "Authorization" not in str(detail)
+
+
+def test_importer_unavailable_detail_marks_generic_provider_failure_retryable():
+    error = ProviderCallError(
+        "provider failed",
+        failure_category="provider_call_failed",
+        exception_type="InternalServerError",
+        safe_summary="provider returned a server error",
+    )
+
+    detail = _safe_importer_unavailable_detail(error)
+
+    assert detail == {
+        "status": "unavailable",
+        "safe_unavailable_category": "provider_transient_failure",
+        "safe_guidance": "The AI provider returned a temporary failure. One bounded retry is allowed.",
+        "retryable": True,
+    }
 
 
 class InvalidStructuredProvider(LLMProvider):

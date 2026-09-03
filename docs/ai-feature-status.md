@@ -46,6 +46,13 @@ core-to-sidecar reachability, and one funded synthetic live nano call passed.
 The available browser sessions were signed out, so the final signed-in UI
 submission remains an explicit manual product check.
 
+0034P hardens the public importer against intermittent provider failures.
+Retryable sidecar failures now permit exactly one core-owned retry through the
+same gate and budget guard; deterministic configuration, quota, auth, model,
+schema, payload, rate-limit, and authorization failures remain no-retry. The
+`0034p` deployment passed public health and a post-deployment funded nano-model
+recipe draft check.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the
