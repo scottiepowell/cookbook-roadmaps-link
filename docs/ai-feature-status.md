@@ -107,6 +107,16 @@ generic cheese, and mushrooms are additionally tracked as deterministic
 requirements for retrieval and diffs. Follow-up transactionality, private
 sidecar routing, budgets, and no-save behavior are unchanged.
 
+0034X hardens the initial generation path. Core sends an opaque idempotency key
+and may retry once only for transport or explicitly transient sidecar failure;
+the retry uses the identical body and shares a 45-second total deadline.
+Sidecar deduplication prevents duplicate sessions and successful initial
+generations, while conflicting key reuse fails closed. A shared process-local
+OpenAI client permits HTTP connection reuse, and safe timing events separate
+retrieval, provider, validation, total sidecar, and core proxy duration without
+logging recipe text or authentication data. Provider-attempt capacity is 22:
+two initial attempts plus two attempts for each of ten successful changes.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

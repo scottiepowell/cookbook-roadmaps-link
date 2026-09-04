@@ -568,6 +568,13 @@ to recipe generation instead of rebuilding it from recognized parser fields.
 The deterministic requirements vocabulary now also recognizes cauliflower,
 generic cheese, and mushrooms for retrieval and revision tracking.
 
+0034X makes that first request retry-safe. Core attaches one opaque idempotency
+key and permits a single identical retry only for transport or explicitly
+transient sidecar failures within a shared deadline. Sidecar replay cannot
+create a second recipe session, the OpenAI client is reused for connection
+pooling, and safe stage timings distinguish retrieval, provider, validation,
+and proxy latency without logging user or authentication data.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

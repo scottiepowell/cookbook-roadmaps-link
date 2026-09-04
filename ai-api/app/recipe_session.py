@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
+from threading import Lock
+from weakref import WeakValueDictionary
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -25,6 +28,50 @@ class RecipeSessionState(BaseModel):
     provider: str | None = None
     model: str | None = None
     finalized_for_demo: bool = False
+
+
+class RecipeStartIdempotencyStore:
+    """Bounded opaque request-to-session mapping with per-request serialization."""
+
+    def __init__(self, *, max_entries: int = 64) -> None:
+        self.max_entries = max_entries
+        self._entries: OrderedDict[str, tuple[str, str]] = OrderedDict()
+        self._mutex = Lock()
+        self._locks: WeakValueDictionary[str, Lock] = WeakValueDictionary()
+
+    @contextmanager
+    def serialize(self, request_id: str):
+        with self._mutex:
+            request_lock = self._locks.get(request_id)
+            if request_lock is None:
+                request_lock = Lock()
+                self._locks[request_id] = request_lock
+        with request_lock:
+            yield
+
+    def lookup(self, request_id: str, fingerprint: str) -> tuple[str | None, bool]:
+        with self._mutex:
+            entry = self._entries.get(request_id)
+            if entry is None:
+                return None, False
+            existing_fingerprint, interaction_id = entry
+            self._entries.move_to_end(request_id)
+            return interaction_id, existing_fingerprint != fingerprint
+
+    def remember(self, request_id: str, fingerprint: str, interaction_id: str) -> None:
+        with self._mutex:
+            self._entries[request_id] = (fingerprint, interaction_id)
+            self._entries.move_to_end(request_id)
+            while len(self._entries) > self.max_entries:
+                self._entries.popitem(last=False)
+
+    def forget(self, request_id: str) -> None:
+        with self._mutex:
+            self._entries.pop(request_id, None)
+
+    def clear(self) -> None:
+        with self._mutex:
+            self._entries.clear()
 
 
 class RecipeRequirementDiffSummary(BaseModel):
@@ -282,3 +329,4 @@ class RecipeSessionStore:
 
 
 default_recipe_session_store = RecipeSessionStore()
+default_recipe_start_idempotency_store = RecipeStartIdempotencyStore()

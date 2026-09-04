@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import hashlib
+import json
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -31,6 +33,7 @@ from app.recipe_session import (
     RecipeSessionState,
     build_requirement_diff,
     build_revision_summary,
+    default_recipe_start_idempotency_store,
     default_recipe_session_store,
 )
 from app.schemas import (
@@ -65,11 +68,72 @@ def _resolve_session_provider(payload):
 def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -> RecipeSessionApiResponse:
     access_session = _require_demo_workflow_access(request, AiAccessWorkflow.RECIPE_SESSION)
     provider = _resolve_session_provider(payload)
+    if payload.request_id:
+        fingerprint = _start_request_fingerprint(payload)
+        with default_recipe_start_idempotency_store.serialize(payload.request_id):
+            interaction_id, conflict = default_recipe_start_idempotency_store.lookup(
+                payload.request_id,
+                fingerprint,
+            )
+            if conflict:
+                raise HTTPException(status_code=409, detail="Initial recipe request key was already used.")
+            if interaction_id:
+                existing = default_recipe_session_store.get_session(interaction_id)
+                if existing is None:
+                    default_recipe_start_idempotency_store.forget(payload.request_id)
+                elif existing.draft is not None or existing.response_state in {
+                    RecipeSessionResponseState.CLARIFICATION_NEEDED.value,
+                    RecipeSessionResponseState.REJECTED.value,
+                }:
+                    log_ai_workflow(
+                        "recipe.session.start",
+                        request,
+                        provider=existing.provider,
+                        model=existing.model,
+                        status="idempotent_replay",
+                        retrieved_count=existing.retrieval.retrieved_count if existing.retrieval else 0,
+                        citation_count=len(existing.citations),
+                        warning_count=len(existing.warnings),
+                    )
+                    return _session_response(existing)
+                else:
+                    return _complete_recipe_session_start(
+                        payload,
+                        request,
+                        access_session=access_session,
+                        provider=provider,
+                        existing_session=existing,
+                    )
+            return _complete_recipe_session_start(
+                payload,
+                request,
+                access_session=access_session,
+                provider=provider,
+                request_fingerprint=fingerprint,
+            )
+    return _complete_recipe_session_start(
+        payload,
+        request,
+        access_session=access_session,
+        provider=provider,
+    )
+
+
+def _complete_recipe_session_start(
+    payload: RecipeSessionStartRequest,
+    request: Request,
+    *,
+    access_session,
+    provider,
+    existing_session: RecipeSessionState | None = None,
+    request_fingerprint: str | None = None,
+) -> RecipeSessionApiResponse:
     requirements = extract_recipe_requirements(payload.text)
     decision = decide_clarification(requirements)
 
     if requirements.confidence_label.value == "rejected":
-        session = default_recipe_session_store.create_session(requirements)
+        session = existing_session or default_recipe_session_store.create_session(requirements)
+        _remember_start_request(payload, request_fingerprint, session)
         session = _update_session_metadata(
             session,
             response_state=RecipeSessionResponseState.REJECTED,
@@ -86,12 +150,14 @@ def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -
                 reason=decision.reason,
             )
         ]
-        session = default_recipe_session_store.create_session(requirements)
+        session = existing_session or default_recipe_session_store.create_session(requirements)
+        _remember_start_request(payload, request_fingerprint, session)
         session = _update_session_metadata(session, response_state=RecipeSessionResponseState.CLARIFICATION_NEEDED)
         log_ai_workflow("recipe.session.start", request, status="clarification_needed", warning_count=0)
         return _session_response(session, decision=decision)
 
-    session = default_recipe_session_store.create_session(requirements)
+    session = existing_session or default_recipe_session_store.create_session(requirements)
+    _remember_start_request(payload, request_fingerprint, session)
     session = _generate_and_store_draft(
         session,
         payload.text,
@@ -110,6 +176,33 @@ def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -
         warning_count=len(session.warnings),
     )
     return _session_response(session, decision=decision)
+
+
+def _remember_start_request(
+    payload: RecipeSessionStartRequest,
+    request_fingerprint: str | None,
+    session: RecipeSessionState,
+) -> None:
+    if payload.request_id and request_fingerprint:
+        default_recipe_start_idempotency_store.remember(
+            payload.request_id,
+            request_fingerprint,
+            session.interaction_id,
+        )
+
+
+def _start_request_fingerprint(payload: RecipeSessionStartRequest) -> str:
+    encoded = json.dumps(
+        {
+            "text": payload.text,
+            "source": payload.source,
+            "provider_mode": payload.provider_mode,
+            "model": payload.model,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 @router.post("/{interaction_id}/message", response_model=RecipeSessionApiResponse)

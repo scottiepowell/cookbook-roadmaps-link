@@ -3,6 +3,7 @@ import logging
 import time
 import uuid
 from collections.abc import Awaitable, Callable
+from contextvars import ContextVar
 from datetime import UTC, datetime
 from typing import Any
 
@@ -10,6 +11,7 @@ from fastapi import Request, Response
 
 LOGGER_NAME = "app.observability"
 logger = logging.getLogger(LOGGER_NAME)
+_request_id_context: ContextVar[str | None] = ContextVar("ai_request_id", default=None)
 
 
 def configure_logging() -> None:
@@ -25,6 +27,7 @@ async def request_logging_middleware(
 ) -> Response:
     request_id = _request_id(request.headers.get("x-request-id"))
     request.state.request_id = request_id
+    context_token = _request_id_context.set(request_id)
     started = time.perf_counter()
     status_code = 500
     error_type: str | None = None
@@ -47,6 +50,7 @@ async def request_logging_middleware(
             duration_ms=duration_ms,
             safe_error_type=error_type,
         )
+        _request_id_context.reset(context_token)
 
 
 def log_ai_workflow(
@@ -83,8 +87,29 @@ def log_ai_workflow(
 
 def get_request_id(request: Request | None) -> str | None:
     if request is None:
-        return None
+        return _request_id_context.get()
     return getattr(request.state, "request_id", None)
+
+
+def log_ai_stage(
+    stage: str,
+    *,
+    duration_ms: float,
+    status: str = "ok",
+    provider: str | None = None,
+    model: str | None = None,
+    safe_error_category: str | None = None,
+) -> None:
+    log_event(
+        "ai.stage",
+        request_id=get_request_id(None),
+        stage=stage,
+        duration_ms=round(duration_ms, 2),
+        status=status,
+        provider=provider,
+        model=model,
+        safe_error_category=safe_error_category,
+    )
 
 
 def log_event(event: str, **fields: Any) -> None:

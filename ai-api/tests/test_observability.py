@@ -4,7 +4,7 @@ import logging
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.observability import LOGGER_NAME, log_ai_workflow
+from app.observability import LOGGER_NAME, log_ai_stage, log_ai_workflow
 
 
 def test_request_logging_middleware_emits_safe_fields(caplog):
@@ -58,6 +58,33 @@ def test_workflow_logging_helper_emits_counts_without_payloads(caplog):
     assert "default=[redacted]" in event["safe_error_summary"]
     assert "prompt" not in event
     assert "response_body" not in event
+
+
+def test_stage_logging_emits_only_safe_timing_metadata(caplog):
+    caplog.set_level(logging.INFO, logger=LOGGER_NAME)
+
+    log_ai_stage(
+        "recipe.import.provider",
+        duration_ms=123.456,
+        status="failed",
+        provider="openai",
+        model="gpt-5.4-nano",
+        safe_error_category="timeout",
+    )
+
+    event = json.loads(caplog.records[-1].message)
+    assert event == {
+        "duration_ms": 123.46,
+        "event": "ai.stage",
+        "model": "gpt-5.4-nano",
+        "provider": "openai",
+        "safe_error_category": "timeout",
+        "stage": "recipe.import.provider",
+        "status": "failed",
+        "timestamp": event["timestamp"],
+    }
+    assert "prompt" not in event
+    assert "response" not in event
 
 
 def record_messages(caplog):

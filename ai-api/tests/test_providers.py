@@ -6,7 +6,7 @@ from app.config import get_ai_settings
 from app.providers import LLMRequest, StructuredLLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, build_provider_call_error, describe_provider_exception, extract_provider_debug_details
 from app.providers.mock import MockProvider
-from app.providers.openai_provider import OpenAIProvider
+from app.providers.openai_provider import OpenAIProvider, reset_shared_openai_clients_for_tests
 
 
 def clear_provider_env(monkeypatch):
@@ -102,6 +102,26 @@ def test_openai_provider_keeps_configured_models_without_live_call(monkeypatch):
     assert provider.model == "gpt-5.4-nano"
     assert provider.fallback_model == "gpt-5.4-mini"
     assert provider._client is None
+
+
+def test_openai_providers_reuse_shared_http_client(monkeypatch):
+    reset_shared_openai_clients_for_tests()
+    created = []
+
+    class FakeClient:
+        pass
+
+    def create_client(**kwargs):
+        created.append({"configured": bool(kwargs.get("api_key")), "timeout": kwargs.get("timeout")})
+        return FakeClient()
+
+    monkeypatch.setattr("openai.OpenAI", create_client)
+    first = OpenAIProvider(api_key="fake-offline-key", timeout_seconds=20)
+    second = OpenAIProvider(api_key="fake-offline-key", timeout_seconds=20)
+
+    assert first._client_instance() is second._client_instance()
+    assert created == [{"configured": True, "timeout": 20}]
+    reset_shared_openai_clients_for_tests()
 
 
 def test_unsupported_provider_returns_controlled_error(monkeypatch):

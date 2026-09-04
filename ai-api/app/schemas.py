@@ -235,6 +235,7 @@ class RecipeSessionStartRequest(BaseModel):
     source: str | None = None
     provider_mode: str | None = None
     model: str | None = None
+    request_id: str | None = Field(default=None, min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class RecipeSessionMessageRequest(BaseModel):

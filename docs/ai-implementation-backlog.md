@@ -1,5 +1,18 @@
 # AI Implementation Backlog
 
+## 0034X: Public AI initial request resilience
+
+Status: complete and deployed.
+
+The first public recipe request now uses a core-generated opaque idempotency
+key and can receive one bounded retry for transport or explicitly retryable
+sidecar failures. Sidecar replay returns or resumes the same recipe session,
+conflicting key reuse fails safely, and both core attempts share one total
+deadline. The sidecar reuses its process-local OpenAI HTTP client and records
+safe retrieval, provider, validation, total, and proxy timings without request
+content. Redis, Protocol Buffers, asynchronous jobs, and persistent session
+state remain deferred.
+
 ## 0034W: Initial recipe ingredient fidelity
 
 Status: complete and deployed.

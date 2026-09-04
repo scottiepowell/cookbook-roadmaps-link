@@ -1,5 +1,8 @@
 import json
 import os
+from collections import OrderedDict
+from hashlib import sha256
+from threading import Lock
 from typing import Any
 
 from app.config import DEFAULT_AI_MAX_OUTPUT_TOKENS, DEFAULT_OPENAI_FALLBACK_MODEL, DEFAULT_OPENAI_MODEL
@@ -87,11 +90,7 @@ class OpenAIProvider(LLMProvider):
 
     def _client_instance(self) -> Any:
         if self._client is None:
-            try:
-                from openai import OpenAI
-            except ImportError as exc:  # pragma: no cover - dependency is installed in validation.
-                raise ProviderConfigError("OpenAI provider requires the openai Python package.") from exc
-            self._client = OpenAI(api_key=self.api_key, timeout=self.timeout_seconds)
+            self._client = _shared_openai_client(self.api_key, self.timeout_seconds)
         return self._client
 
     @staticmethod
@@ -101,6 +100,34 @@ class OpenAIProvider(LLMProvider):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
         return messages
+
+
+_SHARED_CLIENT_LIMIT = 4
+_shared_clients: OrderedDict[tuple[str, float], Any] = OrderedDict()
+_shared_clients_lock = Lock()
+
+
+def _shared_openai_client(api_key: str, timeout_seconds: float) -> Any:
+    cache_key = (sha256(api_key.encode("utf-8")).hexdigest(), timeout_seconds)
+    with _shared_clients_lock:
+        existing = _shared_clients.get(cache_key)
+        if existing is not None:
+            _shared_clients.move_to_end(cache_key)
+            return existing
+        try:
+            from openai import OpenAI
+        except ImportError as exc:  # pragma: no cover - dependency is installed in validation.
+            raise ProviderConfigError("OpenAI provider requires the openai Python package.") from exc
+        client = OpenAI(api_key=api_key, timeout=timeout_seconds)
+        _shared_clients[cache_key] = client
+        while len(_shared_clients) > _SHARED_CLIENT_LIMIT:
+            _shared_clients.popitem(last=False)
+        return client
+
+
+def reset_shared_openai_clients_for_tests() -> None:
+    with _shared_clients_lock:
+        _shared_clients.clear()
 
 
 def _response_text(response: Any) -> str:

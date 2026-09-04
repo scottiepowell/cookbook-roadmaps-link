@@ -1,5 +1,6 @@
 import re
 import os
+import time
 from dataclasses import replace
 
 from pydantic import ValidationError
@@ -11,6 +12,7 @@ from app.config import get_provider_budget_settings
 from app.dataset_index import WEAK_MATCH_SCORE_THRESHOLD, analyze_recipe_query
 from app.dataset_retrieval import search_dataset_recipes
 from app.input_quality import NEEDS_CLARIFICATION, REJECTED, WEAK_BUT_USABLE, classify_recipe_import_input
+from app.observability import log_ai_stage
 from app.rag_context import (
     DEFAULT_IMPORTER_CONTEXT_MAX_CHARS,
     DEFAULT_IMPORTER_CONTEXT_MAX_EXAMPLES,
@@ -19,7 +21,7 @@ from app.rag_context import (
 )
 from app.rag_support_policy import assess_importer_rag_support
 from app.providers import LLMProvider, StructuredLLMRequest, get_provider
-from app.providers.errors import ProviderConfigError, ProviderError
+from app.providers.errors import ProviderConfigError, ProviderError, extract_provider_debug_details
 from app.schemas import (
     RecipeImportCitation,
     RecipeImportDraft,
@@ -63,6 +65,7 @@ def import_recipe_text(
     provider: LLMProvider | None = None,
     session_state: object | None = None,
 ) -> RecipeImportResponse:
+    total_started = time.perf_counter()
     settings = get_ai_settings()
     if request.provider_mode:
         requested = request.provider_mode.lower()
@@ -85,7 +88,12 @@ def import_recipe_text(
             input_quality=input_quality.to_dict(),
         )
 
+    retrieval_started = time.perf_counter()
     retrieval, citations, retrieval_warnings, context_pack = _retrieve_importer_examples(request.text)
+    log_ai_stage(
+        "recipe.import.retrieval",
+        duration_ms=(time.perf_counter() - retrieval_started) * 1000,
+    )
     support = assess_importer_rag_support(
         relevance_category=retrieval.relevance_category if retrieval else None,
         retrieved_count=retrieval.retrieved_count if retrieval else 0,
@@ -128,6 +136,7 @@ def import_recipe_text(
     # Legacy callers retain the no-argument lookup used by existing budget tests.
     active_provider = provider or _get_configured_provider()
     schema = RecipeImportDraft.model_json_schema()
+    provider_started = time.perf_counter()
     try:
         provider_response = active_provider.generate_structured(
             StructuredLLMRequest(
@@ -145,18 +154,44 @@ def import_recipe_text(
             )
         )
     except ProviderError as exc:
+        details = extract_provider_debug_details(exc)
+        log_ai_stage(
+            "recipe.import.provider",
+            duration_ms=(time.perf_counter() - provider_started) * 1000,
+            status="failed",
+            provider=provider_name,
+            model=provider_model,
+            safe_error_category=details.category if details else "provider_call_failed",
+        )
         raise RecipeImportProviderError("Recipe importer provider failed.") from exc
+    log_ai_stage(
+        "recipe.import.provider",
+        duration_ms=(time.perf_counter() - provider_started) * 1000,
+        provider=provider_name,
+        model=provider_model,
+    )
 
+    validation_started = time.perf_counter()
     try:
         draft = RecipeImportDraft.model_validate(provider_response.data)
     except ValidationError as exc:
+        log_ai_stage(
+            "recipe.import.validation",
+            duration_ms=(time.perf_counter() - validation_started) * 1000,
+            status="failed",
+            safe_error_category="schema_validation",
+        )
         raise RecipeImportValidationError("Provider returned an invalid recipe draft.") from exc
+    log_ai_stage(
+        "recipe.import.validation",
+        duration_ms=(time.perf_counter() - validation_started) * 1000,
+    )
 
     draft = _improve_draft(draft, request.text)
     warnings = [*retrieval_warnings]
     if input_quality.status == WEAK_BUT_USABLE:
         warnings.extend(input_quality.warnings)
-    return RecipeImportResponse(
+    result = RecipeImportResponse(
         draft=draft,
         provider=provider_response.provider,
         model=provider_response.model,
@@ -166,6 +201,13 @@ def import_recipe_text(
         usage=provider_response.usage,
         input_quality=input_quality.to_dict(),
     )
+    log_ai_stage(
+        "recipe.import.total",
+        duration_ms=(time.perf_counter() - total_started) * 1000,
+        provider=provider_response.provider,
+        model=provider_response.model,
+    )
+    return result
 
 
 def _get_configured_provider() -> LLMProvider:

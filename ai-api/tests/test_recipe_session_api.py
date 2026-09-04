@@ -10,7 +10,7 @@ from app.importer import RecipeImportProviderError
 from app.providers.errors import ProviderCallError
 from app import recipe_session_routes
 from app.recipe_requirements import extract_recipe_requirements
-from app.recipe_session import default_recipe_session_store
+from app.recipe_session import default_recipe_session_store, default_recipe_start_idempotency_store
 from app.retrieval_cache import reset_retrieval_cache
 
 
@@ -88,6 +88,7 @@ def session_client(tmp_path, monkeypatch):
     clear_provider_env(monkeypatch)
     reset_retrieval_cache()
     default_recipe_session_store.clear()
+    default_recipe_start_idempotency_store.clear()
     dataset_dir = tmp_path / "dataset"
     write_session_dataset(dataset_dir)
     monkeypatch.setenv("AI_PROVIDER", "mock")
@@ -99,6 +100,79 @@ def session_client(tmp_path, monkeypatch):
     monkeypatch.setenv("AI_RETRIEVAL_CACHE_TTL_SECONDS", "900")
     yield TestClient(app), dataset_dir
     default_recipe_session_store.clear()
+    default_recipe_start_idempotency_store.clear()
+
+
+def test_start_request_replay_returns_same_session_without_second_generation(session_client, monkeypatch):
+    client, _dataset_dir = session_client
+    original_import = recipe_session_routes.import_recipe_text
+    calls = 0
+
+    def counted_import(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original_import(*args, **kwargs)
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", counted_import)
+    payload = {
+        "text": "green chile enchiladas with chicken cauliflower and cheese",
+        "request_id": "opaque_initial_request_0001",
+    }
+
+    first = client.post("/ai/recipe-session/start", json=payload)
+    second = client.post("/ai/recipe-session/start", json=payload)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["interaction_id"] == second.json()["interaction_id"]
+    assert calls == 1
+    assert default_recipe_session_store.count() == 1
+
+
+def test_start_request_retry_resumes_failed_session(session_client, monkeypatch):
+    client, _dataset_dir = session_client
+    original_import = recipe_session_routes.import_recipe_text
+    calls = 0
+
+    def fail_once(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RecipeImportProviderError("safe transient failure")
+        return original_import(*args, **kwargs)
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", fail_once)
+    payload = {
+        "text": "green chile enchiladas with chicken cauliflower and cheese",
+        "request_id": "opaque_initial_request_0002",
+    }
+
+    first = client.post("/ai/recipe-session/start", json=payload)
+    second = client.post("/ai/recipe-session/start", json=payload)
+
+    assert first.status_code == 503
+    assert second.status_code == 200
+    assert calls == 2
+    assert default_recipe_session_store.count() == 1
+    assert second.json()["revision_count"] == 0
+
+
+def test_start_request_rejects_conflicting_key_reuse(session_client):
+    client, _dataset_dir = session_client
+    request_id = "opaque_initial_request_0003"
+
+    first = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "green chile enchiladas with chicken", "request_id": request_id},
+    )
+    conflict = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "black bean soup with carrots", "request_id": request_id},
+    )
+
+    assert first.status_code == 200
+    assert conflict.status_code == 409
+    assert default_recipe_session_store.count() == 1
 
 
 def test_start_detailed_cheesecake_generates_draft(session_client):

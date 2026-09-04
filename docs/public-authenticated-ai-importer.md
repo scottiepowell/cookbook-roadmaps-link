@@ -40,7 +40,7 @@ for comparison through its existing operator gate. The browser never sees it.
 
 The public Compose profile enables only the `importer` and `recipe_session`
 workflows and disables the local bypass. Live provider calls remain bounded to
-21 calls per sidecar runtime budget context, 1,800 output tokens per call,
+22 calls per sidecar runtime budget context, 1,800 output tokens per call,
 13,800 total estimated
 tokens per call, 0.05 USD estimated cost per call, and 0.25 USD per runtime
 budget context. The separate manual live-test ceiling remains 25 cents.
@@ -153,9 +153,9 @@ The UI treats its outgoing user bubble as optimistic. If the bounded request
 still fails, it removes that bubble and restores the request text in the
 composer. The current recipe remains visible and the successful-change counter
 does not advance. The 1,800-token output ceiling accommodates full structured
-recipe revisions; 21 allowed provider attempts cover one initial generation and
-one retry for each of ten changes, while the existing cost ceilings remain the
-final budget guard.
+recipe revisions; 22 allowed provider attempts cover an initial generation
+retry and one retry for each of ten changes, while the existing cost ceilings
+remain the final budget guard.
 
 0034W preserves initial prompt fidelity. The recipe-session start route passes
 the complete user request to importer retrieval and generation rather than
@@ -164,6 +164,22 @@ still supplies clarification, replacement, retrieval, and diff signals, but it
 no longer acts as a lossy filter before generation. Cauliflower, generic cheese,
 and mushrooms are tracked explicitly; modifiers such as `riced` remain present
 in the full generation text.
+
+0034X gives initial generation the same bounded transient recovery policy as
+recipe changes. Core creates one opaque request ID, uses it as the sidecar
+idempotency key and safe trace ID, and sends the identical body on at most one
+retry. Both attempts share a 45-second total deadline. Sidecar serializes the
+same key, returns a completed session on replay, resumes the same uncommitted
+session after a failed first attempt, and rejects a key reused with different
+request content. This prevents retry-created duplicate sessions.
+
+The sidecar also reuses one OpenAI HTTP client per safe key fingerprint and
+timeout configuration so repeated calls can reuse pooled connections. Safe
+structured logs now distinguish retrieval, provider, validation, total
+sidecar, and core-proxy duration. They contain no recipe text, prompt, response,
+credential, cookie, OAuth value, or user profile. The provider-attempt ceiling
+is 22: two initial attempts and up to two attempts for each of ten changes.
+Redis, asynchronous jobs, and Protocol Buffers remain outside this task.
 
 ## Excluded routes and data
 
