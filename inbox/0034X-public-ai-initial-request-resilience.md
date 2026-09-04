@@ -49,4 +49,3 @@ or ten-change product boundary.
   container-level smoke.
 - Record only safe boolean, counter, status, model, duration, and opaque-ID
   outcomes.
-
