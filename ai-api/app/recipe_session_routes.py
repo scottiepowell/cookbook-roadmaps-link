@@ -94,7 +94,7 @@ def start_recipe_session(payload: RecipeSessionStartRequest, request: Request) -
     session = default_recipe_session_store.create_session(requirements)
     session = _generate_and_store_draft(
         session,
-        _generation_text(requirements),
+        payload.text,
         response_state=RecipeSessionResponseState.DRAFT_GENERATED,
         source=payload.source,
         provider=provider,
@@ -424,33 +424,6 @@ def _mark_latest_user_values_as_clarified(state: RecipeRequirementsState) -> Non
         state.dish_intent.source = RecipeRequirementSource.CLARIFIED_BY_USER
     if state.cooking_method:
         state.cooking_method.source = RecipeRequirementSource.CLARIFIED_BY_USER
-
-
-def _generation_text(requirements: RecipeRequirementsState) -> str:
-    parts = []
-    if requirements.dish_intent:
-        parts.append(str(requirements.dish_intent.value))
-    parts.append("recipe")
-    if requirements.serving_count:
-        parts.append(f"for {requirements.serving_count.value} servings")
-    if requirements.required_ingredients:
-        parts.append("with " + " ".join(str(field.value) for field in requirements.required_ingredients))
-    if requirements.excluded_ingredients:
-        parts.append("without " + " ".join(str(field.value) for field in requirements.excluded_ingredients))
-    if requirements.cooking_method:
-        parts.append(str(requirements.cooking_method.value))
-    if requirements.equipment_constraints:
-        parts.append("equipment " + " ".join(str(field.value) for field in requirements.equipment_constraints))
-    if requirements.dietary_constraints:
-        parts.append(" ".join(str(field.value) for field in requirements.dietary_constraints))
-    if requirements.time_constraints:
-        parts.append(" ".join(str(field.value) for field in requirements.time_constraints))
-    if len(parts) <= 3:
-        parts.append(requirements.latest_user_text)
-    text = " ".join(part for part in parts if part).strip()
-    if len(text) <= 190:
-        return text
-    return text[:190].rsplit(" ", 1)[0].strip()
 
 
 def _revision_generation_text(draft, message: str) -> str:

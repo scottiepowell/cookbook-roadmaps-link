@@ -221,6 +221,33 @@ def test_general_recipe_follow_up_revises_current_draft(session_client):
     assert data["max_changes"] == 10
 
 
+def test_initial_session_forwards_every_user_ingredient_to_generation(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    original_import = recipe_session_routes.import_recipe_text
+    captured = []
+
+    def capture_import(request, *args, **kwargs):
+        captured.append(request.text)
+        return original_import(request, *args, **kwargs)
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", capture_import)
+    user_text = "green chile enchiladas with chicken, cauliflower, and cheese"
+    response = client.post(
+        "/ai/recipe-session/start",
+        json={"text": user_text, "provider_mode": "mock"},
+    )
+    data = response.json()
+
+    assert response.status_code == 200
+    assert captured == [user_text]
+    assert {item["value"] for item in data["requirements"]["required_ingredients"]} >= {
+        "chicken",
+        "cauliflower",
+        "cheese",
+    }
+    _assert_safe_response(response.text, dataset_dir)
+
+
 def test_failed_recipe_change_does_not_mutate_draft_or_revision(session_client, monkeypatch):
     client, dataset_dir = session_client
     started = client.post(

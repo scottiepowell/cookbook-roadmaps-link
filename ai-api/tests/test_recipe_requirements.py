@@ -30,6 +30,19 @@ def test_general_recipe_intent_and_new_recipe_detection():
     assert suggests_new_recipe("start over", state) is True
 
 
+def test_extracts_requested_cauliflower_cheese_and_mushrooms():
+    state = extract_recipe_requirements(
+        "green chile enchiladas with chicken, cauliflower, cheese, and mushrooms"
+    )
+
+    assert {item.value for item in state.required_ingredients} >= {
+        "chicken",
+        "cauliflower",
+        "cheese",
+        "mushroom",
+    }
+
+
 def test_extracts_cheesecake_requirements():
     state = extract_recipe_requirements(
         "classic baked cheesecake for 4 people with cream cheese sugar eggs vanilla graham cracker crust melted butter bake until just set then cool and chill overnight",

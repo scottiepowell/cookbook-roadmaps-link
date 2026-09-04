@@ -563,6 +563,11 @@ recipe unchanged. Full recipe revisions have a larger structured-output
 allowance, while `gpt-5.4-nano`, ten successful changes, and the existing cost
 ceilings remain enforced.
 
+0034W fixes initial ingredient loss by passing the full bounded first request
+to recipe generation instead of rebuilding it from recognized parser fields.
+The deterministic requirements vocabulary now also recognizes cauliflower,
+generic cheese, and mushrooms for retrieval and revision tracking.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

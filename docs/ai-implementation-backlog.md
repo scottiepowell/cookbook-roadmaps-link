@@ -1,5 +1,15 @@
 # AI Implementation Backlog
 
+## 0034W: Initial recipe ingredient fidelity
+
+Status: complete and deployed.
+
+The initial recipe-session request now reaches importer generation intact rather
+than being replaced by a lossy summary of recognized requirements. Explicit
+cauliflower, cheese, and mushroom terms are also tracked for retrieval and
+revision diffs. The full user wording remains bounded by the existing core and
+schema limits.
+
 ## 0034V: Transactional AI recipe revisions
 
 Status: complete and deployed.

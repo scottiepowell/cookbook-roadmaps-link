@@ -99,6 +99,14 @@ the recipe and counter unchanged. Public revision output is capped at 1,800
 tokens, provider attempts at 21 for the initial draft plus retry capacity, and
 the existing nano model and cost ceilings remain unchanged.
 
+0034W fixes initial-request ingredient loss. Recipe-session start previously
+reconstructed a short generation string from a limited requirement vocabulary,
+which could omit explicitly named ingredients before the provider saw them.
+Initial generation now receives the complete bounded user request; cauliflower,
+generic cheese, and mushrooms are additionally tracked as deterministic
+requirements for retrieval and diffs. Follow-up transactionality, private
+sidecar routing, budgets, and no-save behavior are unchanged.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

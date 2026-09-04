@@ -157,6 +157,10 @@ INGREDIENT_TERMS = (
     "parmesan",
     "pancetta",
     "ricotta",
+    "cauliflower",
+    "mushrooms",
+    "mushroom",
+    "cheese",
     "vanilla",
     "chicken",
     "cheddar",
@@ -479,6 +483,11 @@ def _extract_required_ingredients(
     phrase_values = set(extract_phrases(normalized))
     for term in INGREDIENT_TERMS:
         canonical = _canonical_ingredient(term)
+        if canonical == "cheese" and any(
+            value in {"cheddar", "parmesan", "cream cheese"} or " cheese" in value
+            for value in values
+        ):
+            continue
         if canonical in excluded:
             continue
         if _contains_phrase(normalized, term) or canonical in phrase_values:
@@ -678,6 +687,7 @@ def _canonical_ingredient(term: str) -> str:
     aliases = {
         "eggs": "egg",
         "onions": "onion",
+        "mushrooms": "mushroom",
         "graham crackers": "graham cracker",
         "melted butter": "butter",
         "cheddar cheese": "cheddar",

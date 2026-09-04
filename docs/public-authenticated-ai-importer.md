@@ -157,6 +157,14 @@ recipe revisions; 21 allowed provider attempts cover one initial generation and
 one retry for each of ten changes, while the existing cost ceilings remain the
 final budget guard.
 
+0034W preserves initial prompt fidelity. The recipe-session start route passes
+the complete user request to importer retrieval and generation rather than
+reconstructing it from a necessarily limited deterministic parser. The parser
+still supplies clarification, replacement, retrieval, and diff signals, but it
+no longer acts as a lossy filter before generation. Cauliflower, generic cheese,
+and mushrooms are tracked explicitly; modifiers such as `riced` remain present
+in the full generation text.
+
 ## Excluded routes and data
 
 The core does not expose the sidecar demo, config, admin, invite, arbitrary
