@@ -575,6 +575,13 @@ create a second recipe session, the OpenAI client is reused for connection
 pooling, and safe stage timings distinguish retrieval, provider, validation,
 and proxy latency without logging user or authentication data.
 
+0034Y keeps follow-up edits attached to the recipe the user is actually making.
+The revision contract locks the current dish identity and a deterministic
+pre-commit check rejects directions that drop an established dish anchor or
+introduce an unrequested conflicting one. A rejected candidate is eligible for
+the existing single bounded retry but never replaces the good draft or consumes
+one of its ten successful changes. Explicit substitutions remain supported.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

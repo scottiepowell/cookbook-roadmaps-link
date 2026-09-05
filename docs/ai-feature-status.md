@@ -90,6 +90,15 @@ replacement confirmation. The recipe, ingredients, instructions, and grounding
 sections are collapsible. State is in-memory and lost on restart; no canonical
 recipe save, sidecar identity ownership, or public sidecar route is added.
 
+0034Y protects recipe identity across follow-up changes. Revision prompts lock
+the current dish, base starch, protein, cooking method, existing ingredients,
+and instruction actions unless the user explicitly replaces or removes one.
+Before session state changes, the sidecar checks that established dish anchors
+remain in the directions and that no unrequested conflicting anchor was added.
+A drifted candidate returns only the safe retryable category
+`revision_identity_drift`; the candidate is discarded, so the current draft and
+successful-change count remain unchanged. Explicit substitutions remain valid.
+
 0034V makes every follow-up transactional. Requirements, draft state, and the
 ten-change count are committed together only after a provider response passes
 schema validation. Transient failures permit one core-owned identical retry;

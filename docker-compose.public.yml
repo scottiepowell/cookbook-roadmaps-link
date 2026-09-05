@@ -25,7 +25,7 @@ services:
   ai-api:
     build:
       context: ./ai-api
-    image: local/cookbook-ai-sidecar:0034x
+    image: local/cookbook-ai-sidecar:0034y
     container_name: cookbook-public-ai
     env_file:
       - ./.env

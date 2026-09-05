@@ -36,7 +36,9 @@ from app.recipe_session import (
     default_recipe_start_idempotency_store,
     default_recipe_session_store,
 )
+from app.recipe_revision_guard import validate_recipe_revision
 from app.schemas import (
+    RecipeImportDraft,
     RecipeImportRequest,
     RecipeRequirementValueResponse,
     RecipeSessionApiResponse,
@@ -271,6 +273,8 @@ def message_recipe_session(
             budget_session_state=access_session,
             provider=provider,
             requirements_state=revised_requirements,
+            previous_draft=session.draft,
+            requested_change=payload.text,
         )
         log_ai_workflow(
             "recipe.session.message",
@@ -328,6 +332,8 @@ def message_recipe_session(
         budget_session_state=access_session,
         provider=_resolve_session_provider(payload),
         requirements_state=updated_requirements,
+        previous_draft=session.draft,
+        requested_change=payload.text,
     )
     log_ai_workflow(
         "recipe.session.message",
@@ -401,6 +407,8 @@ def _generate_and_store_draft(
     budget_session_state: object | None = None,
     provider=None,
     requirements_state: RecipeRequirementsState | None = None,
+    previous_draft: RecipeImportDraft | None = None,
+    requested_change: str | None = None,
 ) -> RecipeSessionState:
     try:
         response = import_recipe_text(RecipeImportRequest(text=text, source=source), provider=provider, session_state=budget_session_state or session)
@@ -408,6 +416,27 @@ def _generate_and_store_draft(
         raise HTTPException(status_code=503, detail=_safe_session_unavailable_detail(exc)) from exc
     except RecipeImportValidationError as exc:
         raise HTTPException(status_code=502, detail="Recipe-session provider returned an invalid draft.") from exc
+
+    if previous_draft is not None and response.draft is not None and requested_change is not None:
+        identity_check = validate_recipe_revision(previous_draft, response.draft, requested_change)
+        if not identity_check.valid:
+            log_ai_workflow(
+                "recipe.session.revision_guard",
+                provider=response.provider,
+                model=response.model,
+                status="rejected",
+                safe_error_type="revision_identity_drift",
+                safe_error_summary=",".join(identity_check.violation_codes),
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "status": "unavailable",
+                    "safe_unavailable_category": "revision_identity_drift",
+                    "safe_guidance": "Cookbook AI could not preserve this recipe. One bounded retry is allowed.",
+                    "retryable": True,
+                },
+            )
 
     # Provider generation must succeed before requirements/revision state is
     # committed. A failed request therefore leaves the current draft, context,
@@ -528,10 +557,17 @@ def _revision_generation_text(draft, message: str) -> str:
     )
     instructions = "; ".join(item.text for item in draft.instructions)
     return (
-        f"Revise this current recipe only. Title: {draft.title}. "
+        "Revise the current recipe only and return one complete, internally coherent recipe. "
+        "LOCKED INVARIANTS: preserve the dish identity, base starch, protein, cooking method, and all existing "
+        "ingredients and instruction actions unless the requested change explicitly replaces or removes them. "
+        "Change only fields required by the requested change. Every instruction must still describe the current "
+        "dish and must use its established base ingredients. Never introduce a different staple, dish type, soup, "
+        "or cooking method merely because a retrieved example contains one. Check the final ingredients against "
+        "the final instructions before responding. "
+        f"Requested change: {message.strip()}. "
+        f"Current title: {draft.title}. "
         f"Description: {draft.description or ''}. Servings: {draft.servings or 4}. "
-        f"Ingredients: {ingredients}. Instructions: {instructions}. "
-        f"Requested change: {message.strip()}. Preserve everything not requested to change."
+        f"Ingredients: {ingredients}. Instructions: {instructions}."
     )[:8000]
 
 

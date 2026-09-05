@@ -1,5 +1,16 @@
 # AI Implementation Backlog
 
+## 0034Y: Recipe revision identity preservation
+
+Status: complete and deployed.
+
+Recipe follow-ups now carry an explicit locked-invariant contract covering the
+current dish, base starch, protein, method, ingredients, and instruction
+coherence. A deterministic pre-commit check rejects revisions whose directions
+drop an established dish anchor or introduce an unrequested conflicting anchor.
+Identity drift is retryable once through the existing bounded core policy; if
+both attempts drift, the prior draft and ten-change count remain untouched.
+
 ## 0034X: Public AI initial request resilience
 
 Status: complete and deployed.

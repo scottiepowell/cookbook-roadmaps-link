@@ -10,8 +10,10 @@ from app.importer import RecipeImportProviderError
 from app.providers.errors import ProviderCallError
 from app import recipe_session_routes
 from app.recipe_requirements import extract_recipe_requirements
+from app.recipe_revision_guard import validate_recipe_revision
 from app.recipe_session import default_recipe_session_store, default_recipe_start_idempotency_store
 from app.retrieval_cache import reset_retrieval_cache
+from app.schemas import RecipeImportDraft, RecipeImportResponse
 
 
 FORBIDDEN_RESPONSE_TEXT = (
@@ -353,6 +355,136 @@ def test_failed_recipe_change_does_not_mutate_draft_or_revision(session_client, 
     assert current.draft.model_dump() == started["draft"]
     assert "mushrooms" not in current.requirements.latest_user_text.lower()
     _assert_safe_response(response.text, dataset_dir)
+
+
+def test_drifted_pasta_revision_is_retryable_and_does_not_mutate_session(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={
+            "text": "rigatoni pasta bake with chicken cream cheese and riced cauliflower",
+            "provider_mode": "mock",
+        },
+    ).json()
+    existing = default_recipe_session_store.get_session(started["interaction_id"])
+    assert existing is not None
+    previous = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [{"name": "rigatoni"}, {"name": "chicken"}, {"name": "cream cheese"}],
+            "instructions": [
+                {"step": 1, "text": "Boil the rigatoni until just tender."},
+                {"step": 2, "text": "Combine the pasta with chicken and cream cheese, then bake."},
+            ],
+        }
+    )
+    stored = default_recipe_session_store.update_session(
+        started["interaction_id"], existing.requirements, draft=previous
+    )
+    assert stored is not None
+    drifted_data = previous.model_dump()
+    drifted_data["instructions"] = [
+        {"step": 1, "text": "Preheat the oven and grease a casserole dish."},
+        {"step": 2, "text": "Combine rice, soup, cheese, and seasoning in the dish."},
+        {"step": 3, "text": "Fold in chicken and enough liquid for the rice to cook evenly."},
+        {"step": 4, "text": "Cover and bake until the rice is tender."},
+    ]
+    drifted = RecipeImportDraft.model_validate(drifted_data)
+
+    def drift_generation(*args, **kwargs):
+        del args, kwargs
+        return RecipeImportResponse(draft=drifted, provider="mock", model="mock-basic")
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", drift_generation)
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "add a vegetable", "provider_mode": "mock"},
+    )
+    current = default_recipe_session_store.get_session(started["interaction_id"])
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == {
+        "status": "unavailable",
+        "safe_unavailable_category": "revision_identity_drift",
+        "safe_guidance": "Cookbook AI could not preserve this recipe. One bounded retry is allowed.",
+        "retryable": True,
+    }
+    assert current is not None
+    assert current.revision_count == 0
+    assert current.draft.model_dump() == previous.model_dump()
+    _assert_safe_response(response.text, dataset_dir)
+
+
+def test_revision_identity_guard_accepts_coherent_addition_and_explicit_base_swap():
+    previous = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [{"name": "rigatoni"}, {"name": "chicken"}, {"name": "cream cheese"}],
+            "instructions": [
+                {"step": 1, "text": "Boil the rigatoni until just tender."},
+                {"step": 2, "text": "Combine the pasta with chicken and cream cheese, then bake."},
+            ],
+        }
+    )
+    with_spinach_data = previous.model_dump()
+    with_spinach_data["ingredients"].append({"name": "spinach"})
+    with_spinach_data["instructions"][1]["text"] = (
+        "Fold spinach into the pasta with chicken and cream cheese, then bake."
+    )
+    with_spinach = RecipeImportDraft.model_validate(with_spinach_data)
+
+    assert validate_recipe_revision(previous, with_spinach, "add spinach").valid is True
+
+    rice_bake_data = previous.model_dump()
+    rice_bake_data["title"] = "Chicken and Rice Bake"
+    rice_bake_data["ingredients"][0]["name"] = "rice"
+    rice_bake_data["instructions"] = [
+        {"step": 1, "text": "Cook the rice until just tender."},
+        {"step": 2, "text": "Combine the rice with chicken and cream cheese, then bake."},
+    ]
+    rice_bake = RecipeImportDraft.model_validate(rice_bake_data)
+
+    assert validate_recipe_revision(previous, rice_bake, "replace the pasta with rice").valid is True
+
+
+def test_revision_identity_guard_accepts_cauliflower_rice_alias_without_plain_rice_drift():
+    previous = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [
+                {"name": "rigatoni"},
+                {"name": "riced cauliflower"},
+                {"name": "chicken"},
+            ],
+            "instructions": [{"step": 1, "text": "Fold riced cauliflower into the rigatoni and bake."}],
+        }
+    )
+    candidate = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [{"name": "rigatoni"}, {"name": "cauliflower rice"}, {"name": "chicken"}],
+            "instructions": [{"step": 1, "text": "Fold cauliflower rice and spinach into the rigatoni and bake."}],
+        }
+    )
+
+    assert validate_recipe_revision(previous, candidate, "add spinach").valid is True
+
+
+def test_revision_prompt_locks_recipe_identity_and_instruction_coherence():
+    draft = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [{"name": "rigatoni"}, {"name": "chicken"}],
+            "instructions": [{"step": 1, "text": "Boil rigatoni and bake it with chicken."}],
+        }
+    )
+
+    prompt = recipe_session_routes._revision_generation_text(draft, "add a vegetable")
+
+    assert "LOCKED INVARIANTS" in prompt
+    assert "preserve the dish identity, base starch, protein, cooking method" in prompt
+    assert "Every instruction must still describe the current dish" in prompt
+    assert "Requested change: add a vegetable" in prompt
 
 
 def test_new_recipe_intent_requires_confirmation_without_replacing_draft(session_client):

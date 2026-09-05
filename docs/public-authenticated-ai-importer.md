@@ -157,6 +157,15 @@ recipe revisions; 22 allowed provider attempts cover an initial generation
 retry and one retry for each of ten changes, while the existing cost ceilings
 remain the final budget guard.
 
+0034Y adds revision identity enforcement before that transactional commit. The
+provider receives a locked-invariant instruction to preserve the existing dish,
+base starch, protein, method, ingredients, and instruction actions except where
+the follow-up explicitly changes them. A deterministic check then rejects a
+candidate whose instructions lose an established identity anchor or whose
+draft introduces an unrequested conflicting anchor. The sidecar reports only a
+safe retryable drift category; it never returns the rejected candidate. An
+explicit replacement such as pasta with rice is still allowed.
+
 0034W preserves initial prompt fidelity. The recipe-session start route passes
 the complete user request to importer retrieval and generation rather than
 reconstructing it from a necessarily limited deterministic parser. The parser
