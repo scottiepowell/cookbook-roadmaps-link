@@ -1,5 +1,15 @@
 # AI Implementation Backlog
 
+## 0035E: AI-first Add Recipe and samples
+
+Status: complete and deployed.
+
+The core Add Recipe action becomes the single AI-first entry point while the
+existing complete form remains available through a visible Manual entry
+alternative. The opt-in sample seed expands to five complete recipes and gains
+user-scoped idempotency so the current public cookbook can receive only missing
+samples without duplicates.
+
 ## 0035B: Public AI recipe replacement confirmation
 
 Status: complete and deployed.

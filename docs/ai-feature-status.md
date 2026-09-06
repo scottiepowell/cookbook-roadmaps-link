@@ -155,6 +155,12 @@ new-recipe commands restart directly. 0035D then rejects high-confidence
 title/ingredient/instruction contradictions before revision commit through the
 existing safe retryable and transactional failure path.
 
+0035E integrates that bounded AI chat into the ordinary Add Recipe journey.
+The main and empty-cookbook actions open the AI experience by default, while a
+visible Manual entry action preserves the complete core form and bookmarklet
+path. The core sample seed is expanding to five complete recipes with
+user-scoped idempotency; AI output remains an unsaved draft.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

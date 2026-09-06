@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0035d}
+    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0035e}
     container_name: cookbook-public-core
     env_file:
       - ${PUBLIC_CORE_ENV_FILE:?Set PUBLIC_CORE_ENV_FILE to the ignored core .env path}
