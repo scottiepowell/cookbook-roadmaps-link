@@ -358,7 +358,12 @@ def classify_follow_up(
     )
 
 
-def suggests_new_recipe(message: str, current_state: RecipeRequirementsState | None = None) -> bool:
+def suggests_new_recipe(
+    message: str,
+    current_state: RecipeRequirementsState | None = None,
+    *,
+    current_recipe_text: str | None = None,
+) -> bool:
     normalized = normalize_text(message)
     explicit = (
         "new recipe",
@@ -373,13 +378,49 @@ def suggests_new_recipe(message: str, current_state: RecipeRequirementsState | N
     )
     if any(_contains_phrase(normalized, phrase) for phrase in explicit):
         return True
+
+    replacement_patterns = (
+        r"\bswitch\s+(?:the\s+)?recipe(?:\s+and\s+(?:i\s+want\s+to\s+)?(?:do|make)|\s+to)\s+(?P<target>.+)$",
+        r"\b(?:let\s+s|actually)?\s*go\s+with\s+(?P<target>.+)$",
+        r"\bchange\s+this\s+to\s+(?P<target>.+)$",
+        r"\binstead\s+(?:let\s+s\s+)?(?:do|make)\s+(?P<target>.+)$",
+        r"\bscrap\s+(?:that|this)(?:\s+recipe)?\s+and\s+make\s+(?P<target>.+)$",
+    )
+    for pattern in replacement_patterns:
+        match = re.search(pattern, normalized)
+        if match and _looks_like_dish_switch_target(match.group("target")):
+            return True
+
+    current_dish = str(_field_value(current_state.dish_intent) or "") if current_state else ""
+    current_context = normalize_text(" ".join(part for part in (current_dish, current_recipe_text or "") if part))
+
+    if _contains_phrase(normalized, "more like"):
+        proposed = normalized.split("more like", maxsplit=1)[1].strip()
+        candidate = _extract_dish_intent(proposed)
+        return bool(
+            candidate
+            and normalize_text(str(candidate.value)) != normalize_text(current_dish)
+        )
+
+    staple_swap = re.search(
+        r"\b(?:change|changing|replace|replacing|swap|swapping)(?:\s+out)?\s+(?:the\s+)?"
+        r"(?P<source>pasta|rigatoni|spaghetti|noodles?|rice|tortillas?|bread|potatoes?)\s+"
+        r"(?:to|with|for)\s+"
+        r"(?P<target>pasta|rigatoni|spaghetti|noodles?|rice|tortillas?|bread|potatoes?)\b",
+        normalized,
+    )
+    if staple_swap:
+        source = staple_swap.group("source")
+        target = staple_swap.group("target")
+        if source != target and not _contains_phrase(current_context, source):
+            return True
+
     if not _contains_any(normalized, {"instead", "rather"}):
         return False
     if not _contains_any(normalized, {"make", "want", "do", "cook", "recipe"}):
         return False
     candidate = _extract_dish_intent(normalized)
-    current = str(_field_value(current_state.dish_intent) or "") if current_state else ""
-    return bool(candidate and normalize_text(str(candidate.value)) != normalize_text(current))
+    return bool(candidate and normalize_text(str(candidate.value)) != normalize_text(current_dish))
 
 
 def decide_rag_refresh(
@@ -632,6 +673,28 @@ def _has_material_update_signal(normalized: str) -> bool:
         or _contains_any(normalized, {"double", "doubled", "halve", "half"})
         or re.search(r"\b(?:serves?|servings?|yield)\b", normalized)
     )
+
+
+def _looks_like_dish_switch_target(value: str) -> bool:
+    normalized = normalize_text(value)
+    dish_terms = {
+        "bake",
+        "casserole",
+        "enchilada",
+        "enchiladas",
+        "fried rice",
+        "lasagna",
+        "omelet",
+        "omelette",
+        "pasta",
+        "pizza",
+        "rice",
+        "soup",
+        "stew",
+        "taco",
+        "tacos",
+    }
+    return _contains_any(normalized, dish_terms)
 
 
 def _looks_like_clarification_answer(normalized: str) -> bool:

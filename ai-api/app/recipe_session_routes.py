@@ -44,7 +44,7 @@ from app.recipe_session import (
     default_recipe_start_idempotency_store,
     default_recipe_session_store,
 )
-from app.recipe_revision_guard import validate_recipe_revision
+from app.recipe_revision_guard import validate_recipe_coherence, validate_recipe_revision
 from app.schemas import (
     RecipeImportDraft,
     RecipeImportRequest,
@@ -230,7 +230,17 @@ def message_recipe_session(
     deterministic_serving_scale = is_serving_only_change(payload.text, current_servings)
     additive_serving_scale = is_additive_serving_change(payload.text, current_servings)
 
-    if suggests_new_recipe(payload.text, previous_requirements):
+    draft_context = None
+    if session.draft is not None:
+        draft_context = " ".join(
+            [session.draft.title, *(ingredient.name for ingredient in session.draft.ingredients)]
+        )
+
+    if suggests_new_recipe(
+        payload.text,
+        previous_requirements,
+        current_recipe_text=draft_context,
+    ):
         classification = RecipeFollowUpClassification(
             label=RecipeFollowUpLabel.NEW_RECIPE_SUGGESTED,
             reason="The message appears to request a different recipe.",
@@ -238,7 +248,7 @@ def message_recipe_session(
         )
         decision = RecipeSessionDecision(
             should_clarify=True,
-            question="That sounds like a different recipe. Do you want to start a new recipe and replace this draft?",
+            question="That sounds like a different recipe. Do you want to start a new recipe and discard this draft?",
             reason="A new recipe requires explicit confirmation before replacing the current draft.",
             confidence_label=previous_requirements.confidence_label,
         )
@@ -483,6 +493,27 @@ def _generate_and_store_draft(
                     "status": "unavailable",
                     "safe_unavailable_category": "serving_scale_mismatch",
                     "safe_guidance": "Cookbook AI could not scale this recipe consistently. Up to three bounded retries are allowed.",
+                    "retryable": True,
+                },
+            )
+
+    if response.draft is not None and previous_draft is not None:
+        coherence_check = validate_recipe_coherence(response.draft, text)
+        if not coherence_check.valid:
+            log_ai_workflow(
+                "recipe.session.coherence_guard",
+                provider=response.provider,
+                model=response.model,
+                status="rejected",
+                safe_error_type="recipe_coherence_mismatch",
+                safe_error_summary=",".join(coherence_check.violation_codes),
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "status": "unavailable",
+                    "safe_unavailable_category": "recipe_coherence_mismatch",
+                    "safe_guidance": "Cookbook AI returned an incoherent recipe draft. Up to three bounded retries are allowed.",
                     "retryable": True,
                 },
             )

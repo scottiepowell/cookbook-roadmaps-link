@@ -30,6 +30,73 @@ def test_general_recipe_intent_and_new_recipe_detection():
     assert suggests_new_recipe("start over", state) is True
 
 
+def test_recipe_switch_detection_uses_the_current_draft_context():
+    state = extract_recipe_requirements("green chile enchiladas with chicken")
+    enchilada_context = "Green Chile Chicken Enchiladas chicken tortillas mushrooms"
+
+    assert (
+        suggests_new_recipe(
+            "change the pasta to rice",
+            state,
+            current_recipe_text=enchilada_context,
+        )
+        is True
+    )
+    assert (
+        suggests_new_recipe(
+            "make the dish more like a chicken and rice with mushrooms dish",
+            state,
+            current_recipe_text=enchilada_context,
+        )
+        is True
+    )
+
+
+def test_real_staple_and_ingredient_substitutions_remain_current_recipe_edits():
+    state = extract_recipe_requirements("rigatoni pasta bake with chicken")
+    pasta_context = "Chicken Rigatoni Pasta Bake rigatoni chicken cream cheese"
+
+    assert (
+        suggests_new_recipe(
+            "change the pasta to rice",
+            state,
+            current_recipe_text=pasta_context,
+        )
+        is False
+    )
+    assert (
+        suggests_new_recipe(
+            "replace chicken with pork",
+            state,
+            current_recipe_text=pasta_context,
+        )
+        is False
+    )
+
+
+def test_explicit_replacement_language_is_detected_before_revision_generation():
+    state = extract_recipe_requirements("cheese omelet with sausage and mushrooms")
+    phrases = (
+        "let's switch the recipe and do a pasta bake",
+        "switch the recipe to fried rice",
+        "let's go with fried rice",
+        "actually go with tacos",
+        "change this to a pasta bake",
+        "instead let's do fried rice",
+        "scrap that and make fried rice",
+        "new recipe: fried rice",
+    )
+
+    assert all(
+        suggests_new_recipe(
+            phrase,
+            state,
+            current_recipe_text="Cheese Omelet eggs cheese sausage mushrooms",
+        )
+        for phrase in phrases
+    )
+
+
 def test_extracts_requested_cauliflower_cheese_and_mushrooms():
     state = extract_recipe_requirements(
         "green chile enchiladas with chicken, cauliflower, cheese, and mushrooms"

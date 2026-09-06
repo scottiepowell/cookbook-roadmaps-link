@@ -21,7 +21,7 @@ Completed AI workflows:
 - Bounded input quality: weak or vague input gets deterministic warnings or one clarification question, while empty or nonsensical input is rejected before provider calls.
 - Sidecar demo UI: `GET /demo` and `GET /demo/ai` serve a lightweight browser demo for completed AI workflows, including the local Recipe Session Alpha panel.
 - Provider harness: mock provider by default, OpenAI path available only through explicit manual opt-in.
-- Public authenticated recipe chat: `/ai` in the custom core delegates a core-owned, ten-successful-change recipe conversation to the private sidecar using `gpt-5.4-nano`, uses transactional revisions with one bounded transient retry, an optimized deterministic 5,000-record index for retrieval and context packing, confirmation before replacing a recipe, and a bounded local-example grounding summary; no sidecar route is directly public.
+- Public authenticated recipe chat: `/ai` in the custom core delegates a core-owned, ten-successful-change recipe conversation to the private sidecar using `gpt-5.4-nano`, uses transactional revisions with up to three bounded transient retries, an optimized deterministic 5,000-record index for retrieval and context packing, context-aware confirmation before replacing a recipe, and a bounded local-example grounding summary; no sidecar route is directly public.
 
 Validation proof:
 
@@ -594,6 +594,15 @@ shows the latest request's retry count directly below the ten-change counter.
 Compound additive-and-serving prompts keep the existing draft as context,
 retain the requested new ingredient, and deterministically scale all
 established numeric quantities before one transactional commit.
+
+0035B makes intentional dish replacement usable. A staple swap whose source is
+absent from the displayed draft, or wording that asks to make the dish more
+like another dish, pauses without mutation and asks whether to start a new
+recipe and discard the current draft. Explicit switch and go-with language uses
+the same confirmation path. 0035C resolves buttons, typed yes/no, richer
+replacement descriptions, and explicit new-recipe commands into a clean new
+session using only the proposed idea. 0035D rejects high-confidence stale or
+incompatible instructions before a revision can commit.
 
 ## Status
 

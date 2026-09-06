@@ -1,5 +1,37 @@
 # AI Implementation Backlog
 
+## 0035B: Public AI recipe replacement confirmation
+
+Status: complete and deployed.
+
+Recipe-switch detection now uses the displayed draft as context. Replacing an
+absent base staple or asking to make the draft more like a different dish
+pauses without mutation and asks whether to start a new recipe and discard the
+current draft. Explicit switch, go-with, change-this, instead-do,
+scrap-and-make, and new-recipe language is caught before provider generation.
+Existing-source substitutions remain edits.
+
+## 0035C: Public AI clean recipe replacement
+
+Status: complete and deployed.
+
+The browser accepts the visible controls or bounded typed yes/no answers,
+allows a clearer proposed dish while confirmation is pending, and immediately
+restarts for an explicit `start a new recipe with ...` command. Confirmation
+deletes the old core-owned chat binding and starts a distinct sidecar session
+using only the extracted proposal, so old recipe invariants are not carried
+into the replacement.
+
+## 0035D: Public AI recipe coherence guard
+
+Status: complete and deployed.
+
+A deterministic pre-commit guard rejects high-confidence contradictions among
+the candidate title, major ingredients, and instructions. It covers stale
+omelet directions under non-omelet titles, missing pasta or fried-rice action
+anchors, and unused major proteins for guarded dish families. Rejection uses a
+safe retryable category and leaves the prior session transactionally unchanged.
+
 ## 0035A: Public AI retry visibility and compound edits
 
 Status: complete and deployed.

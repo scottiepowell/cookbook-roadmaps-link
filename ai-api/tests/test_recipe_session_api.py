@@ -10,7 +10,7 @@ from app.importer import RecipeImportProviderError
 from app.providers.errors import ProviderCallError
 from app import recipe_session_routes
 from app.recipe_requirements import extract_recipe_requirements
-from app.recipe_revision_guard import validate_recipe_revision
+from app.recipe_revision_guard import validate_recipe_coherence, validate_recipe_revision
 from app.recipe_session import default_recipe_session_store, default_recipe_start_idempotency_store
 from app.retrieval_cache import reset_retrieval_cache
 from app.schemas import RecipeImportDraft, RecipeImportResponse
@@ -457,8 +457,8 @@ def test_drifted_pasta_revision_is_retryable_and_does_not_mutate_session(session
     assert response.status_code == 503
     assert response.json()["detail"] == {
         "status": "unavailable",
-        "safe_unavailable_category": "revision_identity_drift",
-        "safe_guidance": "Cookbook AI could not preserve this recipe. Up to three bounded retries are allowed.",
+        "safe_unavailable_category": "recipe_coherence_mismatch",
+        "safe_guidance": "Cookbook AI returned an incoherent recipe draft. Up to three bounded retries are allowed.",
         "retryable": True,
     }
     assert current is not None
@@ -497,6 +497,109 @@ def test_revision_identity_guard_accepts_coherent_addition_and_explicit_base_swa
     rice_bake = RecipeImportDraft.model_validate(rice_bake_data)
 
     assert validate_recipe_revision(previous, rice_bake, "replace the pasta with rice").valid is True
+
+
+def test_recipe_coherence_guard_rejects_stale_omelet_and_fried_rice_instructions():
+    stale_pasta = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [{"name": "rigatoni"}, {"name": "chicken"}, {"name": "spinach"}],
+            "instructions": [
+                {"step": 1, "text": "Beat the eggs."},
+                {"step": 2, "text": "Melt butter in a pan."},
+                {"step": 3, "text": "Add cheese and fold the omelet."},
+            ],
+        }
+    )
+    stale_rice = RecipeImportDraft.model_validate(
+        {
+            "title": "Pork Fried Rice",
+            "ingredients": [{"name": "rice"}, {"name": "pork"}, {"name": "vegetables"}],
+            "instructions": [{"step": 1, "text": "Boil rigatoni and bake it with cheese."}],
+        }
+    )
+
+    pasta_check = validate_recipe_coherence(stale_pasta)
+    rice_check = validate_recipe_coherence(stale_rice)
+
+    assert pasta_check.valid is False
+    assert "stale_instruction_anchor:omelet" in pasta_check.violation_codes
+    assert "missing_instruction_anchor:pasta" in pasta_check.violation_codes
+    assert rice_check.valid is False
+    assert "missing_instruction_anchor:rice" in rice_check.violation_codes
+    assert "unused_major_ingredient:pork" in rice_check.violation_codes
+
+
+def test_recipe_coherence_guard_accepts_coherent_pasta_and_fried_rice():
+    pasta = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [{"name": "rigatoni"}, {"name": "chicken"}, {"name": "spinach"}],
+            "instructions": [
+                {"step": 1, "text": "Boil the rigatoni and combine it with chicken and spinach."},
+                {"step": 2, "text": "Bake the pasta in the oven until bubbling."},
+            ],
+        }
+    )
+    fried_rice = RecipeImportDraft.model_validate(
+        {
+            "title": "Pork Fried Rice",
+            "ingredients": [{"name": "rice"}, {"name": "pork"}, {"name": "vegetables"}],
+            "instructions": [
+                {"step": 1, "text": "Cook the rice and cool it."},
+                {"step": 2, "text": "Stir fry the pork and vegetables in a wok, then add rice."},
+            ],
+        }
+    )
+
+    assert validate_recipe_coherence(pasta).valid is True
+    assert validate_recipe_coherence(fried_rice).valid is True
+
+
+def test_stale_instruction_coherence_failure_is_retryable_and_transactional(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "rigatoni pasta bake with chicken and spinach", "provider_mode": "mock"},
+    ).json()
+    existing = default_recipe_session_store.get_session(started["interaction_id"])
+    assert existing is not None
+    previous = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "ingredients": [{"name": "rigatoni"}, {"name": "chicken"}, {"name": "spinach"}],
+            "instructions": [
+                {"step": 1, "text": "Boil the rigatoni and combine it with chicken and spinach."},
+                {"step": 2, "text": "Bake the pasta in the oven until bubbling."},
+            ],
+        }
+    )
+    default_recipe_session_store.update_session(started["interaction_id"], existing.requirements, draft=previous)
+    stale_data = previous.model_dump()
+    stale_data["instructions"] = [
+        {"step": 1, "text": "Beat the eggs."},
+        {"step": 2, "text": "Add cheese and fold the omelet."},
+    ]
+    stale = RecipeImportDraft.model_validate(stale_data)
+
+    def stale_generation(*args, **kwargs):
+        del args, kwargs
+        return RecipeImportResponse(draft=stale, provider="mock", model="mock-basic")
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", stale_generation)
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "add mushrooms", "provider_mode": "mock"},
+    )
+    current = default_recipe_session_store.get_session(started["interaction_id"])
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["safe_unavailable_category"] == "recipe_coherence_mismatch"
+    assert response.json()["detail"]["retryable"] is True
+    assert current is not None
+    assert current.revision_count == 0
+    assert current.draft.model_dump() == previous.model_dump()
+    _assert_safe_response(response.text, dataset_dir)
 
 
 def test_revision_identity_guard_accepts_cauliflower_rice_alias_without_plain_rice_drift():
@@ -644,6 +747,67 @@ def test_new_recipe_intent_requires_confirmation_without_replacing_draft(session
     assert "start a new recipe" in data["clarification_question"].lower()
     assert data["draft"] == started["draft"]
     assert data["revision_count"] == 0
+
+
+def test_missing_staple_swap_requires_confirmation_without_replacing_draft(session_client):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "green chile enchiladas with chicken and mushrooms"},
+    ).json()
+
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "change the pasta to rice"},
+    )
+    data = response.json()
+
+    _assert_safe_response(response.text, dataset_dir)
+    assert data["response_state"] == "new_recipe_confirmation"
+    assert "discard this draft" in data["clarification_question"].lower()
+    assert data["draft"] == started["draft"]
+    assert data["revision_count"] == 0
+
+
+def test_repeated_dish_switches_confirm_without_hybrid_mutation(session_client):
+    client, dataset_dir = session_client
+    omelet = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "cheese omelet with sausage and mushrooms", "provider_mode": "mock"},
+    ).json()
+    pasta_request = (
+        "let's switch the recipe and do a pasta bake with chicken, rigatoni, and spinach"
+    )
+    pasta_confirmation = client.post(
+        f"/ai/recipe-session/{omelet['interaction_id']}/message",
+        json={"text": pasta_request, "provider_mode": "mock"},
+    )
+    pasta_confirmation_data = pasta_confirmation.json()
+
+    assert pasta_confirmation_data["response_state"] == "new_recipe_confirmation"
+    assert pasta_confirmation_data["draft"] == omelet["draft"]
+    assert pasta_confirmation_data["revision_count"] == 0
+
+    pasta = client.post(
+        "/ai/recipe-session/start",
+        json={
+            "text": "pasta bake with chicken, rigatoni, and spinach",
+            "provider_mode": "mock",
+        },
+    ).json()
+    rice_request = "let's go with fried rice with teriyaki, pork, vegetables, and garlic"
+    rice_confirmation = client.post(
+        f"/ai/recipe-session/{pasta['interaction_id']}/message",
+        json={"text": rice_request, "provider_mode": "mock"},
+    )
+    rice_confirmation_data = rice_confirmation.json()
+
+    assert pasta["interaction_id"] != omelet["interaction_id"]
+    assert rice_confirmation_data["response_state"] == "new_recipe_confirmation"
+    assert rice_confirmation_data["draft"] == pasta["draft"]
+    assert rice_confirmation_data["revision_count"] == 0
+    _assert_safe_response(pasta_confirmation.text, dataset_dir)
+    _assert_safe_response(rice_confirmation.text, dataset_dir)
 
 
 def test_ten_change_limit_blocks_another_revision(session_client):

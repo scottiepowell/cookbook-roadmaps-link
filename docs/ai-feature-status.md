@@ -142,6 +142,19 @@ existing draft as dish context, deterministically scale every established
 numeric ingredient, retain the requested new ingredient, and commit the two
 changes transactionally. Initial vague ideas may still ask one clarification.
 
+0035B distinguishes an ordinary substitution from a likely dish switch using
+the current draft's title and ingredient names. Missing-source staple swaps and
+requests to make the dish more like another one pause without mutation for a
+discard confirmation. Explicit switch, go-with, change-this, instead-do,
+scrap-and-make, and new-recipe wording follows the same pre-generation path.
+
+0035C resolves that confirmation into a distinct core-owned chat and sidecar
+session using only the proposed replacement idea. Buttons and typed yes/no are
+supported, a richer proposal can be supplied while paused, and explicit
+new-recipe commands restart directly. 0035D then rejects high-confidence
+title/ingredient/instruction contradictions before revision commit through the
+existing safe retryable and transactional failure path.
+
 ## Local Vanilla Cookbook Docker runtime
 
 Complete, local-dev-only: `docker-compose.local.yml` and the

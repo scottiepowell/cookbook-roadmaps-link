@@ -140,6 +140,25 @@ keep the current recipe or explicitly start a new chat from the proposed idea.
 Recipe, ingredient, instruction, and grounding panels use native collapsible
 controls with plus/minus indicators to keep long drafts manageable.
 
+0035B makes that replacement decision context-aware. A staple swap is treated
+as a likely dish switch only when its named source is absent from the current
+draft; the same request remains a normal revision when that source is present.
+Wording that asks to make the draft more like another dish also pauses for
+confirmation, as do explicit switch, go-with, change-this, instead-do,
+scrap-and-make, and new-recipe phrases.
+
+0035C keeps the prompt usable for typed yes/no answers or a clearer replacement
+idea. Confirmation removes the old core-owned chat binding and starts a new
+sidecar session using only the extracted proposal; `start a new recipe with
+...` performs the same clean restart directly. Until confirmation, the draft
+and successful-change count do not change.
+
+0035D adds a deterministic coherence check before revision commit. Pasta-bake
+and fried-rice candidates must retain their expected base and method anchors,
+major proteins must be used in their instructions, and explicit stale omelet
+directions cannot survive under another dish title. A rejected candidate uses
+the safe retryable transactional path and never replaces the current draft.
+
 0034V makes follow-up mutation transactional. The sidecar stages requirements
 and invokes the provider before committing any new requirements, draft, or
 revision count. A failed attempt therefore cannot consume a change or partially
