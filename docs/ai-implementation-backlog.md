@@ -1,5 +1,17 @@
 # AI Implementation Backlog
 
+## 0034Z: Deterministic recipe serving scaling
+
+Status: complete and deployed.
+
+Serving-only follow-ups now use the latest requested yield and deterministically
+scale every parseable numeric ingredient quantity from the current draft by one
+common ratio. Ingredient identity, units, ordering, and recipe identity remain
+fixed while provider output may adjust non-linear pan, batch, and timing
+guidance. Numeric and written serving counts plus bounded double/halve requests
+are supported. Mixed serving-and-content changes must return the exact requested
+yield or fail transactionally with one bounded retry.
+
 ## 0034Y: Recipe revision identity preservation
 
 Status: complete and deployed.

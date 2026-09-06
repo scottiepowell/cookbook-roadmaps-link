@@ -29,6 +29,7 @@ from app.recipe_requirements import (
     extract_recipe_requirements,
     suggests_new_recipe,
 )
+from app.recipe_scaling import is_serving_only_change, requested_serving_count, scale_recipe_draft
 from app.recipe_session import (
     RecipeSessionState,
     build_requirement_diff,
@@ -217,6 +218,9 @@ def message_recipe_session(
     session = _load_session_or_404(interaction_id)
     previous_requirements = session.requirements
     classification = classify_follow_up(payload.text, current_state=previous_requirements)
+    current_servings = session.draft.servings if session.draft is not None else None
+    serving_target = requested_serving_count(payload.text, current_servings)
+    deterministic_serving_scale = is_serving_only_change(payload.text, current_servings)
 
     if suggests_new_recipe(payload.text, previous_requirements):
         classification = RecipeFollowUpClassification(
@@ -275,6 +279,8 @@ def message_recipe_session(
             requirements_state=revised_requirements,
             previous_draft=session.draft,
             requested_change=payload.text,
+            expected_servings=serving_target,
+            deterministic_serving_scale=deterministic_serving_scale,
         )
         log_ai_workflow(
             "recipe.session.message",
@@ -334,6 +340,8 @@ def message_recipe_session(
         requirements_state=updated_requirements,
         previous_draft=session.draft,
         requested_change=payload.text,
+        expected_servings=serving_target,
+        deterministic_serving_scale=deterministic_serving_scale,
     )
     log_ai_workflow(
         "recipe.session.message",
@@ -409,6 +417,8 @@ def _generate_and_store_draft(
     requirements_state: RecipeRequirementsState | None = None,
     previous_draft: RecipeImportDraft | None = None,
     requested_change: str | None = None,
+    expected_servings: int | None = None,
+    deterministic_serving_scale: bool = False,
 ) -> RecipeSessionState:
     try:
         response = import_recipe_text(RecipeImportRequest(text=text, source=source), provider=provider, session_state=budget_session_state or session)
@@ -416,6 +426,30 @@ def _generate_and_store_draft(
         raise HTTPException(status_code=503, detail=_safe_session_unavailable_detail(exc)) from exc
     except RecipeImportValidationError as exc:
         raise HTTPException(status_code=502, detail="Recipe-session provider returned an invalid draft.") from exc
+
+    if response.draft is not None and previous_draft is not None and expected_servings is not None:
+        if deterministic_serving_scale:
+            response = response.model_copy(
+                update={"draft": scale_recipe_draft(previous_draft, response.draft, expected_servings)},
+                deep=True,
+            )
+        elif response.draft.servings != expected_servings:
+            log_ai_workflow(
+                "recipe.session.serving_guard",
+                provider=response.provider,
+                model=response.model,
+                status="rejected",
+                safe_error_type="serving_scale_mismatch",
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "status": "unavailable",
+                    "safe_unavailable_category": "serving_scale_mismatch",
+                    "safe_guidance": "Cookbook AI could not scale this recipe consistently. One bounded retry is allowed.",
+                    "retryable": True,
+                },
+            )
 
     if previous_draft is not None and response.draft is not None and requested_change is not None:
         identity_check = validate_recipe_revision(previous_draft, response.draft, requested_change)
@@ -517,6 +551,13 @@ def _requirements_after_message(
         now=datetime.now(UTC),
     )
     updated.original_user_text = previous.original_user_text
+    previous_servings = int(previous.serving_count.value) if previous.serving_count else None
+    serving_target = requested_serving_count(message, previous_servings)
+    if serving_target is not None:
+        updated.serving_count = RecipeRequirementField(
+            value=serving_target,
+            source=RecipeRequirementSource.USER_PROVIDED,
+        )
     # Answering an open question completes the pending request; it is not an
     # additional recipe change. This also keeps pre-draft clarification at
     # revision zero so users still receive all ten post-draft changes.
@@ -564,6 +605,8 @@ def _revision_generation_text(draft, message: str) -> str:
         "dish and must use its established base ingredients. Never introduce a different staple, dish type, soup, "
         "or cooking method merely because a retrieved example contains one. Check the final ingredients against "
         "the final instructions before responding. "
+        "For a serving change, use the exact requested serving count and scale every numeric ingredient quantity "
+        "by the same new-servings/current-servings ratio. Do not scale temperatures or cooking times linearly. "
         f"Requested change: {message.strip()}. "
         f"Current title: {draft.title}. "
         f"Description: {draft.description or ''}. Servings: {draft.servings or 4}. "

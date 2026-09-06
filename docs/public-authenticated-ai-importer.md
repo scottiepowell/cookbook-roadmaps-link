@@ -157,6 +157,15 @@ recipe revisions; 22 allowed provider attempts cover an initial generation
 retry and one retry for each of ten changes, while the existing cost ceilings
 remain the final budget guard.
 
+0034Z removes provider discretion from serving-only ingredient math. The latest
+explicit numeric or written serving target replaces older session-history
+targets; double and halve requests resolve from the displayed current yield.
+Every parseable numeric ingredient quantity is scaled from the current draft by
+the same ratio while ingredient identity and units remain fixed. The model may
+adjust pans, batches, and other non-linear instructions, but it cannot change
+the committed serving count or ingredient scaling. Mixed serving/content edits
+must still return the exact requested yield before commit.
+
 0034Y adds revision identity enforcement before that transactional commit. The
 provider receives a locked-invariant instruction to preserve the existing dish,
 base starch, protein, method, ingredients, and instruction actions except where

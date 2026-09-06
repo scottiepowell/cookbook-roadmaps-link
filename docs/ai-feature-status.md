@@ -90,6 +90,15 @@ replacement confirmation. The recipe, ingredients, instructions, and grounding
 sections are collapsible. State is in-memory and lost on restart; no canonical
 recipe save, sidecar identity ownership, or public sidecar route is added.
 
+0034Z makes serving-only recipe changes deterministic. The latest explicit
+serving request overrides earlier numbers in the session history, including
+written counts and bounded double/halve requests. The sidecar sets the exact
+yield and scales every parseable numeric ingredient quantity from the current
+draft by one ratio while preserving ingredient names, units, order, and recipe
+identity. Temperatures and times are not multiplied; generated directions may
+instead adapt pans and batches. A mixed serving/content edit with the wrong
+provider yield is rejected before session commit as `serving_scale_mismatch`.
+
 0034Y protects recipe identity across follow-up changes. Revision prompts lock
 the current dish, base starch, protein, cooking method, existing ingredients,
 and instruction actions unless the user explicitly replaces or removes one.

@@ -484,7 +484,95 @@ def test_revision_prompt_locks_recipe_identity_and_instruction_coherence():
     assert "LOCKED INVARIANTS" in prompt
     assert "preserve the dish identity, base starch, protein, cooking method" in prompt
     assert "Every instruction must still describe the current dish" in prompt
+    assert "scale every numeric ingredient quantity" in prompt
     assert "Requested change: add a vegetable" in prompt
+
+
+def test_chained_serving_changes_override_provider_yield_and_scale_all_quantities(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "rigatoni pasta bake with chicken and spinach", "provider_mode": "mock"},
+    ).json()
+    existing = default_recipe_session_store.get_session(started["interaction_id"])
+    assert existing is not None
+    previous = RecipeImportDraft.model_validate(
+        {
+            "title": "Chicken Rigatoni Pasta Bake",
+            "servings": 4,
+            "ingredients": [
+                {"name": "rigatoni", "quantity": "12", "unit": "oz"},
+                {"name": "chicken", "quantity": "1 1/2", "unit": "lb"},
+                {"name": "spinach", "quantity": "2-3", "unit": "cups"},
+                {"name": "salt", "quantity": None},
+            ],
+            "instructions": [{"step": 1, "text": "Boil the rigatoni, combine with chicken, and bake."}],
+        }
+    )
+    stored = default_recipe_session_store.update_session(
+        started["interaction_id"], existing.requirements, draft=previous
+    )
+    assert stored is not None
+
+    def inconsistent_generation(*args, **kwargs):
+        del args, kwargs
+        candidate = previous.model_copy(update={"servings": 2}, deep=True)
+        return RecipeImportResponse(draft=candidate, provider="mock", model="mock-basic")
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", inconsistent_generation)
+
+    eight_response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "change to eight servings", "provider_mode": "mock"},
+    )
+    eight = eight_response.json()
+    sixteen_response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "change to 16 servings", "provider_mode": "mock"},
+    )
+    sixteen = sixteen_response.json()
+
+    assert eight_response.status_code == 200
+    assert eight["draft"]["servings"] == 8
+    assert [item["quantity"] for item in eight["draft"]["ingredients"]] == ["24", "3", "4-6", None]
+    assert eight["requirements"]["serving_count"] == {"value": 8, "source": "user-provided"}
+    assert eight["revision_count"] == 1
+    assert sixteen_response.status_code == 200
+    assert sixteen["draft"]["servings"] == 16
+    assert [item["quantity"] for item in sixteen["draft"]["ingredients"]] == ["48", "6", "8-12", None]
+    assert sixteen["requirements"]["serving_count"] == {"value": 16, "source": "user-provided"}
+    assert sixteen["revision_count"] == 2
+    _assert_safe_response(eight_response.text, dataset_dir)
+    _assert_safe_response(sixteen_response.text, dataset_dir)
+
+
+def test_mixed_serving_revision_rejects_wrong_provider_yield_without_mutation(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "rigatoni pasta bake with chicken", "provider_mode": "mock"},
+    ).json()
+    previous = RecipeImportDraft.model_validate(started["draft"])
+    wrong_yield = previous.model_copy(update={"servings": 2}, deep=True)
+
+    def inconsistent_generation(*args, **kwargs):
+        del args, kwargs
+        return RecipeImportResponse(draft=wrong_yield, provider="mock", model="mock-basic")
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", inconsistent_generation)
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "make 8 servings and add spinach", "provider_mode": "mock"},
+    )
+    current = default_recipe_session_store.get_session(started["interaction_id"])
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["safe_unavailable_category"] == "serving_scale_mismatch"
+    assert response.json()["detail"]["retryable"] is True
+    assert current is not None
+    assert current.revision_count == 0
+    assert current.draft.model_dump() == started["draft"]
+    _assert_safe_response(response.text, dataset_dir)
 
 
 def test_new_recipe_intent_requires_confirmation_without_replacing_draft(session_client):

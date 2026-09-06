@@ -582,6 +582,13 @@ introduce an unrequested conflicting one. A rejected candidate is eligible for
 the existing single bounded retry but never replaces the good draft or consumes
 one of its ten successful changes. Explicit substitutions remain supported.
 
+0034Z makes serving-only edits mathematically consistent. The latest serving
+request wins, written counts and bounded double/halve requests are recognized,
+and every parseable numeric ingredient quantity is deterministically scaled
+from the current displayed draft by one common ratio. The model can still adapt
+pan and batch guidance, but it cannot choose the committed yield or ingredient
+math. Mixed serving/content edits with the wrong yield fail transactionally.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.
