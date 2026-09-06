@@ -21,4 +21,3 @@ source-staple substitution remains an edit to the current recipe.
 No live provider call was made for validation. No prompt, recipe output,
 provider payload, identity data, credential, token, cookie, session value,
 environment value, or ignored artifact is recorded here.
-

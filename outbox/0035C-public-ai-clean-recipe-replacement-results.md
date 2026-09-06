@@ -22,4 +22,3 @@ sidecar session using only the extracted new idea.
 No live provider call was made for validation. No prompt, recipe output,
 provider payload, identity data, credential, token, cookie, session value,
 environment value, or ignored artifact is recorded here.
-
