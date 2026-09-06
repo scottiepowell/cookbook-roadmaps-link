@@ -29,7 +29,14 @@ from app.recipe_requirements import (
     extract_recipe_requirements,
     suggests_new_recipe,
 )
-from app.recipe_scaling import is_serving_only_change, requested_serving_count, scale_recipe_draft
+from app.recipe_scaling import (
+    draft_contains_ingredient,
+    is_additive_serving_change,
+    is_serving_only_change,
+    requested_serving_count,
+    scale_additive_recipe_draft,
+    scale_recipe_draft,
+)
 from app.recipe_session import (
     RecipeSessionState,
     build_requirement_diff,
@@ -221,6 +228,7 @@ def message_recipe_session(
     current_servings = session.draft.servings if session.draft is not None else None
     serving_target = requested_serving_count(payload.text, current_servings)
     deterministic_serving_scale = is_serving_only_change(payload.text, current_servings)
+    additive_serving_scale = is_additive_serving_change(payload.text, current_servings)
 
     if suggests_new_recipe(payload.text, previous_requirements):
         classification = RecipeFollowUpClassification(
@@ -302,6 +310,15 @@ def message_recipe_session(
     updated_requirements = _requirements_after_message(previous_requirements, payload.text, classification)
     refresh = decide_rag_refresh(previous_requirements, updated_requirements, follow_up=classification)
     clarification = decide_clarification(updated_requirements)
+    if session.draft is not None and (
+        classification.label == RecipeFollowUpLabel.RELEVANT_REQUIREMENT_UPDATE
+        or serving_target is not None
+    ):
+        clarification = RecipeSessionDecision(
+            should_clarify=False,
+            reason="The existing draft supplies dish context for this relevant recipe change.",
+            confidence_label=updated_requirements.confidence_label,
+        )
     if clarification.should_clarify:
         updated_requirements.open_questions = [
             RecipeClarificationQuestion(
@@ -342,6 +359,8 @@ def message_recipe_session(
         requested_change=payload.text,
         expected_servings=serving_target,
         deterministic_serving_scale=deterministic_serving_scale,
+        additive_serving_scale=additive_serving_scale,
+        required_additions=_new_required_ingredients(previous_requirements, updated_requirements),
     )
     log_ai_workflow(
         "recipe.session.message",
@@ -419,6 +438,8 @@ def _generate_and_store_draft(
     requested_change: str | None = None,
     expected_servings: int | None = None,
     deterministic_serving_scale: bool = False,
+    additive_serving_scale: bool = False,
+    required_additions: tuple[str, ...] = (),
 ) -> RecipeSessionState:
     try:
         response = import_recipe_text(RecipeImportRequest(text=text, source=source), provider=provider, session_state=budget_session_state or session)
@@ -431,6 +452,21 @@ def _generate_and_store_draft(
         if deterministic_serving_scale:
             response = response.model_copy(
                 update={"draft": scale_recipe_draft(previous_draft, response.draft, expected_servings)},
+                deep=True,
+            )
+        elif additive_serving_scale:
+            if not all(draft_contains_ingredient(response.draft, item) for item in required_additions):
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "status": "unavailable",
+                        "safe_unavailable_category": "ingredient_change_mismatch",
+                        "safe_guidance": "Cookbook AI could not apply every requested ingredient change. Up to three bounded retries are allowed.",
+                        "retryable": True,
+                    },
+                )
+            response = response.model_copy(
+                update={"draft": scale_additive_recipe_draft(previous_draft, response.draft, expected_servings)},
                 deep=True,
             )
         elif response.draft.servings != expected_servings:
@@ -446,7 +482,7 @@ def _generate_and_store_draft(
                 detail={
                     "status": "unavailable",
                     "safe_unavailable_category": "serving_scale_mismatch",
-                    "safe_guidance": "Cookbook AI could not scale this recipe consistently. One bounded retry is allowed.",
+                    "safe_guidance": "Cookbook AI could not scale this recipe consistently. Up to three bounded retries are allowed.",
                     "retryable": True,
                 },
             )
@@ -467,7 +503,7 @@ def _generate_and_store_draft(
                 detail={
                     "status": "unavailable",
                     "safe_unavailable_category": "revision_identity_drift",
-                    "safe_guidance": "Cookbook AI could not preserve this recipe. One bounded retry is allowed.",
+                    "safe_guidance": "Cookbook AI could not preserve this recipe. Up to three bounded retries are allowed.",
                     "retryable": True,
                 },
             )
@@ -527,7 +563,7 @@ def _safe_session_unavailable_detail(exc: BaseException) -> dict[str, str | bool
     category = details.category if details else "unexpected_safe_internal_block"
     retryable = category in retryable_categories
     guidance = (
-        "Cookbook AI could not complete this change. One bounded retry is allowed."
+        "Cookbook AI could not complete this change. Up to three bounded retries are allowed."
         if retryable
         else "Cookbook AI could not complete this recipe change."
     )
@@ -580,6 +616,14 @@ def _requirements_after_message(
         updated.open_questions = []
         _mark_latest_user_values_as_clarified(updated)
     return updated
+
+
+def _new_required_ingredients(
+    previous: RecipeRequirementsState,
+    updated: RecipeRequirementsState,
+) -> tuple[str, ...]:
+    existing = {str(item.value) for item in previous.required_ingredients}
+    return tuple(str(item.value) for item in updated.required_ingredients if str(item.value) not in existing)
 
 
 def _mark_latest_user_values_as_clarified(state: RecipeRequirementsState) -> None:

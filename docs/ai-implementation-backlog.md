@@ -1,5 +1,18 @@
 # AI Implementation Backlog
 
+## 0035A: Public AI retry visibility and compound edits
+
+Status: complete and deployed.
+
+Core now permits up to three bounded retries for retryable transport or
+explicitly transient sidecar failures and reports the latest request's safe
+retry count beside the ten-change counter. Every retry retains the identical
+body and initial idempotency key; deterministic failures remain no-retry.
+Additive ingredient plus serving changes are treated as relevant updates to the
+existing draft. Established numeric ingredient quantities are scaled by one
+ratio, requested additions are retained, and both changes commit together only
+after the requested ingredient and exact yield are present.
+
 ## 0034Z: Deterministic recipe serving scaling
 
 Status: complete and deployed.
@@ -10,7 +23,7 @@ common ratio. Ingredient identity, units, ordering, and recipe identity remain
 fixed while provider output may adjust non-linear pan, batch, and timing
 guidance. Numeric and written serving counts plus bounded double/halve requests
 are supported. Mixed serving-and-content changes must return the exact requested
-yield or fail transactionally with one bounded retry.
+yield or fail transactionally under the bounded retry policy.
 
 ## 0034Y: Recipe revision identity preservation
 
@@ -20,18 +33,18 @@ Recipe follow-ups now carry an explicit locked-invariant contract covering the
 current dish, base starch, protein, method, ingredients, and instruction
 coherence. A deterministic pre-commit check rejects revisions whose directions
 drop an established dish anchor or introduce an unrequested conflicting anchor.
-Identity drift is retryable once through the existing bounded core policy; if
-both attempts drift, the prior draft and ten-change count remain untouched.
+Identity drift follows the bounded core retry policy; if all attempts drift,
+the prior draft and ten-change count remain untouched.
 
 ## 0034X: Public AI initial request resilience
 
 Status: complete and deployed.
 
 The first public recipe request now uses a core-generated opaque idempotency
-key and can receive one bounded retry for transport or explicitly retryable
-sidecar failures. Sidecar replay returns or resumes the same recipe session,
-conflicting key reuse fails safely, and both core attempts share one total
-deadline. The sidecar reuses its process-local OpenAI HTTP client and records
+key and can receive bounded recovery for transport or explicitly retryable
+sidecar failures. 0035A raises that policy to three retries. Sidecar replay
+returns or resumes the same recipe session, conflicting key reuse fails safely,
+and all attempts share one total deadline. The sidecar reuses its process-local OpenAI HTTP client and records
 safe retrieval, provider, validation, total, and proxy timings without request
 content. Redis, Protocol Buffers, asynchronous jobs, and persistent session
 state remain deferred.

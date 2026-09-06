@@ -330,7 +330,7 @@ def test_importer_unavailable_detail_maps_timeout_without_provider_internals():
     assert detail["status"] == "unavailable"
     assert detail["safe_unavailable_category"] == "provider_timeout"
     assert detail["retryable"] is True
-    assert "One bounded retry" in detail["safe_guidance"]
+    assert "three bounded retries" in detail["safe_guidance"]
     assert "sk-proj-secret" not in str(detail)
     assert "Authorization" not in str(detail)
 
@@ -348,7 +348,7 @@ def test_importer_unavailable_detail_marks_generic_provider_failure_retryable():
     assert detail == {
         "status": "unavailable",
         "safe_unavailable_category": "provider_transient_failure",
-        "safe_guidance": "The AI provider returned a temporary failure. One bounded retry is allowed.",
+        "safe_guidance": "The AI provider returned a temporary failure. Up to three bounded retries are allowed.",
         "retryable": True,
     }
 

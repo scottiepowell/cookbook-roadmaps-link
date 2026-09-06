@@ -589,6 +589,12 @@ from the current displayed draft by one common ratio. The model can still adapt
 pan and batch guidance, but it cannot choose the committed yield or ingredient
 math. Mixed serving/content edits with the wrong yield fail transactionally.
 
+0035A permits up to three bounded transient retries for recipe requests and
+shows the latest request's retry count directly below the ten-change counter.
+Compound additive-and-serving prompts keep the existing draft as context,
+retain the requested new ingredient, and deterministically scale all
+established numeric quantities before one transactional commit.
+
 ## Status
 
 Runtime, EC2 control, bootstrap, verification, and backup/restore assets exist. An operator must still configure EC2, IAM and instance profile, GitHub settings, Cloudflare Tunnel/DNS, and the first admin user. The repository does not create cloud resources.

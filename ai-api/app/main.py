@@ -526,14 +526,14 @@ def _safe_importer_unavailable_detail(exc: BaseException) -> dict[str, str | boo
     """Return bounded importer diagnostics without provider internals."""
     details = extract_provider_debug_details(exc)
     category_map = {
-        "timeout": ("provider_timeout", "The AI provider timed out. One bounded retry is allowed.", True),
+        "timeout": ("provider_timeout", "The AI provider timed out. Up to three bounded retries are allowed.", True),
         "quota_or_rate_limit": ("provider_account_or_quota_unavailable", "The AI provider is unavailable because of account, quota, or rate limits.", False),
         "auth": ("provider_account_or_quota_unavailable", "The AI provider did not authorize the configured request.", False),
         "bad_model": ("model_not_allowed", "The AI provider did not allow the configured gpt-5.4-nano model.", False),
-        "network": ("provider_http_error_redacted", "The AI provider connection failed. One bounded retry is allowed.", True),
-        "provider_call_failed": ("provider_transient_failure", "The AI provider returned a temporary failure. One bounded retry is allowed.", True),
-        "output_cap_or_incomplete_response": ("provider_output_incomplete", "The AI provider returned an incomplete recipe draft. One bounded retry is allowed.", True),
-        "invalid_json": ("provider_output_incomplete", "The AI provider returned an incomplete recipe draft. One bounded retry is allowed.", True),
+        "network": ("provider_http_error_redacted", "The AI provider connection failed. Up to three bounded retries are allowed.", True),
+        "provider_call_failed": ("provider_transient_failure", "The AI provider returned a temporary failure. Up to three bounded retries are allowed.", True),
+        "output_cap_or_incomplete_response": ("provider_output_incomplete", "The AI provider returned an incomplete recipe draft. Up to three bounded retries are allowed.", True),
+        "invalid_json": ("provider_output_incomplete", "The AI provider returned an incomplete recipe draft. Up to three bounded retries are allowed.", True),
         "schema_rejection": ("provider_request_rejected", "The AI provider rejected the structured recipe request.", False),
     }
     category, guidance, retryable = category_map.get(

@@ -160,6 +160,10 @@ INGREDIENT_TERMS = (
     "cauliflower",
     "mushrooms",
     "mushroom",
+    "potatoes",
+    "potato",
+    "spinach",
+    "bacon",
     "cheese",
     "vanilla",
     "chicken",
@@ -610,7 +614,7 @@ def _refresh_requirement_sources(state: RecipeRequirementsState) -> None:
 
 
 def _has_material_update_signal(normalized: str) -> bool:
-    if _contains_any(normalized, {"actually", "instead", "change", "use", "make"}):
+    if _contains_any(normalized, {"actually", "instead", "change", "use", "make", "add", "include"}):
         if (
             _extract_dish_intent(normalized)
             or _extract_cooking_method(normalized)
@@ -625,6 +629,8 @@ def _has_material_update_signal(normalized: str) -> bool:
         or _contains_phrase(normalized, "no bake")
         or _contains_phrase(normalized, "gluten free")
         or _contains_phrase(normalized, "without")
+        or _contains_any(normalized, {"double", "doubled", "halve", "half"})
+        or re.search(r"\b(?:serves?|servings?|yield)\b", normalized)
     )
 
 
@@ -688,6 +694,7 @@ def _canonical_ingredient(term: str) -> str:
         "eggs": "egg",
         "onions": "onion",
         "mushrooms": "mushroom",
+        "potatoes": "potato",
         "graham crackers": "graham cracker",
         "melted butter": "butter",
         "cheddar cheese": "cheddar",

@@ -114,6 +114,15 @@ def is_serving_only_change(message: str, current_servings: int | None = None) ->
     return all(word.isdigit() or word in _SERVING_ONLY_WORDS for word in words)
 
 
+def is_additive_serving_change(message: str, current_servings: int | None = None) -> bool:
+    normalized = message.casefold()
+    if requested_serving_count(message, current_servings) is None:
+        return False
+    if not re.search(r"\b(?:add|include)\b", normalized):
+        return False
+    return not re.search(r"\b(?:remove|omit|without|replace|swap|instead)\b", normalized)
+
+
 def scale_recipe_draft(
     previous: RecipeImportDraft,
     candidate: RecipeImportDraft,
@@ -140,6 +149,53 @@ def scale_recipe_draft(
             "source": previous.source,
         },
         deep=True,
+    )
+
+
+def scale_additive_recipe_draft(
+    previous: RecipeImportDraft,
+    candidate: RecipeImportDraft,
+    target_servings: int,
+) -> RecipeImportDraft:
+    """Scale established ingredients while retaining provider-added ingredients."""
+
+    current_servings = previous.servings or 4
+    ratio = Fraction(target_servings, current_servings)
+    candidate_ratio = Fraction(target_servings, candidate.servings or current_servings)
+    previous_names = [_ingredient_key(item.name) for item in previous.ingredients]
+    scaled_existing = [
+        ingredient.model_copy(
+            update={
+                "quantity": scale_quantity_text(ingredient.quantity, ratio),
+                "note": _update_serving_note(ingredient.note, target_servings),
+            }
+        )
+        for ingredient in previous.ingredients
+    ]
+    additions = [
+        ingredient.model_copy(
+            update={
+                "quantity": scale_quantity_text(ingredient.quantity, candidate_ratio),
+                "note": _update_serving_note(ingredient.note, target_servings),
+            }
+        )
+        for ingredient in candidate.ingredients
+        if not any(_ingredient_names_match(_ingredient_key(ingredient.name), name) for name in previous_names)
+    ]
+    return candidate.model_copy(
+        update={
+            "servings": target_servings,
+            "ingredients": scaled_existing + additions,
+        },
+        deep=True,
+    )
+
+
+def draft_contains_ingredient(draft: RecipeImportDraft, ingredient: str) -> bool:
+    requested = _ingredient_key(ingredient)
+    return any(
+        _ingredient_names_match(requested, _ingredient_key(item.name))
+        for item in draft.ingredients
     )
 
 
@@ -182,3 +238,16 @@ def _update_serving_note(note: str | None, target_servings: int) -> str | None:
         note,
         flags=re.IGNORECASE,
     )
+
+
+def _ingredient_key(value: str) -> str:
+    words = re.findall(r"[a-z]+", value.casefold())
+    return " ".join(word[:-2] if word.endswith("es") else word[:-1] if word.endswith("s") else word for word in words)
+
+
+def _ingredient_names_match(left: str, right: str) -> bool:
+    if left == right:
+        return True
+    left_words = set(left.split())
+    right_words = set(right.split())
+    return bool(left_words and right_words and (left_words <= right_words or right_words <= left_words))

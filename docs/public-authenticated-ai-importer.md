@@ -40,21 +40,20 @@ for comparison through its existing operator gate. The browser never sees it.
 
 The public Compose profile enables only the `importer` and `recipe_session`
 workflows and disables the local bypass. Live provider calls remain bounded to
-22 calls per sidecar runtime budget context, 1,800 output tokens per call,
+44 calls per sidecar runtime budget context, 1,800 output tokens per call,
 13,800 total estimated
 tokens per call, 0.05 USD estimated cost per call, and 0.25 USD per runtime
 budget context. The separate manual live-test ceiling remains 25 cents.
 
 ## Transient provider recovery
 
-0034P distinguishes retryable provider failures from deterministic failures.
-Timeouts, network errors, temporary provider failures, and incomplete
-structured output permit exactly one core-owned retry. The second call passes
-through the same sidecar operator gate and provider budget check, so it counts
-against the configured call and cost caps. Account/quota, authentication,
-model, schema, payload, rate-limit, and authorization failures are never
-retried. If the retry also fails, the UI reports that one bounded retry was
-used without exposing provider internals.
+0034P distinguishes retryable provider failures from deterministic failures;
+0035A raises the recovery ceiling to three core-owned retries. Every attempt
+passes through the same sidecar operator gate and provider budget check, so it
+counts against the configured call and cost caps. Account/quota,
+authentication, model, schema, payload, rate-limit, and authorization failures
+are never retried. The UI reports the latest request's safe retry count below
+the change count without exposing provider internals.
 
 ## Runtime
 
@@ -146,15 +145,15 @@ and invokes the provider before committing any new requirements, draft, or
 revision count. A failed attempt therefore cannot consume a change or partially
 alter future context. Retryable timeout, network, temporary-provider, invalid
 JSON, and incomplete-output failures expose only a bounded classification to
-core and receive one identical retry. Authorization, quota, configuration,
+core and receive up to three identical retries under 0035A. Authorization, quota, configuration,
 model, schema, payload, and budget failures are not retried.
 
 The UI treats its outgoing user bubble as optimistic. If the bounded request
 still fails, it removes that bubble and restores the request text in the
 composer. The current recipe remains visible and the successful-change counter
 does not advance. The 1,800-token output ceiling accommodates full structured
-recipe revisions; 22 allowed provider attempts cover an initial generation
-retry and one retry for each of ten changes, while the existing cost ceilings
+recipe revisions; 44 allowed provider attempts cover four attempts for an
+initial generation and each of ten changes, while the existing cost ceilings
 remain the final budget guard.
 
 0034Z removes provider discretion from serving-only ingredient math. The latest
@@ -185,8 +184,8 @@ in the full generation text.
 
 0034X gives initial generation the same bounded transient recovery policy as
 recipe changes. Core creates one opaque request ID, uses it as the sidecar
-idempotency key and safe trace ID, and sends the identical body on at most one
-retry. Both attempts share a 45-second total deadline. Sidecar serializes the
+idempotency key and safe trace ID, and sends the identical body on retries.
+0035A permits up to three retries within a 90-second total deadline. Sidecar serializes the
 same key, returns a completed session on replay, resumes the same uncommitted
 session after a failed first attempt, and rejects a key reused with different
 request content. This prevents retry-created duplicate sessions.
@@ -196,8 +195,13 @@ timeout configuration so repeated calls can reuse pooled connections. Safe
 structured logs now distinguish retrieval, provider, validation, total
 sidecar, and core-proxy duration. They contain no recipe text, prompt, response,
 credential, cookie, OAuth value, or user profile. The provider-attempt ceiling
-is 22: two initial attempts and up to two attempts for each of ten changes.
+is 44: four initial attempts and up to four attempts for each of ten changes.
 Redis, asynchronous jobs, and Protocol Buffers remain outside this task.
+
+Compound prompts such as adding potatoes while doubling servings remain edits
+to the current recipe. The sidecar uses the existing draft as dish context,
+requires the requested addition, sets the exact yield, and deterministically
+scales every established numeric ingredient before committing the revision.
 
 ## Excluded routes and data
 

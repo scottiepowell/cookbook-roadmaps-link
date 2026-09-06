@@ -3,8 +3,11 @@ from fractions import Fraction
 import pytest
 
 from app.recipe_scaling import (
+    draft_contains_ingredient,
+    is_additive_serving_change,
     is_serving_only_change,
     requested_serving_count,
+    scale_additive_recipe_draft,
     scale_quantity_text,
     scale_recipe_draft,
 )
@@ -37,6 +40,11 @@ def test_requested_serving_count(message, current, expected):
 )
 def test_serving_only_change_detection(message, expected):
     assert is_serving_only_change(message, 4) is expected
+
+
+def test_additive_serving_change_detection():
+    assert is_additive_serving_change("add potato's and double the servings", 4) is True
+    assert is_additive_serving_change("replace potato and double the servings", 4) is False
 
 
 @pytest.mark.parametrize(
@@ -94,3 +102,36 @@ def test_scale_recipe_draft_preserves_identity_and_scales_every_numeric_quantity
     assert [item.quantity for item in scaled.ingredients] == ["24", "3", "1", "4-6", None]
     assert scaled.tags == ["pasta"]
     assert "two baking dishes" in scaled.instructions[0].text
+
+
+def test_additive_scale_scales_existing_items_and_keeps_new_ingredient():
+    previous = RecipeImportDraft.model_validate(
+        {
+            "title": "Omelet",
+            "servings": 4,
+            "ingredients": [
+                {"name": "Eggs", "quantity": "8"},
+                {"name": "Mushrooms", "quantity": "12", "unit": "oz"},
+            ],
+            "instructions": [{"step": 1, "text": "Cook the eggs and mushrooms."}],
+        }
+    )
+    candidate = RecipeImportDraft.model_validate(
+        {
+            "title": "Potato Omelet",
+            "servings": 4,
+            "ingredients": [
+                {"name": "eggs", "quantity": "8"},
+                {"name": "mushroom", "quantity": "12", "unit": "oz"},
+                {"name": "potatoes", "quantity": "2", "unit": "cups"},
+            ],
+            "instructions": [{"step": 1, "text": "Cook the potatoes, eggs, and mushrooms."}],
+        }
+    )
+
+    scaled = scale_additive_recipe_draft(previous, candidate, 8)
+
+    assert scaled.servings == 8
+    assert [item.quantity for item in scaled.ingredients] == ["16", "24", "4"]
+    assert [item.name for item in scaled.ingredients] == ["Eggs", "Mushrooms", "potatoes"]
+    assert draft_contains_ingredient(scaled, "potato") is True

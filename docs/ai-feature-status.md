@@ -126,14 +126,21 @@ requirements for retrieval and diffs. Follow-up transactionality, private
 sidecar routing, budgets, and no-save behavior are unchanged.
 
 0034X hardens the initial generation path. Core sends an opaque idempotency key
-and may retry once only for transport or explicitly transient sidecar failure;
-the retry uses the identical body and shares a 45-second total deadline.
+and uses the identical body for bounded transient recovery. 0035A supersedes
+the original one-retry limit with up to three retries inside a 90-second total
+deadline.
 Sidecar deduplication prevents duplicate sessions and successful initial
 generations, while conflicting key reuse fails closed. A shared process-local
 OpenAI client permits HTTP connection reuse, and safe timing events separate
 retrieval, provider, validation, total sidecar, and core proxy duration without
-logging recipe text or authentication data. Provider-attempt capacity is 22:
-two initial attempts plus two attempts for each of ten successful changes.
+logging recipe text or authentication data. Provider-attempt capacity is 44:
+four initial attempts plus four attempts for each of ten successful changes.
+
+0035A also exposes only the latest request's safe retry count directly below
+the successful-change count. Compound additive-and-serving follow-ups use the
+existing draft as dish context, deterministically scale every established
+numeric ingredient, retain the requested new ingredient, and commit the two
+changes transactionally. Initial vague ideas may still ask one clarification.
 
 ## Local Vanilla Cookbook Docker runtime
 

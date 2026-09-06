@@ -43,6 +43,12 @@ def test_extracts_requested_cauliflower_cheese_and_mushrooms():
     }
 
 
+def test_extracts_apostrophe_tolerant_potato_addition():
+    state = extract_recipe_requirements("omelete with cheese and mushrooms add potato's")
+
+    assert "potato" in values(state.required_ingredients)
+
+
 def test_extracts_cheesecake_requirements():
     state = extract_recipe_requirements(
         "classic baked cheesecake for 4 people with cream cheese sugar eggs vanilla graham cracker crust melted butter bake until just set then cool and chill overnight",
@@ -174,6 +180,7 @@ def test_follow_up_delta_classification_examples():
     assert classify_follow_up("use ricotta instead of cream cheese").label == RecipeFollowUpLabel.CORRECTION_TO_ASSUMPTION
     assert classify_follow_up("make it gluten-free").label == RecipeFollowUpLabel.RELEVANT_REQUIREMENT_UPDATE
     assert classify_follow_up("I only have an air fryer").label == RecipeFollowUpLabel.RELEVANT_REQUIREMENT_UPDATE
+    assert classify_follow_up("add potato's and double the servings").label == RecipeFollowUpLabel.RELEVANT_REQUIREMENT_UPDATE
     assert classify_follow_up("thanks").label == RecipeFollowUpLabel.IRRELEVANT_CHATTER
     assert classify_follow_up("make it shorter").label == RecipeFollowUpLabel.FORMATTING_ONLY
     assert classify_follow_up("regenerate it").label == RecipeFollowUpLabel.REGENERATE_WITHOUT_NEW_REQUIREMENTS

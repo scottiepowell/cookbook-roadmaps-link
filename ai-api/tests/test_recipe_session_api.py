@@ -297,6 +297,58 @@ def test_general_recipe_follow_up_revises_current_draft(session_client):
     assert data["max_changes"] == 10
 
 
+def test_compound_addition_and_serving_change_uses_existing_draft_context(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "omelette with cheese bacon and mushrooms", "provider_mode": "mock"},
+    ).json()
+    existing = default_recipe_session_store.get_session(started["interaction_id"])
+    assert existing is not None
+    previous = RecipeImportDraft.model_validate(
+        {
+            "title": "Bacon, Mushroom and Cheese Omelet",
+            "servings": 4,
+            "ingredients": [
+                {"name": "Eggs", "quantity": "8"},
+                {"name": "Mushrooms", "quantity": "12", "unit": "oz"},
+                {"name": "Cheese", "quantity": "1 1/2", "unit": "cups"},
+            ],
+            "instructions": [{"step": 1, "text": "Cook the eggs, mushrooms, and cheese."}],
+        }
+    )
+    default_recipe_session_store.update_session(started["interaction_id"], existing.requirements, draft=previous)
+    candidate = RecipeImportDraft.model_validate(
+        {
+            "title": "Potato Bacon, Mushroom and Cheese Omelet",
+            "servings": 4,
+            "ingredients": previous.model_dump()["ingredients"]
+            + [{"name": "Potatoes", "quantity": "2", "unit": "cups"}],
+            "instructions": [{"step": 1, "text": "Cook the potatoes with the eggs, mushrooms, and cheese."}],
+        }
+    )
+
+    def compound_generation(*args, **kwargs):
+        del args, kwargs
+        return RecipeImportResponse(draft=candidate, provider="mock", model="mock-basic")
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", compound_generation)
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "add potato's and double the servings", "provider_mode": "mock"},
+    )
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["response_state"] != "clarification_needed"
+    assert data["draft"]["servings"] == 8
+    assert [item["quantity"] for item in data["draft"]["ingredients"][:3]] == ["16", "24", "3"]
+    assert any("potato" in item["name"].lower() for item in data["draft"]["ingredients"])
+    assert any(item["value"] == "potato" for item in data["requirements"]["required_ingredients"])
+    assert data["revision_count"] == 1
+    _assert_safe_response(response.text, dataset_dir)
+
+
 def test_initial_session_forwards_every_user_ingredient_to_generation(session_client, monkeypatch):
     client, dataset_dir = session_client
     original_import = recipe_session_routes.import_recipe_text
@@ -406,7 +458,7 @@ def test_drifted_pasta_revision_is_retryable_and_does_not_mutate_session(session
     assert response.json()["detail"] == {
         "status": "unavailable",
         "safe_unavailable_category": "revision_identity_drift",
-        "safe_guidance": "Cookbook AI could not preserve this recipe. One bounded retry is allowed.",
+        "safe_guidance": "Cookbook AI could not preserve this recipe. Up to three bounded retries are allowed.",
         "retryable": True,
     }
     assert current is not None
@@ -546,7 +598,7 @@ def test_chained_serving_changes_override_provider_yield_and_scale_all_quantitie
     _assert_safe_response(sixteen_response.text, dataset_dir)
 
 
-def test_mixed_serving_revision_rejects_wrong_provider_yield_without_mutation(session_client, monkeypatch):
+def test_replacement_serving_revision_rejects_wrong_provider_yield_without_mutation(session_client, monkeypatch):
     client, dataset_dir = session_client
     started = client.post(
         "/ai/recipe-session/start",
@@ -562,7 +614,7 @@ def test_mixed_serving_revision_rejects_wrong_provider_yield_without_mutation(se
     monkeypatch.setattr(recipe_session_routes, "import_recipe_text", inconsistent_generation)
     response = client.post(
         f"/ai/recipe-session/{started['interaction_id']}/message",
-        json={"text": "make 8 servings and add spinach", "provider_mode": "mock"},
+        json={"text": "make 8 servings and replace chicken with pork", "provider_mode": "mock"},
     )
     current = default_recipe_session_store.get_session(started["interaction_id"])
 
