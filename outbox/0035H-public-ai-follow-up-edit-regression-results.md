@@ -44,6 +44,7 @@ begins from a clean new session.
 - Public sidecar image: `local/cookbook-ai-sidecar:0035h`.
 - External core branch: `openclaw/0035H-public-ai-follow-up-edit-regression`.
 - External core commit: `73f5d1c2e73b39f932ac4c51f0a849842cd25ed8`.
+- Sidecar/repository implementation commit: `2e67bd4cb1b10caee589ba0831031bd6c3df903a`.
 
 No live provider request or signed-in recipe mutation was performed. No
 secrets, prompts, raw provider output, cookies, tokens, session values, local
