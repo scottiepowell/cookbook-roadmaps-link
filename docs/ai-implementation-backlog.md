@@ -1,5 +1,15 @@
 # AI Implementation Backlog
 
+## 0035G: Five retries and empty prompt guard
+
+Status: complete and deployed.
+
+Core permits five bounded retries for explicitly transient failures within a
+135-second total deadline while deterministic failures remain single-attempt.
+Empty, whitespace-only, and invisible-only initial or follow-up prompts are
+rejected with zero retries before rate limiting or sidecar/provider work. The
+public counter reports the latest request against the new five-retry ceiling.
+
 ## 0035F: Core-owned AI draft save
 
 Status: complete and deployed.
@@ -56,10 +66,11 @@ safe retryable category and leaves the prior session transactionally unchanged.
 
 Status: complete and deployed.
 
-Core now permits up to three bounded retries for retryable transport or
-explicitly transient sidecar failures and reports the latest request's safe
-retry count beside the ten-change counter. Every retry retains the identical
-body and initial idempotency key; deterministic failures remain no-retry.
+0035G supersedes this limit: core now permits up to five bounded retries for
+retryable transport or explicitly transient sidecar failures and reports the
+latest request's safe retry count beside the ten-change counter. Every retry
+retains the identical body and initial idempotency key; deterministic failures
+remain no-retry.
 Additive ingredient plus serving changes are treated as relevant updates to the
 existing draft. Established numeric ingredient quantities are scaled by one
 ratio, requested additions are retained, and both changes commit together only
@@ -94,7 +105,7 @@ Status: complete and deployed.
 
 The first public recipe request now uses a core-generated opaque idempotency
 key and can receive bounded recovery for transport or explicitly retryable
-sidecar failures. 0035A raises that policy to three retries. Sidecar replay
+sidecar failures. 0035G raises that policy to five retries. Sidecar replay
 returns or resumes the same recipe session, conflicting key reuse fails safely,
 and all attempts share one total deadline. The sidecar reuses its process-local OpenAI HTTP client and records
 safe retrieval, provider, validation, total, and proxy timings without request

@@ -134,14 +134,22 @@ sidecar routing, budgets, and no-save behavior are unchanged.
 
 0034X hardens the initial generation path. Core sends an opaque idempotency key
 and uses the identical body for bounded transient recovery. 0035A supersedes
-the original one-retry limit with up to three retries inside a 90-second total
-deadline.
+the original one-retry limit with up to five retries inside a 135-second total
+deadline as of 0035G.
 Sidecar deduplication prevents duplicate sessions and successful initial
-generations, while conflicting key reuse fails closed. A shared process-local
+generations, while conflicting key reuse fails closed. Empty, whitespace-only,
+and invisible-only prompts stop with zero retries before rate limiting or any
+sidecar/provider call. A shared process-local
 OpenAI client permits HTTP connection reuse, and safe timing events separate
 retrieval, provider, validation, total sidecar, and core proxy duration without
-logging recipe text or authentication data. Provider-attempt capacity is 44:
-four initial attempts plus four attempts for each of ten successful changes.
+logging recipe text or authentication data. Provider-attempt capacity is 66:
+six initial attempts plus six attempts for each of ten successful changes.
+
+0035G raises the visible recovery ceiling from three to five bounded retries
+for both initial generation and changes. Six total attempts share a 135-second
+deadline and retain the same deterministic no-retry policy. Client and server
+guards reject empty, whitespace-only, and invisible-format-only input before
+rate limiting, sidecar calls, or provider work and report zero retries.
 
 0035A also exposes only the latest request's safe retry count directly below
 the successful-change count. Compound additive-and-serving follow-ups use the

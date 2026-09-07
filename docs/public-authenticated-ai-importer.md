@@ -204,7 +204,7 @@ in the full generation text.
 0034X gives initial generation the same bounded transient recovery policy as
 recipe changes. Core creates one opaque request ID, uses it as the sidecar
 idempotency key and safe trace ID, and sends the identical body on retries.
-0035A permits up to three retries within a 90-second total deadline. Sidecar serializes the
+0035G permits up to five retries within a 135-second total deadline. Sidecar serializes the
 same key, returns a completed session on replay, resumes the same uncommitted
 session after a failed first attempt, and rejects a key reused with different
 request content. This prevents retry-created duplicate sessions.
@@ -213,8 +213,10 @@ The sidecar also reuses one OpenAI HTTP client per safe key fingerprint and
 timeout configuration so repeated calls can reuse pooled connections. Safe
 structured logs now distinguish retrieval, provider, validation, total
 sidecar, and core-proxy duration. They contain no recipe text, prompt, response,
-credential, cookie, OAuth value, or user profile. The provider-attempt ceiling
-is 44: four initial attempts and up to four attempts for each of ten changes.
+credential, cookie, OAuth value, or user profile. Empty, whitespace-only, and
+invisible-format-only prompts are rejected with zero retries before rate
+limiting or sidecar/provider work. The provider-attempt ceiling is 66: six
+initial attempts and up to six attempts for each of ten changes.
 Redis, asynchronous jobs, and Protocol Buffers remain outside this task.
 
 Compound prompts such as adding potatoes while doubling servings remain edits
