@@ -2680,3 +2680,10 @@ Status: complete, sidecar-only. Added narrow deterministic normalization for
 common singular/plural units and count nouns after serving scaling, plus a
 conservative bound for obvious newly added mushroom outliers in baked-ziti and
 pasta-bake drafts. No grounding or retrieval behavior changed.
+
+## 0035J: Compose Deployment Validation for 0035I
+
+Status: complete and deployed. The public Compose configuration now pins the
+validated `0035i` sidecar image. Existing ignored core env inputs and the
+public OIDC env input resolved the previous path mismatch; Compose validation,
+container startup, and public health verification passed.

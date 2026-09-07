@@ -371,6 +371,7 @@ status=passed
 | Administrator/user separation | Accepted ADR | [Administrator And User Separation](admin-user-separation-adr.md) | Core owns identities, sessions, `isAdmin`/`isRoot`, bootstrap, and server-side authorization. Admins and users share login but receive different authorized capabilities; the sidecar and tunnel assign no roles. |
 | Public Google OIDC callback | Corrected; manual authenticated return pending | [0034N Results](../outbox/0034N-public-homepage-login-and-google-oidc-callback-results.md) | Public auth now uses a dedicated Web client, the exact HTTPS callback, a provider-accepted secret, and only `openid email profile`. Desktop, Android-style, and signed-in probes reached Google without redirect mismatch; account selection and final core session acceptance require a manual operator retry. |
 | Ingredient quantity sanity and scaled grammar | Complete, sidecar-only | [0035I Results](../outbox/0035I-ingredient-quantity-sanity-and-scaled-grammar-results.md) | Narrow post-scaling grammar normalization and conservative new-mushroom outlier handling preserve 0035H session behavior without changing grounding or retrieval. |
+| 0035I public Compose deployment validation | Complete and deployed | [0035J Results](../outbox/0035J-compose-deployment-validation-for-0035I-results.md) | The public stack runs the validated `local/cookbook-ai-sidecar:0035i` image; configuration, container health, and public health checks passed. |
 
 ## Demo Starting Points
 
