@@ -143,6 +143,7 @@ def scale_recipe_draft(
         )
         for ingredient in previous.ingredients
     ]
+    scaled_ingredients = [normalize_scaled_ingredient(item) for item in scaled_ingredients]
     return candidate.model_copy(
         update={
             "title": previous.title,
@@ -168,21 +169,21 @@ def scale_additive_recipe_draft(
     candidate_ratio = Fraction(target_servings, candidate.servings or current_servings)
     previous_names = [_ingredient_key(item.name) for item in previous.ingredients]
     scaled_existing = [
-        ingredient.model_copy(
+        normalize_scaled_ingredient(ingredient.model_copy(
             update={
                 "quantity": scale_quantity_text(ingredient.quantity, ratio),
                 "note": _update_serving_note(ingredient.note, target_servings),
             }
-        )
+        ))
         for ingredient in previous.ingredients
     ]
     additions = [
-        ingredient.model_copy(
+        normalize_scaled_ingredient(ingredient.model_copy(
             update={
                 "quantity": scale_quantity_text(ingredient.quantity, candidate_ratio),
                 "note": _update_serving_note(ingredient.note, target_servings),
             }
-        )
+        ))
         for ingredient in candidate.ingredients
         if not any(_ingredient_names_match(_ingredient_key(ingredient.name), name) for name in previous_names)
     ]
@@ -193,6 +194,77 @@ def scale_additive_recipe_draft(
         },
         deep=True,
     )
+
+
+def normalize_scaled_ingredient(ingredient):
+    """Normalize a deliberately small set of singular/plural display forms."""
+    quantity = ingredient.quantity
+    if not quantity:
+        return ingredient
+    match = re.match(r"^\s*(\d+(?:\.\d+)?|\d+\s+\d+/\d+|\d+/\d+)", quantity)
+    if not match:
+        return ingredient
+    value = _parse_fraction(match.group(1))
+    plural = value != 1
+    unit = ingredient.unit
+    units = {"tablespoon": "tablespoons", "teaspoon": "teaspoons", "cup": "cups", "clove": "cloves"}
+    singular_units = {v: k for k, v in units.items()}
+    if unit:
+        key = unit.casefold()
+        if plural and key in units:
+            unit = units[key]
+        elif not plural and key in singular_units:
+            unit = singular_units[key]
+    name = ingredient.name
+    name_match = re.match(r"^(onion|clove|egg|mushroom)(s?)(?=,|$)(.*)$", name.strip(), re.I)
+    if name_match:
+        base, suffix, rest = name_match.groups()
+        name = f"{base}{'s' if plural else ''}{rest}"
+    return ingredient.model_copy(update={"unit": unit, "name": name})
+
+
+def normalize_added_ingredient_quantities(
+    previous: RecipeImportDraft,
+    candidate: RecipeImportDraft,
+    required_additions: tuple[str, ...],
+    target_servings: int,
+    *,
+    allow_extra: bool = False,
+) -> RecipeImportDraft:
+    """Clamp only obvious mushroom outliers in pasta-bake additions."""
+    previous_names = [_ingredient_key(item.name) for item in previous.ingredients]
+    pasta_bake = bool(
+        re.search(r"\b(?:baked?\s+ziti|pasta\s+bake)\b", f"{previous.title} {candidate.title}", re.I)
+    )
+    requested_mushroom = any("mushroom" in _ingredient_key(item) for item in required_additions)
+    if not (pasta_bake and requested_mushroom) or allow_extra:
+        return candidate
+    max_ounces = max(8, min(16, target_servings * 2))
+    ingredients = []
+    for item in candidate.ingredients:
+        is_new = not any(
+            _ingredient_names_match(_ingredient_key(item.name), name) for name in previous_names
+        )
+        if (
+            is_new
+            and "mushroom" in _ingredient_key(item.name)
+            and item.unit
+            and item.unit.casefold() in {"oz", "ounce", "ounces"}
+        ):
+            qty = item.quantity
+            if qty:
+                match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*", qty)
+                if match and float(match.group(1)) > max_ounces:
+                    item = item.model_copy(
+                        update={
+                            "quantity": str(max_ounces),
+                            "unit": "oz",
+                            "note": (item.note + " " if item.note else "")
+                            + "Quantity normalized to a reasonable estimate.",
+                        }
+                    )
+        ingredients.append(normalize_scaled_ingredient(item))
+    return candidate.model_copy(update={"ingredients": ingredients}, deep=True)
 
 
 def draft_contains_ingredient(draft: RecipeImportDraft, ingredient: str) -> bool:

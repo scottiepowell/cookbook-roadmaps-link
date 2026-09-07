@@ -10,8 +10,10 @@ from app.recipe_scaling import (
     scale_additive_recipe_draft,
     scale_quantity_text,
     scale_recipe_draft,
+    normalize_added_ingredient_quantities,
+    normalize_scaled_ingredient,
 )
-from app.schemas import RecipeImportDraft
+from app.schemas import RecipeImportDraft, RecipeIngredientDraft
 
 
 @pytest.mark.parametrize(
@@ -136,3 +138,54 @@ def test_additive_scale_scales_existing_items_and_keeps_new_ingredient():
     assert [item.quantity for item in scaled.ingredients] == ["16", "24", "4"]
     assert [item.name for item in scaled.ingredients] == ["Eggs", "Mushrooms", "potatoes"]
     assert draft_contains_ingredient(scaled, "potato") is True
+
+
+@pytest.mark.parametrize(
+    ("quantity", "unit", "name", "expected_unit", "expected_name"),
+    (("1", "tablespoon", "oil", "tablespoon", "oil"), ("2", "tablespoon", "oil", "tablespoons", "oil"),
+     ("1", "cup", "water", "cup", "water"), ("2", "cup", "water", "cups", "water"),
+     ("1", None, "onions", None, "onion"), ("2", None, "onion", None, "onions"),
+     ("1", None, "cloves", None, "clove"), ("6", None, "clove", None, "cloves"),
+     ("1", None, "eggs", None, "egg"), ("2", None, "egg", None, "eggs")),
+)
+def test_normalize_scaled_ingredient_grammar(quantity, unit, name, expected_unit, expected_name):
+    ingredient = RecipeIngredientDraft(name=name, quantity=quantity, unit=unit)
+    normalized = normalize_scaled_ingredient(ingredient)
+    assert normalized.unit == expected_unit
+    assert normalized.name == expected_name
+
+
+def test_normalize_added_mushroom_outlier_for_baked_ziti():
+    previous = RecipeImportDraft.model_validate({
+        "title": "Baked Ziti", "servings": 4,
+        "ingredients": [{"name": "ziti", "quantity": "16", "unit": "oz"}],
+        "instructions": [{"step": 1, "text": "Bake the ziti."}],
+    })
+    candidate = RecipeImportDraft.model_validate({"title": "Baked Ziti", "servings": 8, "ingredients": [
+        {"name": "ziti", "quantity": "32", "unit": "oz"},
+        {"name": "mushrooms", "quantity": "32", "unit": "oz"},
+    ], "instructions": [{"step": 1, "text": "Bake the ziti."}]})
+    normalized = normalize_added_ingredient_quantities(previous, candidate, ("mushrooms",), 8)
+    mushrooms = next(item for item in normalized.ingredients if "mushroom" in item.name.casefold())
+    assert mushrooms.quantity == "16"
+    assert "normalized" in (mushrooms.note or "")
+
+
+def test_normalize_added_mushroom_accepts_reasonable_amounts_and_extra_override():
+    previous = RecipeImportDraft.model_validate({
+        "title": "Baked Ziti", "servings": 4,
+        "ingredients": [{"name": "ziti", "quantity": "16", "unit": "oz"}],
+        "instructions": [{"step": 1, "text": "Bake the ziti."}],
+    })
+    for amount in ("8", "12", "16"):
+        candidate = RecipeImportDraft.model_validate({"title": "Baked Ziti", "servings": 8, "ingredients": [
+            {"name": "ziti", "quantity": "32", "unit": "oz"},
+            {"name": "mushrooms", "quantity": amount, "unit": "oz"},
+        ], "instructions": [{"step": 1, "text": "Bake the ziti."}]})
+        normalized = normalize_added_ingredient_quantities(previous, candidate, ("mushrooms",), 8)
+        assert next(item for item in normalized.ingredients if "mushroom" in item.name.casefold()).quantity == amount
+    extra = RecipeImportDraft.model_validate({"title": "Baked Ziti", "servings": 8, "ingredients": [
+        {"name": "ziti", "quantity": "32", "unit": "oz"},
+        {"name": "mushrooms", "quantity": "32", "unit": "oz"},
+    ], "instructions": [{"step": 1, "text": "Bake the ziti."}]})
+    assert next(item for item in normalize_added_ingredient_quantities(previous, extra, ("mushrooms",), 8, allow_extra=True).ingredients if "mushroom" in item.name.casefold()).quantity == "32"

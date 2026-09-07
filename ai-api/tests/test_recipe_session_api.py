@@ -760,6 +760,29 @@ def test_existing_baked_ziti_compound_edit_keeps_context_and_commits_both_change
     _assert_safe_response(response.text, dataset_dir)
 
 
+def test_baked_ziti_mushroom_addition_normalizes_outlier_and_scaled_grammar(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    original = _baked_ziti_draft(servings=4, protein="Italian sausage")
+    revised_base = _baked_ziti_draft(servings=8, protein="Italian sausage")
+    revised_data = revised_base.model_dump()
+    revised_data["ingredients"] = [
+        {**item, "unit": {"tablespoons": "tablespoon", "cups": "cup"}.get(item.get("unit"), item.get("unit"))}
+        for item in revised_data["ingredients"]
+    ] + [{"name": "mushrooms, sliced", "quantity": "32", "unit": "oz"}]
+    revised = RecipeImportDraft.model_validate(revised_data)
+    responses = iter((original, revised))
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", lambda *args, **kwargs: RecipeImportResponse(draft=next(responses), provider="mock", model="mock-basic"))
+    started = client.post("/ai/recipe-session/start", json={"text": "Baked ziti with Italian sausage.", "provider_mode": "mock"}).json()
+    response = client.post(f"/ai/recipe-session/{started['interaction_id']}/message", json={"text": "Add mushrooms and change servings to 8.", "provider_mode": "mock"})
+    data = response.json()
+    assert response.status_code == 200
+    assert data["draft"]["servings"] == 8
+    mushrooms = next(item for item in data["draft"]["ingredients"] if "mushroom" in item["name"].casefold())
+    assert mushrooms["quantity"] == "16"
+    assert any(item["unit"] == "cups" for item in data["draft"]["ingredients"] if item["quantity"] == "2")
+    _assert_safe_response(response.text, dataset_dir)
+
+
 @pytest.mark.parametrize(
     ("message", "protein", "servings"),
     [

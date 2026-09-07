@@ -35,6 +35,7 @@ from app.recipe_scaling import (
     is_additive_serving_change,
     is_serving_only_change,
     requested_serving_count,
+    normalize_added_ingredient_quantities,
     scale_additive_recipe_draft,
     scale_recipe_draft,
 )
@@ -517,10 +518,15 @@ def _generate_and_store_draft(
                         "retryable": True,
                     },
                 )
-            response = response.model_copy(
-                update={"draft": scale_additive_recipe_draft(previous_draft, response.draft, expected_servings)},
-                deep=True,
+            scaled = scale_additive_recipe_draft(previous_draft, response.draft, expected_servings)
+            scaled = normalize_added_ingredient_quantities(
+                previous_draft,
+                scaled,
+                required_additions,
+                expected_servings,
+                allow_extra=bool(re.search(r"\b(?:extra|double|mushroom-heavy)\b", text, re.I)),
             )
+            response = response.model_copy(update={"draft": scaled}, deep=True)
         elif response.draft.servings != expected_servings:
             log_ai_workflow(
                 "recipe.session.serving_guard",

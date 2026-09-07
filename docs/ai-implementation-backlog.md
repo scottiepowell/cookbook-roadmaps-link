@@ -2673,3 +2673,10 @@ This task creates no AWS resources, infrastructure-as-code, deployment
 workflow, DNS/Cloudflare change, database migration, auth/payment system,
 public route, provider routing change, secondary provider, vector/embedding
 system, or production integration. Normal validation remains offline/mock-only.
+
+## 0035I: Ingredient Quantity Sanity and Scaled Grammar
+
+Status: complete, sidecar-only. Added narrow deterministic normalization for
+common singular/plural units and count nouns after serving scaling, plus a
+conservative bound for obvious newly added mushroom outliers in baked-ziti and
+pasta-bake drafts. No grounding or retrieval behavior changed.
