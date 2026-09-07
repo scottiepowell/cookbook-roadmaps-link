@@ -19,6 +19,7 @@ from app.schemas import RecipeImportDraft
     (
         ("change to eight servings", 4, 8),
         ("make 16 servings", 8, 16),
+        ("make it serve 8", 4, 8),
         ("servings: 12", 4, 12),
         ("double the recipe", 4, 8),
         ("halve this recipe", 8, 4),

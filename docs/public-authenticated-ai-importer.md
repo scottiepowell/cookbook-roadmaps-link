@@ -224,6 +224,17 @@ to the current recipe. The sidecar uses the existing draft as dish context,
 requires the requested addition, sets the exact yield, and deterministically
 scales every established numeric ingredient before committing the revision.
 
+0035H extends that transaction boundary to ordinary ingredient substitutions.
+With a draft present, serving changes, doubling, and substitutions stay on the
+existing opaque core-to-sidecar interaction rather than re-entering
+initial-recipe clarification. A compound serving-and-substitution candidate
+commits only when it has the exact requested yield, contains the replacement
+ingredient, removes the substituted ingredient, and passes existing coherence
+and identity protections. A candidate that cannot satisfy all requested edits
+is retryable and leaves the visible draft and successful-change count intact.
+If a follow-up candidate is retained after rejection, public copy describes it
+as a failed change rather than asking for a new recipe idea.
+
 ## Excluded routes and data
 
 The core does not expose the sidecar demo, config, admin, invite, arbitrary

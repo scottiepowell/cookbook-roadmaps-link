@@ -80,6 +80,14 @@ lookups stored in the in-memory index. The real-dataset warm novel-query
 benchmark fell from approximately 9.4 seconds to 0.28 seconds while the
 retrieval/RAG regression corpus retained its prior ranking and support results.
 
+0035H restores ordinary existing-draft follow-ups as revisions in the public
+AI-first flow. The core preserves its opaque binding to the same private
+sidecar interaction; sidecar recognizes serving updates and substitutions as
+current-draft changes. A compound yield-plus-substitution candidate must have
+the requested serving count, replacement ingredient, and no retained source
+ingredient before it can commit. Retained-draft follow-up failures use
+follow-up-specific copy rather than initial-request clarification copy.
+
 0034U transforms the public draft page into a bounded recipe conversation.
 Core owns an opaque chat handle bound to the authenticated user and maps it to
 the private sidecar session for one hour. The initial request may ask a

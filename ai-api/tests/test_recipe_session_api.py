@@ -458,7 +458,7 @@ def test_drifted_pasta_revision_is_retryable_and_does_not_mutate_session(session
     assert response.json()["detail"] == {
         "status": "unavailable",
         "safe_unavailable_category": "recipe_coherence_mismatch",
-        "safe_guidance": "Cookbook AI returned an incoherent recipe draft. Up to three bounded retries are allowed.",
+        "safe_guidance": "Cookbook AI returned an incoherent recipe draft. Up to five bounded retries are allowed.",
         "retryable": True,
     }
     assert current is not None
@@ -699,6 +699,131 @@ def test_chained_serving_changes_override_provider_yield_and_scale_all_quantitie
     assert sixteen["revision_count"] == 2
     _assert_safe_response(eight_response.text, dataset_dir)
     _assert_safe_response(sixteen_response.text, dataset_dir)
+
+
+def _baked_ziti_draft(*, servings: int, protein: str) -> RecipeImportDraft:
+    return RecipeImportDraft.model_validate(
+        {
+            "title": "Baked Ziti",
+            "description": "A baked pasta casserole with sauce and cheese.",
+            "servings": servings,
+            "ingredients": [
+                {"name": "ziti", "quantity": str(4 * servings), "unit": "oz"},
+                {"name": "tomato sauce", "quantity": str(servings // 2), "unit": "cups"},
+                {"name": "ricotta", "quantity": str(servings // 4), "unit": "cups"},
+                {"name": "mozzarella", "quantity": str(servings // 2), "unit": "cups"},
+                {"name": "Parmesan", "quantity": str(servings // 8), "unit": "cups"},
+                {"name": protein, "quantity": str(servings // 4), "unit": "lb"},
+            ],
+            "instructions": [
+                {"step": 1, "text": f"Cook the ziti and {protein}, then combine them with sauce and ricotta."},
+                {"step": 2, "text": "Layer the pasta with mozzarella and bake until hot and browned."},
+            ],
+        }
+    )
+
+
+def test_existing_baked_ziti_compound_edit_keeps_context_and_commits_both_changes(session_client, monkeypatch):
+    client, dataset_dir = session_client
+    original = _baked_ziti_draft(servings=4, protein="Italian sausage")
+    revised = _baked_ziti_draft(servings=8, protein="chicken")
+    responses = iter((original, revised))
+
+    def generation(*args, **kwargs):
+        del args, kwargs
+        return RecipeImportResponse(draft=next(responses), provider="mock", model="mock-basic")
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", generation)
+    started_response = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "Let's do a baked pasta ziti", "provider_mode": "mock"},
+    )
+    started = started_response.json()
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": "change the servings to eight and use chicken instead of sausage", "provider_mode": "mock"},
+    )
+    data = response.json()
+
+    assert started_response.status_code == 200
+    assert started["draft"]["title"] == "Baked Ziti"
+    assert response.status_code == 200
+    assert data["response_state"] in {"draft_revised", "rag_refreshed"}
+    assert data["decision"]["delta_label"] != "unknown"
+    assert data["draft"]["title"] == "Baked Ziti"
+    assert data["draft"]["servings"] == 8
+    ingredient_names = {item["name"].casefold() for item in data["draft"]["ingredients"]}
+    assert "chicken" in ingredient_names
+    assert not any("sausage" in name for name in ingredient_names)
+    assert all("ziti" in item["text"].casefold() or "bake" in item["text"].casefold() for item in data["draft"]["instructions"])
+    assert data["revision_count"] == 1
+    _assert_safe_response(response.text, dataset_dir)
+
+
+@pytest.mark.parametrize(
+    ("message", "protein", "servings"),
+    [
+        ("change sausage to chicken", "chicken", 4),
+        ("change servings to eight", "Italian sausage", 8),
+    ],
+)
+def test_existing_baked_ziti_simple_follow_up_edits_do_not_reenter_initial_clarification(
+    session_client, monkeypatch, message, protein, servings
+):
+    client, dataset_dir = session_client
+    original = _baked_ziti_draft(servings=4, protein="Italian sausage")
+    revised = _baked_ziti_draft(servings=servings, protein=protein)
+    responses = iter((original, revised))
+
+    def generation(*args, **kwargs):
+        del args, kwargs
+        return RecipeImportResponse(draft=next(responses), provider="mock", model="mock-basic")
+
+    monkeypatch.setattr(recipe_session_routes, "import_recipe_text", generation)
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "Let's do a baked pasta ziti", "provider_mode": "mock"},
+    ).json()
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": message, "provider_mode": "mock"},
+    )
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["response_state"] != "clarification_needed"
+    assert data["response_state"] != "new_recipe_confirmation"
+    assert data["draft"]["title"] == "Baked Ziti"
+    assert data["draft"]["servings"] == servings
+    assert data["revision_count"] == 1
+    _assert_safe_response(response.text, dataset_dir)
+
+
+@pytest.mark.parametrize("message", ("let's go with fried rice", "switch the recipe to fried rice"))
+def test_baked_ziti_replacements_still_pause_without_mutation(session_client, monkeypatch, message):
+    client, dataset_dir = session_client
+    original = _baked_ziti_draft(servings=4, protein="Italian sausage")
+
+    monkeypatch.setattr(
+        recipe_session_routes,
+        "import_recipe_text",
+        lambda *args, **kwargs: RecipeImportResponse(draft=original, provider="mock", model="mock-basic"),
+    )
+    started = client.post(
+        "/ai/recipe-session/start",
+        json={"text": "Let's do a baked pasta ziti", "provider_mode": "mock"},
+    ).json()
+    response = client.post(
+        f"/ai/recipe-session/{started['interaction_id']}/message",
+        json={"text": message, "provider_mode": "mock"},
+    )
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["response_state"] == "new_recipe_confirmation"
+    assert data["draft"] == started["draft"]
+    assert data["revision_count"] == 0
+    _assert_safe_response(response.text, dataset_dir)
 
 
 def test_replacement_serving_revision_rejects_wrong_provider_yield_without_mutation(session_client, monkeypatch):

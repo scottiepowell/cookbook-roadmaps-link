@@ -74,6 +74,28 @@ def test_real_staple_and_ingredient_substitutions_remain_current_recipe_edits():
     )
 
 
+def test_existing_draft_short_edits_are_material_updates_not_fresh_recipe_requests():
+    state = extract_recipe_requirements("baked pasta ziti with sausage")
+    messages = (
+        "change servings to eight",
+        "change the servings to eight",
+        "make it serve 8",
+        "double it",
+        "change sausage to chicken",
+        "replace sausage with chicken",
+        "use chicken instead of sausage",
+        "change the servings to eight and use chicken instead of sausage",
+    )
+
+    for message in messages:
+        classification = classify_follow_up(message, current_state=state)
+        assert classification.label in {
+            RecipeFollowUpLabel.RELEVANT_REQUIREMENT_UPDATE,
+            RecipeFollowUpLabel.CORRECTION_TO_ASSUMPTION,
+        }
+        assert suggests_new_recipe(message, state, current_recipe_text="Baked Ziti ziti sausage") is False
+
+
 def test_explicit_replacement_language_is_detected_before_revision_generation():
     state = extract_recipe_requirements("cheese omelet with sausage and mushrooms")
     phrases = (

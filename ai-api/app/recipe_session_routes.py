@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import hashlib
 import json
+import re
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -63,6 +64,40 @@ from app.schemas import (
 
 router = APIRouter(prefix="/ai/recipe-session", tags=["recipe-session-alpha"])
 MAX_RECIPE_CHANGES = 10
+
+
+def requested_ingredient_substitutions(message: str) -> tuple[tuple[str, str], ...]:
+    """Return bounded source-to-target ingredient substitutions from a follow-up.
+
+    This is deliberately narrow: it protects a requested substitution from a
+    partial provider revision without trying to infer a new recipe identity.
+    """
+
+    normalized = " ".join(message.casefold().split())
+    patterns = (
+        r"\bchange\s+(?P<source>[a-z][a-z -]{0,48}?)\s+to\s+(?P<target>[a-z][a-z -]{0,48}?)(?:\s+and\b|$)",
+        r"\breplace\s+(?P<source>[a-z][a-z -]{0,48}?)\s+with\s+(?P<target>[a-z][a-z -]{0,48}?)(?:\s+and\b|$)",
+        r"\buse\s+(?P<target>[a-z][a-z -]{0,48}?)\s+instead\s+of\s+(?P<source>[a-z][a-z -]{0,48}?)(?:\s+and\b|$)",
+    )
+    substitutions: list[tuple[str, str]] = []
+    blocked = {"serving", "servings", "serve", "serves", "yield", "portion", "portions"}
+    for pattern in patterns:
+        for match in re.finditer(pattern, normalized):
+            source = match.group("source").strip(" -")
+            target = match.group("target").strip(" -")
+            if (
+                not source
+                or not target
+                or source in blocked
+                or target in blocked
+                or set(source.split()) & blocked
+                or set(target.split()) & blocked
+            ):
+                continue
+            pair = (source, target)
+            if pair not in substitutions:
+                substitutions.append(pair)
+    return tuple(substitutions)
 
 
 def _resolve_session_provider(payload):
@@ -229,6 +264,7 @@ def message_recipe_session(
     serving_target = requested_serving_count(payload.text, current_servings)
     deterministic_serving_scale = is_serving_only_change(payload.text, current_servings)
     additive_serving_scale = is_additive_serving_change(payload.text, current_servings)
+    substitutions = requested_ingredient_substitutions(payload.text)
 
     draft_context = None
     if session.draft is not None:
@@ -321,7 +357,11 @@ def message_recipe_session(
     refresh = decide_rag_refresh(previous_requirements, updated_requirements, follow_up=classification)
     clarification = decide_clarification(updated_requirements)
     if session.draft is not None and (
-        classification.label == RecipeFollowUpLabel.RELEVANT_REQUIREMENT_UPDATE
+        classification.label
+        in {
+            RecipeFollowUpLabel.RELEVANT_REQUIREMENT_UPDATE,
+            RecipeFollowUpLabel.CORRECTION_TO_ASSUMPTION,
+        }
         or serving_target is not None
     ):
         clarification = RecipeSessionDecision(
@@ -371,6 +411,7 @@ def message_recipe_session(
         deterministic_serving_scale=deterministic_serving_scale,
         additive_serving_scale=additive_serving_scale,
         required_additions=_new_required_ingredients(previous_requirements, updated_requirements),
+        required_substitutions=substitutions,
     )
     log_ai_workflow(
         "recipe.session.message",
@@ -450,6 +491,7 @@ def _generate_and_store_draft(
     deterministic_serving_scale: bool = False,
     additive_serving_scale: bool = False,
     required_additions: tuple[str, ...] = (),
+    required_substitutions: tuple[tuple[str, str], ...] = (),
 ) -> RecipeSessionState:
     try:
         response = import_recipe_text(RecipeImportRequest(text=text, source=source), provider=provider, session_state=budget_session_state or session)
@@ -471,7 +513,7 @@ def _generate_and_store_draft(
                     detail={
                         "status": "unavailable",
                         "safe_unavailable_category": "ingredient_change_mismatch",
-                        "safe_guidance": "Cookbook AI could not apply every requested ingredient change. Up to three bounded retries are allowed.",
+                        "safe_guidance": "Cookbook AI could not apply every requested ingredient change. Up to five bounded retries are allowed.",
                         "retryable": True,
                     },
                 )
@@ -492,7 +534,25 @@ def _generate_and_store_draft(
                 detail={
                     "status": "unavailable",
                     "safe_unavailable_category": "serving_scale_mismatch",
-                    "safe_guidance": "Cookbook AI could not scale this recipe consistently. Up to three bounded retries are allowed.",
+                    "safe_guidance": "Cookbook AI could not scale this recipe consistently. Up to five bounded retries are allowed.",
+                    "retryable": True,
+                },
+            )
+
+    if response.draft is not None and previous_draft is not None and required_substitutions:
+        unapplied = [
+            (source, target)
+            for source, target in required_substitutions
+            if not draft_contains_ingredient(response.draft, target)
+            or draft_contains_ingredient(response.draft, source)
+        ]
+        if unapplied:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "status": "unavailable",
+                    "safe_unavailable_category": "ingredient_substitution_mismatch",
+                    "safe_guidance": "Cookbook AI could not apply every requested ingredient substitution. Up to five bounded retries are allowed.",
                     "retryable": True,
                 },
             )
@@ -513,7 +573,7 @@ def _generate_and_store_draft(
                 detail={
                     "status": "unavailable",
                     "safe_unavailable_category": "recipe_coherence_mismatch",
-                    "safe_guidance": "Cookbook AI returned an incoherent recipe draft. Up to three bounded retries are allowed.",
+                    "safe_guidance": "Cookbook AI returned an incoherent recipe draft. Up to five bounded retries are allowed.",
                     "retryable": True,
                 },
             )
@@ -534,7 +594,7 @@ def _generate_and_store_draft(
                 detail={
                     "status": "unavailable",
                     "safe_unavailable_category": "revision_identity_drift",
-                    "safe_guidance": "Cookbook AI could not preserve this recipe. Up to three bounded retries are allowed.",
+                    "safe_guidance": "Cookbook AI could not preserve this recipe. Up to five bounded retries are allowed.",
                     "retryable": True,
                 },
             )
@@ -594,7 +654,7 @@ def _safe_session_unavailable_detail(exc: BaseException) -> dict[str, str | bool
     category = details.category if details else "unexpected_safe_internal_block"
     retryable = category in retryable_categories
     guidance = (
-        "Cookbook AI could not complete this change. Up to three bounded retries are allowed."
+        "Cookbook AI could not complete this change. Up to five bounded retries are allowed."
         if retryable
         else "Cookbook AI could not complete this recipe change."
     )

@@ -43,6 +43,10 @@ _SERVING_PATTERNS = (
         rf"\b(?:servings?|yield)\s*(?::|=|to)?\s*(?P<count>\d{{1,2}}|{_NUMBER_PATTERN})\b",
         flags=re.IGNORECASE,
     ),
+    re.compile(
+        rf"\b(?:make\s+(?:it|this)\s+)?serves?\s+(?P<count>\d{{1,2}}|{_NUMBER_PATTERN})\b",
+        flags=re.IGNORECASE,
+    ),
 )
 _SERVING_ONLY_WORDS = frozenset(
     {

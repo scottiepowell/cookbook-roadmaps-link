@@ -1,5 +1,17 @@
 # AI Implementation Backlog
 
+## 0035H: Public AI follow-up edit regression
+
+Status: complete and deployed.
+
+Existing-draft serving edits and ingredient substitutions now remain on the
+same core-owned chat and sidecar interaction. A deterministic compound-edit
+guard requires the exact requested yield plus the requested substitution before
+commit; a partial candidate remains transactional and retryable. The public
+copy no longer presents a retained-draft follow-up failure as an initial recipe
+clarification. Replacement confirmation and clean replacement behavior remain
+unchanged.
+
 ## 0035G: Five retries and empty prompt guard
 
 Status: complete and deployed.
