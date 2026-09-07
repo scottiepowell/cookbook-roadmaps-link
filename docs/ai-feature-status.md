@@ -90,6 +90,13 @@ replacement confirmation. The recipe, ingredients, instructions, and grounding
 sections are collapsible. State is in-memory and lost on restart; no canonical
 recipe save, sidecar identity ownership, or public sidecar route is added.
 
+0035F adds an explicit save boundary to that conversation. Complete drafts are
+mapped to the existing core recipe shape and submitted through the authenticated
+canonical create route. The core assigns user ownership and applies the user's
+public-recipe default. Failed saves retain the draft and revision count; success
+clears the transient chat and opens the normal recipe view. No automatic save,
+sidecar database access, or sidecar identity/session ownership is introduced.
+
 0034Z makes serving-only recipe changes deterministic. The latest explicit
 serving request overrides earlier numbers in the session history, including
 written counts and bounded double/halve requests. The sidecar sets the exact
@@ -278,8 +285,9 @@ status=passed
 
 | Boundary | Status | Reason |
 | --- | --- | --- |
-| Production AI storage | Not implemented | Kept out of scope until a dedicated architecture task. |
-| Production AI access layer | Proposed, not implemented | Public live provider-backed AI requires auth/session/metering work first. |
+| Canonical AI-draft persistence | Implemented, core-owned | Complete reviewed drafts can be explicitly saved as normal recipes through the authenticated core create route. |
+| Sidecar AI storage | Not implemented | Transient AI chats remain bounded in-memory state; the sidecar has no Cookbook database access. |
+| Authenticated public AI access layer | Implemented and deployed | Core-owned authenticated proxies enforce the existing session, model, retry, and budget boundaries. |
 | Public unauthenticated live AI endpoint | Not allowed | Provider-backed endpoints must be protected before public exposure. |
 | Payment integration | Deferred | Paid access requires a later ADR and implementation task after the monetization/entitlement boundary ADR. |
 | Embeddings/vector DB | Not implemented | Deterministic retrieval is enough for the current demo and eval scope. |
@@ -337,6 +345,7 @@ status=passed
 | Core-owned local persistent-user auth transport | Complete, disposable/local-only | [Core-Owned Local Persistent-User Auth Transport](core-owned-local-persistent-user-auth-transport.md) | 0034G verifies a synthetic core AuthUser, one persistent-runtime commit, read-after-write, replay/conflict/duplicate/rollback, and DB/uploads restore in `local/vanilla-cookbook-adapter:0034g`. No real session, provider call, browser UI save, or production auth. |
 | Local UI real-save wiring | Complete, local/dev-only and disabled by default | [Local UI Real-Save Wiring](local-ui-real-save-wiring.md) | 0034H routes the reviewed importer panel to the 0034G persistent core transport only under explicit loopback/Compose/image/approval gates. The in-memory prototype remains the fallback; no production auth or Save-to-Cookbook exists. |
 | Local UI persistent-save E2E verification | Pass, API-level local/disposable | [Local UI Persistent Save E2E Verification](local-ui-persistent-save-e2e-verification.md) | 0034I verified mock importer → dry-run → explicit local confirmation → 0034G persistent core status/UID/read-after-write/idempotency evidence, then cleaned up the local runtime. Browser observation remains blocked by the absence of a real session. |
+| Public AI draft save | Complete and deployed | [AI Recipe Save Flow](ai-recipe-save-flow.md) | 0035F maps a complete reviewed draft into the canonical core recipe-create payload, preserves the draft on failure, clears transient chat state on success, and redirects to the saved recipe view. Signed-in browser verification confirmed mapped title, ingredients, and directions without giving the sidecar database or session ownership. |
 | Core real authenticated session plan | Complete, security/design-only | [Core Real Authenticated Session Plan](core-real-authenticated-session-plan.md) | 0034J records the Lucia/AuthUser/AuthAccount/session/OIDC gaps and recommends 0034K: a disabled-by-default core-local mock OIDC session fixture before any manual Google credential task. No provider calls, cookies, tokens, or production auth were added. |
 | Core-owned mock OIDC real-session fixture | Complete, core-process/local-only | [Core-Owned Mock OIDC Real-Session Fixture](core-owned-mock-oidc-real-session-fixture.md) | 0034K proves synthetic core identity linking, real Lucia session creation/validation, `locals.user`/`requireAuth`, Save-to-Cookbook ownership, replay, logout/invalidation, and safe cookie handling in isolated test state. No provider calls, real credentials, public route, or production auth. |
 | Manual local Google OIDC real session | Prepared, manual credential gate not exercised | [Manual Local Google OIDC Real Session](manual-local-google-oidc-real-session.md) | 0034L adds loopback/development/Google issuer guards, exact identity-only scopes, and state+PKCE+nonce callback binding in the external core. No local credentials were present, so no provider call or real login was made. |

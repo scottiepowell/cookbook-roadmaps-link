@@ -1,5 +1,15 @@
 # AI Implementation Backlog
 
+## 0035F: Core-owned AI draft save
+
+Status: complete and deployed.
+
+An authenticated user can explicitly save a complete AI recipe draft through
+the core's existing canonical `/api/recipe` create boundary. The core retains
+identity, ownership, recipe, and persistence authority; the sidecar receives no
+database access. Failed saves preserve the draft and change count, while a
+successful save clears the transient chat and opens the canonical recipe view.
+
 ## 0035E: AI-first Add Recipe and samples
 
 Status: complete and deployed.
