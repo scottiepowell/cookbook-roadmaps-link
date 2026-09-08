@@ -2687,3 +2687,10 @@ Status: complete and deployed. The public Compose configuration now pins the
 validated `0035i` sidecar image. Existing ignored core env inputs and the
 public OIDC env input resolved the previous path mismatch; Compose validation,
 container startup, and public health verification passed.
+
+## 0035K: Editable AI Draft Review Before Save
+
+Status: complete and deployed. The core AI review surface supports local edits
+to recipe metadata, ingredients, and instructions, including adding/removing
+rows. Narrow core validation prevents incomplete or invalid drafts from being
+saved; the existing explicit authenticated save boundary remains unchanged.

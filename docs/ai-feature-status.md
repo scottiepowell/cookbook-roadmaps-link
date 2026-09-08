@@ -372,6 +372,7 @@ status=passed
 | Public Google OIDC callback | Corrected; manual authenticated return pending | [0034N Results](../outbox/0034N-public-homepage-login-and-google-oidc-callback-results.md) | Public auth now uses a dedicated Web client, the exact HTTPS callback, a provider-accepted secret, and only `openid email profile`. Desktop, Android-style, and signed-in probes reached Google without redirect mismatch; account selection and final core session acceptance require a manual operator retry. |
 | Ingredient quantity sanity and scaled grammar | Complete, sidecar-only | [0035I Results](../outbox/0035I-ingredient-quantity-sanity-and-scaled-grammar-results.md) | Narrow post-scaling grammar normalization and conservative new-mushroom outlier handling preserve 0035H session behavior without changing grounding or retrieval. |
 | 0035I public Compose deployment validation | Complete and deployed | [0035J Results](../outbox/0035J-compose-deployment-validation-for-0035I-results.md) | The public stack runs the validated `local/cookbook-ai-sidecar:0035i` image; configuration, container health, and public health checks passed. |
+| Editable AI draft review | Complete and deployed | [Editable AI Draft Review](ai-editable-draft-review.md) | 0035K lets users directly edit draft metadata, ingredients, and instructions before the existing explicit authenticated Save to Cookbook action. |
 
 ## Demo Starting Points
 
