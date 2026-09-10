@@ -91,6 +91,13 @@ Even after the gate passes, a future runtime adapter task must still preserve th
 
 Passing this gate does not authorize direct implementation.
 
+The `0033G` ADR applies this rule to Groq-hosted `openai/gpt-oss-20b`. Its
+primary-source facts support a future isolated evaluation proposal, but do not
+authorize runtime work. A future task must refresh the facts, verify account
+limits and ZDR, define exact payloads, and pass the Cookbook-specific offline
+and opt-in live gates in that ADR. GLM remains at the original unverified
+`no-go` state.
+
 Any runtime adapter work still requires:
 
 1. a new future mailbox task;

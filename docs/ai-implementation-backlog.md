@@ -2703,3 +2703,18 @@ Compose services and existing Cloudflare connector, and reports bounded safe
 health results without printing private configuration or invoking the provider.
 The host stale `dockerInference` runtime socket was cleared, after which Docker
 engine readiness, sidecar health, and local/public core health all passed.
+
+## 0033G: Free-Tier LLM Offload And QMD-Assisted Chat ADR
+
+Status: complete, docs-only; runtime remains unapproved.
+
+Added [Free-Tier LLM Offload and QMD-Assisted Chat ADR](free-tier-llm-offload-qmd-chat-adr.md).
+Primary-source review recommends Groq-hosted `openai/gpt-oss-20b` for a future
+bounded advisory pilot because its current free quota, strict JSON Schema,
+compatible API, speed, and retention controls make it the strongest evaluated
+fit. OpenAI `gpt-5.4-nano` remains the final-answer baseline. QMD remains an
+optional local retrieval benchmark, and the ADR defines task allowlists,
+fallbacks, privacy boundaries, RAG quality/cost metrics, and go/no-go gates.
+
+No provider runtime, SDK, call, QMD dependency, model, index, route, auth,
+analytics, monetization, or public exposure was added.

@@ -78,6 +78,22 @@ reason: primary provider documentation was not available in this task
 - No provider pricing, API, privacy, retention, quota, or availability fact is treated as verified here.
 - Future runtime adapter work is blocked until the implementation gate in [AI Secondary Provider Implementation Gate](ai-secondary-provider-implementation-gate.md) is satisfied.
 
+## 0033G verified evaluation candidate
+
+The [Free-Tier LLM Offload and QMD-Assisted Chat ADR](free-tier-llm-offload-qmd-chat-adr.md)
+adds a second, independently evaluated candidate: Groq-hosted
+`openai/gpt-oss-20b`. Primary Groq documentation was checked on 2026-09-10 for
+model availability, free-plan quota, paid pricing, API/auth, context/output
+limits, strict JSON Schema, data retention/ZDR, end-user application terms, and
+error behavior. Region/locality remains unverified, account-specific state must
+be checked live, and provider facts must be refreshed before implementation.
+
+This moves only the **docs/evaluation recommendation** to `go`. Runtime remains
+`blocked`: a separate mailbox task, accepted current terms, enabled ZDR,
+dedicated secret, offline failure fixtures, bounded generated-fixture live eval,
+and the ADR's quality/citation/latency/token gates are still required. The
+original GLM candidate remains unverified and blocked.
+
 ## Non-Goals
 
 - No GLM SDK installation
