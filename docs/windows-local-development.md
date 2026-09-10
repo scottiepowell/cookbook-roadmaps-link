@@ -59,3 +59,24 @@ bash -n scripts/validate-repo.sh
 ```
 
 Do not change deployment behavior, runtime secrets, or AI provider settings when fixing line endings.
+
+## Start the public Cookbook stack from Git Bash
+
+The checked-in launcher starts Docker Desktop when needed, waits for its Linux
+engine, validates the existing ignored environment files, and starts the public
+core, AI sidecar, and existing Cloudflare connector:
+
+```bash
+cd /c/Users/scott/cookbook-roadmaps-link
+./scripts/start-public-cookbook.sh
+```
+
+The external core defaults to
+`$HOME/projects/vanilla-cookbook-core`. Override `COOKBOOK_CORE_DIR` only when
+that checkout is elsewhere. The launcher reports bounded container and HTTP
+status; it does not print environment contents or make AI provider calls.
+
+If Docker Desktop exits with an inaccessible `dockerInference` socket, the
+Windows WSL service still owns a stale Docker runtime entry. Restart Windows,
+then run the launcher again. An administrator can instead restart `WslService`;
+the launcher deliberately does not elevate or delete runtime state itself.

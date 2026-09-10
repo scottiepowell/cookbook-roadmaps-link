@@ -2694,3 +2694,12 @@ Status: complete and deployed. The core AI review surface supports local edits
 to recipe metadata, ingredients, and instructions, including adding/removing
 rows. Narrow core validation prevents incomplete or invalid drafts from being
 saved; the existing explicit authenticated save boundary remains unchanged.
+
+## 0035L: Git Bash Public Stack Launcher
+
+Status: implemented; full local startup verification is blocked by a stale
+Docker Desktop `dockerInference` runtime socket that requires an elevated WSL
+service restart or Windows reboot. The launcher starts Docker Desktop when
+needed, validates the existing ignored configuration, brings up the public
+Compose services and existing Cloudflare connector, and reports bounded safe
+health results without printing private configuration or invoking the provider.
