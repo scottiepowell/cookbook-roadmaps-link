@@ -1,7 +1,6 @@
 # 0035L Git Bash Public Stack Launcher Results
 
-Status: implemented; end-to-end startup verification blocked by host Docker
-Desktop runtime state.
+Status: complete and host-verified.
 
 ## Delivered
 
@@ -23,12 +22,11 @@ Desktop runtime state.
 - Focused launcher contract test: passed.
 - Repository validation: passed (489 tests, 39 offline eval cases, Compose
   configuration, whitespace, links, domain guard, and secret-pattern scan).
-- End-to-end host startup: blocked. Docker Desktop exits while removing its
-  `dockerInference` runtime socket because the Windows WSL service retains an
-  inaccessible stale entry. A normal WSL shutdown did not release it, and the
-  current process cannot restart the Windows service without elevation.
-- No Compose services, provider calls, recipe writes, or deployment mutations
-  were attempted after Docker engine readiness failed.
+- End-to-end host startup: passed after the stale `dockerInference` and
+  companion runtime socket entries were cleared. Docker engine readiness,
+  Compose startup, sidecar health, local core health, and public core health
+  all returned successfully.
+- No provider calls or recipe writes were performed.
 
 ## Safety
 
