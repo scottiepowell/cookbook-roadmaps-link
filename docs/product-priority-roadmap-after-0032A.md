@@ -118,6 +118,15 @@ links, donations, supporter options, newsletters, and creator partnerships
 without implementing any of them. Payment, subscriptions, premium access,
 third-party scripts, and ad-network evaluation remain separately gated.
 
+## 0033G free-tier LLM offload emphasis
+
+The [Free-Tier LLM Offload and QMD-Assisted Chat ADR](free-tier-llm-offload-qmd-chat-adr.md)
+recommends Groq-hosted `openai/gpt-oss-20b` only for a future bounded advisory
+pilot. It keeps OpenAI `gpt-5.4-nano` as the final-answer baseline, defines
+allowed retrieval/chat tasks and measurable RAG value gates, and keeps QMD as
+an optional local benchmark. It does not change the main product-usability
+priority or approve a provider/QMD runtime.
+
 ## 0033I product Cookbook link correction emphasis
 
 The [Local Cookbook AI Product Integration](local-cookbook-ai-product-integration.md)
