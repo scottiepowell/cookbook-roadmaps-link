@@ -2713,8 +2713,11 @@ Primary-source review recommends Groq-hosted `openai/gpt-oss-20b` for a future
 bounded advisory pilot because its current free quota, strict JSON Schema,
 compatible API, speed, and retention controls make it the strongest evaluated
 fit. OpenAI `gpt-5.4-nano` remains the final-answer baseline. QMD remains an
-optional local retrieval benchmark, and the ADR defines task allowlists,
-fallbacks, privacy boundaries, RAG quality/cost metrics, and go/no-go gates.
+optional local retrieval benchmark. The expanded ADR defines a general
+eligibility rubric and prioritized advisory candidates across conversation,
+recipe assistance, planning, support/operations, localization, offline
+development, and RAG, with task-level acceptance/correction metrics, fallbacks,
+privacy boundaries, and go/no-go gates.
 
 No provider runtime, SDK, call, QMD dependency, model, index, route, auth,
 analytics, monetization, or public exposure was added.
