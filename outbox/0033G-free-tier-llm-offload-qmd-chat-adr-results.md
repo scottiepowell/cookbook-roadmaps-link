@@ -85,6 +85,13 @@ Validation passed:
 
 The validation remained offline/mock-only. No provider or browser call was made.
 
+GitHub's Ubuntu validation job remains red for the same pre-existing portability
+failures present on `main`: tests invoke the Windows executable name
+`powershell`, one script assumes `TEMP` exists, and local-save platform gates
+report unavailable. The branch did not change those scripts, tests, or workflow.
+Local Windows validation passed the complete suite. Repairing cross-platform CI
+is separate from this documentation-only mailbox task.
+
 ## Non-goals
 
 No provider SDK, runtime adapter, provider call, QMD install, Node/Bun/native
