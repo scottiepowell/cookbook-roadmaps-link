@@ -1,16 +1,26 @@
-# ADR: Free-Tier LLM Offload and QMD-Assisted Chat
+# ADR: Hosted Free-Tier LLM Offload
 
 Status: proposed for an isolated evaluation; runtime use is not approved
 
 Date: 2026-09-10
 
-Goal: [GitHub Issue #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2), expanded by [GitHub Issue #4](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/4)
+Goal: [GitHub Issue #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2), expanded by [GitHub Issue #4](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/4) and [GitHub Issue #6](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/6)
 
 Mailbox source: `inbox/0033G-free-tier-llm-offload-qmd-chat-adr.md`
 
 ## Decision
 
-The best first free-tier candidate is **Groq-hosted `openai/gpt-oss-20b`**.
+The selected solution is **GroqCloud's hosted API running
+`openai/gpt-oss-20b`**. Cookbook calls it over HTTPS from the server-side
+`ai-api`; no model weights, inference server, GPU runtime, or local model
+process is installed or operated by Cookbook.
+
+Externally hosted API inference is a hard requirement. Self-hosted and locally
+hosted models are outside the solution space, even when their weights are free.
+QMD is also outside this decision because it is a local retrieval tool rather
+than the required hosted LLM API. Its separate retrieval spike remains
+historical planning only and is not part of this recommendation.
+
 Use it only in a future, separately approved pilot for bounded advisory work.
 The first pilot should not be limited to RAG: conversation classification and
 compression, recipe metadata suggestions, shopping-list organization, grounded
@@ -23,15 +33,9 @@ as production capacity. Groq's free limits support evaluation and light traffic
 without a production availability guarantee. Quota exhaustion, model retirement,
 and capacity errors must fall back to deterministic behavior or the baseline.
 
-QMD remains a separate optional local retrieval experiment. Its BM25, vector,
-hybrid, query-expansion, and reranking pipeline may improve paraphrase recall
-and reduce context size, but its Node/native-model/index lifecycle is not
-justified until a corpus benchmark shows a material gain.
-
-The juice is worth the squeeze for a small Groq adapter and comparison harness.
-QMD is conditional on retrieval benchmarks. Self-hosted `gpt-oss-20b` is not
-worth it now: free weights still require roughly 16 GB of memory plus serving
-and operations, while current Cookbook hosted-model costs are very low.
+The juice is worth the squeeze for one small Groq adapter and comparison
+harness. The hosted-only constraint keeps the work bounded to an API adapter,
+secret configuration, routing, validation, metering, and failure handling.
 
 ## Problem
 
@@ -82,9 +86,6 @@ catalogs, prices, and terms can change and must be rechecked before implementati
 - OpenRouter: [FAQ](https://openrouter.ai/docs/faq),
   [provider logging](https://openrouter.ai/docs/guides/privacy/provider-logging),
   and [ZDR controls](https://openrouter.ai/docs/guides/features/zdr).
-- Local/open weight: [OpenAI's `gpt-oss` announcement](https://openai.com/index/introducing-gpt-oss/)
-  and [`gpt-oss-20b` model page](https://developers.openai.com/api/docs/models/gpt-oss-20b).
-- QMD: [official repository](https://github.com/tobi/qmd).
 
 ## Recommended provider fact register
 
@@ -114,8 +115,6 @@ behavior remain implementation-time gates.
 | Cloudflare + `@cf/openai/gpt-oss-20b` | Existing Cloudflare relationship; same model family; 128k context; compatible Chat API; customer content is not used for training. The $0.11-equivalent daily allocation could cover roughly 846 illustrative 500-input/100-output calls at listed token rates. | Free usage is a compute allocation rather than a simple token quota; exact consumption must be measured. The reviewed docs expose `response_format` but do not provide Groq's strict-schema guarantee. | Strongest runner-up; compare if infrastructure consolidation or call volume outweighs strict-schema behavior. |
 | Gemini 2.5 Flash-Lite unpaid | Free token pricing and capable low-cost model. | Unpaid terms permit product-improvement use and human review and say not to submit sensitive/confidential/personal data. Exact free quota is project-specific. | Public-fixture experiment only; blocked for private Cookbook data. |
 | OpenRouter free models | Compatible API, many models, provider-policy filters. | Default 50 RPD (1,000 after buying $10 credits); its docs say free models are usually unsuitable for production. Routing variability hurts reproducibility/privacy review. | Benchmark lab only. |
-| Local `gpt-oss-20b` | Apache 2.0; local data; same model family; 131k context. | About 16 GB memory plus download, serving, patching, cold starts, and capacity operations. | Defer until utilization or privacy justifies it. |
-| QMD local model set | BM25/vector/RRF, local expansion/reranking/cache, retrieval benchmark support. | Node 22/Bun, native dependencies, three GGUF downloads around 2 GB, index freshness/deletion, hardware latency, model-license review. | Benchmark retrieval only. |
 | GLM/Zhipu, direct DeepSeek, direct MiniMax | Possible low-cost candidates. | Complete primary-source free quota, privacy, retention, schema, and failure facts were not established; some current Cloudflare frontier variants require paid billing. | `Unverified`; blocked by existing fact gate. |
 
 ## General offload decision rule
@@ -145,7 +144,6 @@ User turn
   -> deterministic auth, safety, intent, scope, and input checks
   -> when grounding is needed:
        current keyword retrieval
-       optional QMD/local hybrid retrieval when healthy and scoped
        merge by canonical source ID and preserve provenance
   -> optional Groq advisory task from an allowlist
        classify | transform | suggest | expand | rerank | compress
@@ -195,7 +193,6 @@ end-to-end failures.
 | Clarification candidate | Advisory only; deterministic policy approves one non-invasive question. |
 | Retrieval reranking | Input IDs only; output must be a permutation/subset; fall back to deterministic rank. |
 | Context compression | Bounded snippets only; all claims retain input citation IDs; fall back to uncompressed context. |
-| QMD/local-note summary | Authorized generated snapshots only; preserve source/version/citation mapping. |
 | No-match triage | Cannot invent a match; fall back to no-match or baseline policy. |
 | Cache-key/retrieval-plan suggestion | Advisory; local code computes the scoped key and executes only approved plans. |
 | Low-risk brainstorming/title suggestion | Facts already fixed; never auto-persist or publish. |
@@ -231,8 +228,6 @@ end-to-end failures.
 | Internal OpenAI-compatible contract | Reusable message/schema concepts. | Compatibility is partial; lowest-common-denominator design can hide behavior. | Small interface with explicit adapters. |
 | Cloudflare Workers AI | Existing operator relationship, same `gpt-oss-20b` family, serverless, favorable data statement, and useful short-call capacity. | Neuron accounting needs measurement and strict schema behavior is less explicit. | Strong runner-up if consolidation or volume matters. |
 | OpenRouter | Rapid access to many models and privacy controls. | Dynamic routes and weak free capacity. | Evaluation lab. |
-| Local `gpt-oss-20b` | Control and no marginal provider bill. | Disproportionate hardware/operations now. | Revisit after usage evidence. |
-| QMD adapter | Purpose-built local hybrid retrieval/cache. | Node/native/GGUF/index lifecycle beside Python. | Benchmark before integration. |
 
 ## Prioritized pilot sequence
 
@@ -268,9 +263,109 @@ A separate mailbox task should implement Phase 1A first:
 8. Run a manual opt-in live comparison using generated public fixtures only.
 9. Promote one task class at a time after it meets all gates.
 
-Phase 2 may benchmark QMD in an isolated local process/container using generated
-Markdown snapshots. Compare deterministic BM25, vector, hybrid without rerank,
-and full rerank. Do not add QMD to the Python image or index canonical storage.
+This ADR has no local-model or self-hosted phase. If Groq's hosted free tier no
+longer meets the gates, re-evaluate another externally hosted API provider.
+
+## Exact codebase solution
+
+The implementation should reuse the installed OpenAI Python client through a
+dedicated adapter rather than add another SDK:
+
+```text
+Vanilla Cookbook core
+  -> private ai-api route
+  -> deterministic offload task allowlist and payload minimizer
+  -> GroqOffloadProvider
+       OpenAI client base_url=https://api.groq.com/openai/v1
+       POST /chat/completions
+       model=openai/gpt-oss-20b
+       strict JSON Schema
+  -> local schema/scope/citation validation
+  -> accept advisory output or fall back to deterministic/OpenAI baseline
+```
+
+The future implementation task changes these areas:
+
+1. Add Groq settings to `ai-api/app/config.py` and provider availability using
+   `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL`,
+   `AI_OFFLOAD_PROVIDER`, `AI_OFFLOAD_ENABLED`, and
+   `AI_OFFLOAD_ALLOWED_TASKS`.
+2. Add `ai-api/app/providers/groq_offload_provider.py`. Construct a separate
+   `OpenAI` client with the Groq base URL and key, and call Chat Completions.
+   Do not change the base URL of the trusted `OpenAIProvider`.
+3. Send strict schemas as `response_format.type=json_schema` with
+   `json_schema.strict=true`; require every property and set
+   `additionalProperties=false`. Keep streaming and tools disabled.
+4. Add an offload router above the existing workflow providers. It may select
+   Groq only for the task allowlist and must accept-or-ignore its result.
+5. Add task contract validation, minimal-payload rules, metering, timeout,
+   rate-limit handling, circuit breaker, and baseline/deterministic fallback.
+6. Add fake-client unit tests, generated-fixture evals, and a separate
+   manual-only live smoke command. Normal tests and CI remain keyless/offline.
+7. Add blank, documented variables to `.env.example`; actual values stay only
+   in ignored local `.env` or the deployment secret store.
+
+## Manual setup for the operator
+
+These steps prepare the external service and repository. They do not activate
+Groq until the adapter implementation above is merged.
+
+### GroqCloud console
+
+1. Sign in at [GroqCloud Console](https://console.groq.com/).
+2. Open the organization/project selector, create a project named
+   `cookbook-dev`, and select it. Groq recommends separate projects and keys per
+   environment; later create `cookbook-staging` and `cookbook-production`
+   instead of sharing the development key.
+3. Open **Data Controls** and enable Zero Data Retention for inference for the
+   organization/project. Record only that ZDR is enabled, never a screenshot or
+   value that exposes credentials.
+4. Open the project's limits/settings and leave it on the free plan. Set the
+   most conservative project/model limits the console permits. Do not add a
+   payment method or automatic paid overflow for this pilot.
+5. Open **API Keys**, create a project-specific key named
+   `cookbook-dev-offload`, copy it once, and store it in the local secret
+   manager. Never paste it into an issue, PR, commit, chat, frontend variable,
+   or browser bundle.
+6. Confirm `openai/gpt-oss-20b` is enabled in the project's model permissions
+   and review the current rate-limit page before the first live test.
+
+### Local repository configuration
+
+After the adapter PR exists, add these names to the ignored repository `.env`:
+
+```dotenv
+GROQ_API_KEY=<value stored locally; never commit>
+GROQ_MODEL=openai/gpt-oss-20b
+GROQ_BASE_URL=https://api.groq.com/openai/v1
+AI_OFFLOAD_PROVIDER=groq
+AI_OFFLOAD_ENABLED=false
+AI_OFFLOAD_ALLOWED_TASKS=intent_classification
+```
+
+Keep `AI_OFFLOAD_ENABLED=false` through offline validation. The Compose
+`ai-api` service already reads the repository `.env`, so no secret belongs in
+`docker-compose.yml`. Enable only the generated-fixture live-smoke command for
+the first call, then add task classes one at a time after their gates pass.
+
+### GitHub repository settings
+
+1. Open the repository, then **Settings > Secrets and variables > Actions**.
+2. Do not add `GROQ_API_KEY` while GitHub Actions remains offline-only. The
+   current validation workflow does not need or use a live provider key.
+3. If a later deployment workflow is approved, create environment-scoped
+   GitHub environments named `development`, `staging`, and `production`, add
+   `GROQ_API_KEY` only to the matching environment, and protect staging and
+   production with required reviewers.
+4. Add non-secret configuration as environment variables: `GROQ_MODEL`,
+   `GROQ_BASE_URL`, `AI_OFFLOAD_PROVIDER`, `AI_OFFLOAD_ENABLED`, and
+   `AI_OFFLOAD_ALLOWED_TASKS`.
+5. Keep `AI_OFFLOAD_ENABLED=false` in every environment until the live fixture
+   smoke and task-specific evaluation pass. Turn on one environment and one
+   task class at a time.
+6. Use separate Groq project keys per GitHub environment. Rotate or revoke a
+   key in GroqCloud first if it is exposed, then replace only the corresponding
+   GitHub environment secret.
 
 ## Metrics and starting gates
 
@@ -288,18 +383,16 @@ and full rerank. Do not add QMD to the Python image or index canonical storage.
 | Latency | Eligible-turn P95 no more than 20% slower; local/clarification turns should improve. |
 | Cache | Report scoped hit rate and prove correct invalidation/no cross-scope hits. |
 | Failure safety | 100% of deterministic rejection/fallback fixtures pass. |
-| Cost | Report both providers and estimated local compute per successful answer and avoided baseline call. |
+| Cost | Report both hosted providers per successful answer and avoided baseline call. |
 
 These thresholds are evaluation hypotheses, not production SLAs. Record corpus,
-model, provider tier, contract version, and hardware class with results.
+model, provider tier, and contract version with results.
 
 ## Risks and controls
 
 - Hallucinated expansions: validate/cap terms and retain original query.
 - Semantic false positives: retain exact anchors, filters, and precision floor.
 - Citation drift: use a closed ID set and reject unsupported sentences.
-- Stale QMD indexes: version sources, deny stale mappings, process deletions,
-  and keep indexes disposable/rebuildable.
 - Abuse/quota: session and task limits, concurrency cap, circuit breaker, no
   automatic paid overflow.
 - Provider churn: pin model/contract and re-evaluate replacements.
@@ -307,8 +400,6 @@ model, provider tier, contract version, and hardware class with results.
   OpenRouter dynamic routing blocked for private data.
 - Mixed quality: consistent UI/support states with provider metadata hidden from
   ordinary users.
-- Local cost: measure download, warm-up, CPU/RAM/GPU, index time, query latency,
-  and maintenance before adopting QMD/local inference.
 - Retry multiplication: at most one safe bounded retry; no provider cascade.
 - Cheap but low-value generation: require task-level acceptance, edit-effort,
   call-avoidance, and total-cost evidence before promotion.
@@ -330,16 +421,16 @@ examples, and offline failure/eval fixtures. Production remains no-go until a
 generated-fixture live comparison passes quality, citation, latency, avoidance,
 and total-token gates.
 
-QMD remains no-go pending its benchmark. Self-hosted `gpt-oss-20b`, Gemini
-unpaid private-data use, OpenRouter production free routing, and unverified
+Self-hosted/local inference is categorically out of scope. Gemini unpaid
+private-data use, OpenRouter production free routing, and unverified
 GLM/DeepSeek/MiniMax candidates remain no-go.
 
 ## Non-goals
 
 - No provider SDK, adapter, account, key, request, or routing change.
 - No live provider call.
-- No QMD/Node/Bun/native dependency, model download, index, snapshot, vector DB,
-  embedding implementation, or local model server.
+- No QMD/Node/Bun/native dependency, model download, local inference runtime,
+  GPU service, or self-hosted model server.
 - No model picker, timer, SSO/BYOS, analytics, Resend, ads, monetization, AWS,
   auth, payment, public route, or canonical recipe change.
 - No secrets, prompts, provider outputs, datasets, traces, screenshots, or

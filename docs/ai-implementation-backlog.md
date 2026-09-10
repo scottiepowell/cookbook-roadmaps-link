@@ -2704,20 +2704,25 @@ health results without printing private configuration or invoking the provider.
 The host stale `dockerInference` runtime socket was cleared, after which Docker
 engine readiness, sidecar health, and local/public core health all passed.
 
-## 0033G: Free-Tier LLM Offload And QMD-Assisted Chat ADR
+## 0033G: Hosted Free-Tier LLM Offload ADR
 
 Status: complete, docs-only; runtime remains unapproved.
 
-Added [Free-Tier LLM Offload and QMD-Assisted Chat ADR](free-tier-llm-offload-qmd-chat-adr.md).
+Added [Hosted Free-Tier LLM Offload ADR](free-tier-llm-offload-qmd-chat-adr.md).
 Primary-source review recommends Groq-hosted `openai/gpt-oss-20b` for a future
 bounded advisory pilot because its current free quota, strict JSON Schema,
 compatible API, speed, and retention controls make it the strongest evaluated
-fit. OpenAI `gpt-5.4-nano` remains the final-answer baseline. QMD remains an
-optional local retrieval benchmark. The expanded ADR defines a general
+fit. OpenAI `gpt-5.4-nano` remains the final-answer baseline. Hosted API
+inference is a hard requirement; self-hosted/local models and QMD are outside
+this decision. The expanded ADR defines a general
 eligibility rubric and prioritized advisory candidates across conversation,
 recipe assistance, planning, support/operations, localization, offline
 development, and RAG, with task-level acceptance/correction metrics, fallbacks,
 privacy boundaries, and go/no-go gates.
+
+Issue `#6` adds the exact server-side Groq adapter shape and manual GroqCloud,
+ignored local `.env`, and GitHub environment setup steps. Adding a key alone is
+insufficient because the current runtime does not yet implement Groq routing.
 
 No provider runtime, SDK, call, QMD dependency, model, index, route, auth,
 analytics, monetization, or public exposure was added.

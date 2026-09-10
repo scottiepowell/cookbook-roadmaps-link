@@ -1,9 +1,11 @@
-# 0033G Free-Tier LLM Offload And QMD-Assisted Chat ADR Results
+# 0033G Hosted Free-Tier LLM Offload ADR Results
 
-Created [Free-Tier LLM Offload and QMD-Assisted Chat ADR](../docs/free-tier-llm-offload-qmd-chat-adr.md)
+Created [Hosted Free-Tier LLM Offload ADR](../docs/free-tier-llm-offload-qmd-chat-adr.md)
 for [Goal #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2)
 and expanded its task scope in
-[Goal #4](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/4).
+[Goal #4](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/4),
+then clarified the hosted-only constraint and setup in
+[Goal #6](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/6).
 
 ## Recommendation
 
@@ -14,16 +16,14 @@ claimed token speed, a 131k context window, and controllable retention/ZDR.
 OpenAI `gpt-5.4-nano` remains the trusted final-answer and final-structured-
 output baseline.
 
-The conclusion is that a small hosted offload adapter is worth evaluating.
-Self-hosting the same open-weight model is not currently justified by Cookbook's
-low baseline cost and the roughly 16 GB memory plus serving/operations burden.
-QMD remains worth benchmarking as a separate local retrieval candidate but is
-not accepted as a runtime dependency.
+The conclusion is that one small GroqCloud offload adapter is worth evaluating.
+Externally hosted API inference is a hard requirement. Self-hosted/local models
+and QMD are outside the selected solution rather than deferred alternatives.
 
 ## External facts
 
 Primary documentation was reviewed on 2026-09-10 for Groq, Cloudflare Workers
-AI, Gemini, OpenRouter, OpenAI `gpt-oss`, and QMD. The ADR links every source and
+AI, Gemini, and OpenRouter. The ADR links every source and
 marks remaining facts and candidates as verified, unverified, or blocked.
 
 The candidate matrix concludes:
@@ -41,8 +41,8 @@ The candidate matrix concludes:
 
 ## Architecture and offload value
 
-The ADR defines a QMD-assisted flow from deterministic intent/safety checks,
-through keyword and optional hybrid retrieval, bounded offload expansion/
+The ADR defines a hosted-API flow from deterministic intent/safety checks,
+through current retrieval when needed, bounded offload expansion/
 rerank/compression, deterministic citation validation, and the baseline final
 answer only when needed. It explains how this can improve paraphrase recall,
 exact-match precision, context packing, cacheability, clarification, citation
@@ -76,11 +76,18 @@ privacy, and fallback measures.
 ## Implementation needs
 
 A separate future task would add a small explicit `OffloadProvider` contract,
-a pinned Groq Chat Completions adapter, dedicated secret, strict JSON schema,
+a pinned GroqCloud Chat Completions adapter using the existing OpenAI Python
+client with Groq's base URL, dedicated secret, strict JSON schema,
 task/payload allowlist, enabled ZDR, per-provider/task metering, circuit breaker,
 scoped cache, failure fixtures, and a manual generated-fixture live comparison.
-Private saved recipes stay blocked during the first evaluation. QMD would be a
-later isolated benchmark using generated snapshots, not canonical storage.
+Private saved recipes stay blocked during the first evaluation. QMD is a
+separate historical retrieval idea and is not part of this hosted solution.
+
+The ADR now includes the manual steps to create isolated GroqCloud projects and
+keys, enable ZDR, confirm the model and limits, configure the ignored local
+`.env`, and later add environment-scoped GitHub deployment secrets. It explicitly
+states that the current codebase cannot use Groq until the adapter is implemented
+and that normal CI must remain offline and keyless.
 
 ## Planning updates and validation
 
@@ -108,8 +115,8 @@ is separate from this documentation-only mailbox task.
 
 ## Non-goals
 
-No provider SDK, runtime adapter, provider call, QMD install, Node/Bun/native
-dependency, model download, generated index/snapshot, vector DB, route, model
+No provider SDK, runtime adapter, provider call, local inference, model download,
+generated index/snapshot, vector DB, route, model
 picker, auth, timer, BYOS, analytics, Resend, monetization, AWS, payment, or
 public exposure was added. No secrets, prompts, provider output, raw datasets,
 traces, screenshots, or generated artifacts were committed.
