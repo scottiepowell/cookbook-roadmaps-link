@@ -4,18 +4,19 @@ Status: proposed for an isolated evaluation; runtime use is not approved
 
 Date: 2026-09-10
 
-Goal: [GitHub Issue #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2)
+Goal: [GitHub Issue #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2), expanded by [GitHub Issue #4](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/4)
 
 Mailbox source: `inbox/0033G-free-tier-llm-offload-qmd-chat-adr.md`
 
 ## Decision
 
 The best first free-tier candidate is **Groq-hosted `openai/gpt-oss-20b`**.
-Use it only in a future, separately approved pilot for bounded advisory work:
-query expansion, clarification candidates, retrieval reranking, and
-provenance-preserving context compression. Keep OpenAI `gpt-5.4-nano` as the
-trusted final-answer and final-structured-output baseline until Cookbook evals
-prove another path is at least as reliable.
+Use it only in a future, separately approved pilot for bounded advisory work.
+The first pilot should not be limited to RAG: conversation classification and
+compression, recipe metadata suggestions, shopping-list organization, grounded
+support triage, and aggregate usage-report narratives are also good candidates.
+Keep OpenAI `gpt-5.4-nano` as the trusted final-answer and final-structured-output
+baseline until Cookbook evals prove another path is at least as reliable.
 
 The recommendation is a provider/model pair, not an endorsement of free quota
 as production capacity. Groq's free limits support evaluation and light traffic
@@ -35,10 +36,10 @@ and operations, while current Cookbook hosted-model costs are very low.
 ## Problem
 
 Deterministic input checks and retrieval already avoid some OpenAI calls, but
-retrieval-heavy and exploratory chat can still spend a hosted call on work that
-does not need final-answer authority. A cheap advisory tier could produce query
-variants, ask one clarifying question, compress grounded snippets, or rank
-candidates before the baseline sees a smaller, better context pack.
+many classification, transformation, drafting, and exploratory tasks can still
+spend a hosted call despite not needing final-answer authority. A cheap advisory
+tier could handle those bounded tasks directly or prepare a smaller, better
+input for the baseline.
 
 Free price alone is insufficient. A useful option also needs a stable API,
 adequate quota, acceptable data handling, predictable failures, structured
@@ -117,16 +118,37 @@ behavior remain implementation-time gates.
 | QMD local model set | BM25/vector/RRF, local expansion/reranking/cache, retrieval benchmark support. | Node 22/Bun, native dependencies, three GGUF downloads around 2 GB, index freshness/deletion, hardware latency, model-license review. | Benchmark retrieval only. |
 | GLM/Zhipu, direct DeepSeek, direct MiniMax | Possible low-cost candidates. | Complete primary-source free quota, privacy, retention, schema, and failure facts were not established; some current Cloudflare frontier variants require paid billing. | `Unverified`; blocked by existing fact gate. |
 
-## Proposed RAG and chat flow
+## General offload decision rule
+
+A task is eligible when its output is advisory, reversible, privacy-safe,
+bounded by a narrow contract, and cheap to verify mechanically or through the
+existing user review step. It stays on deterministic/core or baseline paths
+when it makes an authoritative decision, changes persisted state, handles
+sensitive identity or account data, makes a safety-critical claim, or is more
+expensive to verify than to generate correctly on the trusted path.
+
+| Question | Eligible answer | Otherwise |
+| --- | --- | --- |
+| Can failure be ignored or regenerated without losing user work? | Continue. | Baseline/core. |
+| Can the input be reduced to public, synthetic, aggregate, or minimal authorized data? | Continue. | Block pending privacy review. |
+| Can a schema, closed candidate set, citation set, or human review cheaply verify it? | Continue. | Baseline. |
+| Does it avoid auth, entitlement, payment, deletion, publication, or persistence authority? | Continue. | Deterministic/core authority. |
+| Does it avoid food-safety, allergy, medical, and nutrition certainty? | Continue. | Safety policy and baseline. |
+| Does it save a baseline call, reduce total tokens, or measurably improve success? | Pilot candidate. | Do not offload. |
+
+This rubric matters more than whether a task happens to use retrieval.
+
+## Proposed general offload flow
 
 ```text
 User turn
-  -> deterministic auth, safety, intent, and no-match checks
-  -> current keyword retrieval
-  -> optional QMD/local hybrid retrieval when healthy and scoped
-  -> merge by canonical source ID and preserve provenance
+  -> deterministic auth, safety, intent, scope, and input checks
+  -> when grounding is needed:
+       current keyword retrieval
+       optional QMD/local hybrid retrieval when healthy and scoped
+       merge by canonical source ID and preserve provenance
   -> optional Groq advisory task from an allowlist
-       expansion | clarification | rerank | compression
+       classify | transform | suggest | expand | rerank | compress
   -> deterministic contract, citation-ID, and scope validation
   -> local exploratory/clarification response when approved, or
   -> OpenAI gpt-5.4-nano final answer/structured output when needed
@@ -138,7 +160,7 @@ session, account record, secret, provider response, or authorization decision.
 Retrieved snippets carry stable citation IDs through compression. Unknown,
 dropped, duplicated, or invented IDs reject the advisory result.
 
-## RAG quality and cost mechanism
+## Quality and cost mechanisms
 
 - Expansion adds bounded aliases and paraphrases while preserving the original
   query at highest weight.
@@ -159,6 +181,12 @@ Free-tier users may receive more exploratory or clarification turns while final
 answer limits and session budgets remain authoritative. The UI shows consistent
 degraded/unavailable states and no model picker.
 
+Outside retrieval, savings come from accepting a validated advisory result as
+the completed low-risk task, such as classifying an intent, grouping a shopping
+list, or drafting an aggregate report narrative. Where the baseline still must
+run, the offload step counts only when it reduces total tokens, retries, or
+end-to-end failures.
+
 ## Task classification
 
 | Task | Policy and guard |
@@ -172,6 +200,24 @@ degraded/unavailable states and no model picker.
 | Cache-key/retrieval-plan suggestion | Advisory; local code computes the scoped key and executes only approved plans. |
 | Low-risk brainstorming/title suggestion | Facts already fixed; never auto-persist or publish. |
 | Draft checklist critique | Cannot become the final answer; deterministic/baseline checks decide. |
+| Intent/workflow classification | Closed label set with confidence threshold; unknown or low-confidence results use deterministic routing or baseline. |
+| Conversation summary/memory compression | Minimal authorized turns only; preserve explicit constraints and mark omissions; never replace the canonical transcript. |
+| Help/onboarding or FAQ draft | Ground only in approved product documentation; retain citations; user or support agent reviews before use. |
+| Recipe title, description, tags, cuisine, or technique suggestions | Advisory candidates from known recipe facts; validate length/enums; never auto-save. |
+| Ingredient normalization and unit parsing suggestions | Return source spans and normalized candidates; deterministic parser or user decides the accepted value. |
+| Instruction cleanup or ordering suggestions | Preserve ingredients, exclusions, and safety constraints; user/baseline owns final recipe. |
+| Substitution candidates | Clearly advisory; exclude allergy, medical, and guaranteed-equivalence claims; require user review. |
+| Duplicate-recipe candidate detection | Rank only an authorized closed candidate set; deterministic thresholds and user decide merge behavior. |
+| Meal-plan brainstorming or candidate ranking | Rank only supplied recipes against explicit preferences; final plan JSON and save remain baseline/core. |
+| Shopping-list grouping, aisle labels, and duplicate suggestions | Transform a supplied list without adding purchases; deterministic quantity reconciliation and user review remain authoritative. |
+| Pantry-use and leftovers ideas | Brainstorm from explicitly supplied facts; no freshness or food-safety determination. |
+| Draft translation, plain-language rewrite, or formatting | Preserve protected terms, quantities, citation IDs, and placeholders; user reviews before publish. |
+| Support ticket classification/routing | Closed queue and priority labels from sanitized text; no account action, promise, or customer message is sent automatically. |
+| Sanitized log clustering and incident summary | Aggregate/redacted diagnostics only; cite event IDs; operators diagnose and act. |
+| Aggregate usage-report narrative | Receive precomputed non-identifying metrics only; cannot calculate billing, entitlement, or enforcement decisions. |
+| Release-note or documentation draft | Generate from an approved change set; reviewer verifies before commit or publication. |
+| Synthetic eval cases, failure clustering, and prompt critique | Offline development aid only; deterministic tests and reviewer acceptance remain required. |
+| Content-risk tag suggestion | Advisory signal only; deterministic policy/baseline makes any enforcement or refusal decision. |
 | Final importer JSON, meal-plan JSON, final answer, citation-faithfulness decision | Baseline only. |
 | Food safety, allergy, medical, or nutrition certainty | Baseline/safety policy only. |
 | Auth, account, deletion/export, admin, entitlement, payment, or budget decisions | Deterministic/core authority only. |
@@ -188,9 +234,18 @@ degraded/unavailable states and no model picker.
 | Local `gpt-oss-20b` | Control and no marginal provider bill. | Disproportionate hardware/operations now. | Revisit after usage evidence. |
 | QMD adapter | Purpose-built local hybrid retrieval/cache. | Node/native/GGUF/index lifecycle beside Python. | Benchmark before integration. |
 
+## Prioritized pilot sequence
+
+| Phase | Candidate tasks | Why here |
+| --- | --- | --- |
+| 1A | Intent classification, conversation compression, title/tag suggestions, shopping-list grouping, support routing, and aggregate usage-report narrative | Small contracts, easy validation, low consequence, and several can complete without a baseline call. |
+| 1B | Query expansion, reranking, context compression, and grounded FAQ drafts | Existing retrieval evidence and citation checks provide clear comparison gates. |
+| 2 | Ingredient/unit suggestions, instruction cleanup, meal-plan candidate ranking, translation/plain-language drafts, sanitized incident summaries, and substitution ideas | Higher semantic risk or more human-review burden; promote one at a time. |
+| Keep authoritative | Final recipes/plans/answers, persistence/publication, auth/accounts, billing/entitlements, deletion/export, moderation enforcement, and health/safety claims | Failure is costly, sensitive, or difficult to verify cheaply. |
+
 ## Future implementation plan
 
-A separate mailbox task should implement Phase 1 only:
+A separate mailbox task should implement Phase 1A first:
 
 1. Define an `OffloadProvider` contract with task, schema version, bounded
    payload, model, timeout, and an accept-or-ignore result.
@@ -198,15 +253,18 @@ A separate mailbox task should implement Phase 1 only:
    `openai/gpt-oss-20b`, strict JSON Schema, low reasoning effort, low token cap,
    temperature zero, and short timeout. Do not merely change the current OpenAI
    Responses client's base URL.
-3. Add a deterministic task allowlist and payload builder. Start with public
-   dataset expansion and reranking; keep private saved recipes blocked.
+3. Add a deterministic task allowlist and payload builder. Start with generated
+   fixtures for intent classification, conversation compression, title/tag
+   suggestions, shopping grouping, support routing, aggregate-report narrative,
+   public-dataset expansion, and reranking. Keep private saved recipes blocked.
 4. Enable Groq ZDR before a live test and record only non-secret status.
 5. Meter provider/model/task attempts, accepted/rejected output, timeout,
    rate-limit, fallback, tokens, latency, and cache hit.
 6. Add a 429/5xx circuit breaker and bounded retry. Never cascade through
    multiple free providers on one user turn.
-7. Extend offline evals for malformed JSON, invented/missing citations, unsafe
-   claims, privacy violations, timeout, and quota fixtures.
+7. Extend offline evals for malformed JSON, closed-label violations, lost user
+   constraints, changed quantities, invented/missing citations, unsafe claims,
+   privacy violations, timeout, and quota fixtures.
 8. Run a manual opt-in live comparison using generated public fixtures only.
 9. Promote one task class at a time after it meets all gates.
 
@@ -224,6 +282,9 @@ and full rerank. Do not add QMD to the Python image or index canonical storage.
 | Retrieval | Improve recall@5 or MRR at least 10% on paraphrases without reducing exact-match precision more than 2%. |
 | Citation fidelity | 100% of citation IDs are authorized inputs; zero invented IDs. |
 | Answer quality | No regression in locked Cookbook workflows. |
+| Advisory acceptance | At least 80% of accepted Phase 1A outputs pass their task-specific deterministic contract without repair. |
+| Human correction | Track rejection and material-edit rates for reviewed drafts; do not promote a task whose review cost erases the saving. |
+| Constraint preservation | 100% preservation of explicit quantities, exclusions, protected terms, placeholders, and closed-set IDs where applicable. |
 | Latency | Eligible-turn P95 no more than 20% slower; local/clarification turns should improve. |
 | Cache | Report scoped hit rate and prove correct invalidation/no cross-scope hits. |
 | Failure safety | 100% of deterministic rejection/fallback fixtures pass. |
@@ -249,6 +310,8 @@ model, provider tier, contract version, and hardware class with results.
 - Local cost: measure download, warm-up, CPU/RAM/GPU, index time, query latency,
   and maintenance before adopting QMD/local inference.
 - Retry multiplication: at most one safe bounded retry; no provider cascade.
+- Cheap but low-value generation: require task-level acceptance, edit-effort,
+  call-avoidance, and total-cost evidence before promotion.
 
 ## Related product work
 

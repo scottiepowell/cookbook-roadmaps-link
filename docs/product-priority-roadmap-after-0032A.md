@@ -122,9 +122,11 @@ third-party scripts, and ad-network evaluation remain separately gated.
 
 The [Free-Tier LLM Offload and QMD-Assisted Chat ADR](free-tier-llm-offload-qmd-chat-adr.md)
 recommends Groq-hosted `openai/gpt-oss-20b` only for a future bounded advisory
-pilot. It keeps OpenAI `gpt-5.4-nano` as the final-answer baseline, defines
-allowed retrieval/chat tasks and measurable RAG value gates, and keeps QMD as
-an optional local benchmark. It does not change the main product-usability
+pilot. It keeps OpenAI `gpt-5.4-nano` as the final-answer baseline, defines a
+general rubric for cheaply verifiable advisory tasks across retrieval,
+conversation, recipe assistance, planning, support/operations, localization,
+and offline development, and keeps QMD as an optional local benchmark. It does
+not change the main product-usability
 priority or approve a provider/QMD runtime.
 
 ## 0033I product Cookbook link correction emphasis

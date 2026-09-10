@@ -1,7 +1,9 @@
 # 0033G Free-Tier LLM Offload And QMD-Assisted Chat ADR Results
 
 Created [Free-Tier LLM Offload and QMD-Assisted Chat ADR](../docs/free-tier-llm-offload-qmd-chat-adr.md)
-for [Goal #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2).
+for [Goal #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2)
+and expanded its task scope in
+[Goal #4](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/4).
 
 ## Recommendation
 
@@ -37,7 +39,7 @@ The candidate matrix concludes:
 - local `gpt-oss-20b`: technically feasible, operationally premature;
 - GLM/Zhipu, direct DeepSeek, and direct MiniMax: still unverified and blocked.
 
-## Architecture and RAG value
+## Architecture and offload value
 
 The ADR defines a QMD-assisted flow from deterministic intent/safety checks,
 through keyword and optional hybrid retrieval, bounded offload expansion/
@@ -55,9 +57,21 @@ baseline call is not counted as a saving.
 Allowed candidates include bounded expansion, clarification, reranking,
 compression, local-note summaries with source mapping, no-match triage, cache/
 retrieval-plan suggestions, low-risk brainstorming, and checklist critique.
+The expanded decision also covers cheaply verifiable non-RAG work: intent
+classification, conversation compression, recipe metadata and cleanup
+suggestions, shopping-list grouping, meal-plan candidate ranking, grounded help
+drafts, support routing, sanitized incident summaries, aggregate usage-report
+narratives, localization drafts, and offline eval/documentation assistance.
 Final answers/JSON, citation authority, safety/health claims, auth/account/admin/
 payment/budget decisions, and all write/publish actions remain baseline,
 deterministic, or blocked.
+
+The governing rule is task risk and verification cost rather than whether the
+task uses retrieval. Phase 1 prioritizes narrow schemas, closed candidate sets,
+and transformations whose outputs can be ignored or reviewed without losing
+user work. Metrics now include contract acceptance, material correction effort,
+and explicit-constraint preservation alongside call, token, quality, latency,
+privacy, and fallback measures.
 
 ## Implementation needs
 
