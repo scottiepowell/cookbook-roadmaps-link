@@ -1,0 +1,23 @@
+# Optional overlay: docker compose -f docker-compose.public.yml -f docker-compose.reporting.yml ...
+services:
+  ai-api:
+    image: local/cookbook-ai-sidecar:reports-v1
+    environment:
+      AI_USAGE_DB_PATH: /app/report-data/usage.sqlite3
+    volumes:
+      - cookbook-usage-reports:/app/report-data
+
+  usage-report:
+    image: local/cookbook-ai-sidecar:reports-v1
+    profiles: [reports]
+    env_file:
+      - ./.env.reporting
+    environment:
+      AI_USAGE_DB_PATH: /app/report-data/usage.sqlite3
+    volumes:
+      - cookbook-usage-reports:/app/report-data
+    entrypoint: [python, -m, app.usage_reporting]
+
+volumes:
+  cookbook-usage-reports:
+    name: cookbook-usage-reports
