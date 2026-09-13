@@ -12,6 +12,7 @@ from app.ai_mode_routing import resolve_ai_mode
 from app.ai_invite_sessions import invite_router, require_demo_workflow_access
 from app.ai_operator_gate import check_operator_gate
 from app.ai_usage_report import AiUsageReport, build_ai_usage_report
+from app.groq_advisory import router as groq_advisory_router
 from app.cookbook_import_adapter import FakeCookbookAdapter
 from app.cookbook_import_commit import (
     LocalCommitGuard,
@@ -88,6 +89,7 @@ app = FastAPI(title="Cookbook AI API", version="0.1.0", lifespan=app_lifespan)
 configure_logging()
 app.middleware("http")(request_logging_middleware)
 app.include_router(recipe_session_router)
+app.include_router(groq_advisory_router)
 app.include_router(invite_router)
 
 STATIC_DIR = Path(__file__).parent / "static"

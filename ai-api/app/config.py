@@ -107,6 +107,7 @@ DEFAULT_AI_INVITE_LOCAL_OPERATOR_CREATE_ENABLED = True
 PROVIDER_ENV_VARS = {
     "mock": None,
     "openai": "OPENAI_API_KEY",
+    "groq": "GROQ_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
     "google": "GOOGLE_API_KEY",
     "ollama": "OLLAMA_BASE_URL",

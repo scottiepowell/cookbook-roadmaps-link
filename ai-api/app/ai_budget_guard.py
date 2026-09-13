@@ -164,7 +164,7 @@ def check_provider_budget(
     requested_output_tokens = max(0, int(requested_output_tokens or 0))
     call_estimated_cost = _estimate_cost_usd(estimated_input_tokens, requested_output_tokens)
 
-    if provider_name != "openai":
+    if provider_name not in {"openai", "groq"}:
         snapshot = active_tracker.snapshot(
             session_key,
             grant_id=_grant_id(session_state),

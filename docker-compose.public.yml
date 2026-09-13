@@ -1,11 +1,11 @@
 services:
   app:
-    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0035k}
+    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0035m}
     container_name: cookbook-public-core
     env_file:
       - ${PUBLIC_CORE_ENV_FILE:?Set PUBLIC_CORE_ENV_FILE to the ignored core .env path}
       - ${PUBLIC_CORE_OIDC_ENV_FILE:?Set PUBLIC_CORE_OIDC_ENV_FILE to the ignored public OIDC env path}
-      - ./.env.public-ai
+      - ${PUBLIC_AI_CONFIG_FILE:-./.env.public-ai}
     environment:
       ORIGIN: https://cookbook.roadmaps.link
       AI_SIDECAR_ENABLED: "true"
@@ -25,13 +25,16 @@ services:
   ai-api:
     build:
       context: ./ai-api
-    image: local/cookbook-ai-sidecar:0035i
+    image: local/cookbook-ai-sidecar:0035m
     container_name: cookbook-public-ai
     env_file:
-      - ./.env
-      - ./.env.public-ai
+      - ${PUBLIC_AI_ENV_FILE:-./.env}
+      - ${PUBLIC_AI_CONFIG_FILE:-./.env.public-ai}
     environment:
       AI_PROVIDER: openai
+      AI_OFFLOAD_ENABLED: "true"
+      AI_OFFLOAD_PROVIDER: groq
+      AI_OFFLOAD_ALLOWED_TASKS: recipe_titles,ingredient_parse,instruction_cleanup,substitution_ideas,shopping_group,pantry_ideas,meal_ideas,plain_language,query_expansion
       AI_MODEL: gpt-5.4-nano
       OPENAI_MODEL: gpt-5.4-nano
       OPENAI_ENABLE_LIVE_TESTS: "true"
@@ -54,7 +57,7 @@ services:
       RECIPE_DATASET_INDEX_LIMIT: "5000"
     volumes:
       - type: bind
-        source: ./recipe-dataset
+        source: ${PUBLIC_RECIPE_DATASET_DIR:-./recipe-dataset}
         target: /app/recipe-dataset
         read_only: true
         bind:

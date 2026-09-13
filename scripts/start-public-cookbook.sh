@@ -4,6 +4,9 @@ set -euo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 CORE_DIR=${COOKBOOK_CORE_DIR:-"$HOME/projects/vanilla-cookbook-core"}
+AI_ENV_SOURCE=${PUBLIC_AI_ENV_FILE:-"$REPO_ROOT/.env"}
+AI_CONFIG_SOURCE=${PUBLIC_AI_CONFIG_FILE:-"$REPO_ROOT/.env.public-ai"}
+DATASET_SOURCE=${PUBLIC_RECIPE_DATASET_DIR:-"$REPO_ROOT/recipe-dataset"}
 COMPOSE_FILE="$REPO_ROOT/docker-compose.public.yml"
 DOCKER_DESKTOP_EXE=${DOCKER_DESKTOP_EXE:-'/c/Program Files/Docker/Docker/Docker Desktop.exe'}
 TUNNEL_CONTAINER=${COOKBOOK_TUNNEL_CONTAINER:-cookbook-public-cloudflared}
@@ -56,6 +59,20 @@ wait_for_sidecar_health() {
   fail "Timed out waiting for AI sidecar health after ${STARTUP_TIMEOUT_SECONDS}s."
 }
 
+wait_for_core_health() {
+  local elapsed=0
+  local status=''
+  while (( elapsed < STARTUP_TIMEOUT_SECONDS )); do
+    status=$(docker exec cookbook-public-core node -e \
+      "fetch('http://127.0.0.1:3000/api/health').then(r=>process.stdout.write(String(r.status))).catch(()=>process.exit(1))" \
+      2>/dev/null || true)
+    [[ "$status" == 200 ]] && return 0
+    sleep 2
+    elapsed=$((elapsed + 2))
+  done
+  fail "Timed out waiting for core health after ${STARTUP_TIMEOUT_SECONDS}s."
+}
+
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*) ;;
   *) fail 'This launcher is intended for Windows Git Bash.' ;;
@@ -65,8 +82,9 @@ command -v docker >/dev/null 2>&1 || fail 'Docker CLI is unavailable in Git Bash
 [[ -f "$COMPOSE_FILE" ]] || fail "Missing public Compose file: $COMPOSE_FILE"
 [[ -f "$CORE_DIR/.env" ]] || fail 'Missing ignored core .env file.'
 [[ -f "$CORE_DIR/.env.public" ]] || fail 'Missing ignored core .env.public file.'
-[[ -f "$REPO_ROOT/.env" ]] || fail 'Missing ignored sidecar .env file.'
-[[ -f "$REPO_ROOT/.env.public-ai" ]] || fail 'Missing ignored sidecar .env.public-ai file.'
+[[ -f "$AI_ENV_SOURCE" ]] || fail 'Missing ignored sidecar .env file.'
+[[ -f "$AI_CONFIG_SOURCE" ]] || fail 'Missing ignored sidecar .env.public-ai file.'
+[[ -d "$DATASET_SOURCE" ]] || fail 'Missing recipe dataset directory.'
 
 if ! docker info >/dev/null 2>&1; then
   [[ -f "$DOCKER_DESKTOP_EXE" ]] || fail "Docker Desktop executable was not found: $DOCKER_DESKTOP_EXE"
@@ -91,6 +109,12 @@ export PUBLIC_CORE_ENV_FILE
 PUBLIC_CORE_ENV_FILE=$(native_path "$CORE_DIR/.env")
 export PUBLIC_CORE_OIDC_ENV_FILE
 PUBLIC_CORE_OIDC_ENV_FILE=$(native_path "$CORE_DIR/.env.public")
+export PUBLIC_AI_ENV_FILE
+PUBLIC_AI_ENV_FILE=$(native_path "$AI_ENV_SOURCE")
+export PUBLIC_AI_CONFIG_FILE
+PUBLIC_AI_CONFIG_FILE=$(native_path "$AI_CONFIG_SOURCE")
+export PUBLIC_RECIPE_DATASET_DIR
+PUBLIC_RECIPE_DATASET_DIR=$(native_path "$DATASET_SOURCE")
 
 cd "$REPO_ROOT"
 docker compose -f "$COMPOSE_FILE" config --quiet
@@ -107,6 +131,7 @@ else
 fi
 
 wait_for_sidecar_health
+wait_for_core_health
 
 sidecar_health=$(docker inspect --format '{{.State.Health.Status}}' cookbook-public-ai)
 core_status=$(docker inspect --format '{{.State.Status}}' cookbook-public-core)
@@ -117,9 +142,7 @@ printf 'Core: %s (%s)\n' "$core_image" "$core_status"
 printf 'AI sidecar: %s (%s)\n' "$sidecar_image" "$sidecar_health"
 
 if command -v curl >/dev/null 2>&1; then
-  local_status=$(docker exec cookbook-public-core node -e \
-    "fetch('http://127.0.0.1:3000/api/health').then(r=>process.stdout.write(String(r.status))).catch(()=>process.exit(1))")
-  printf 'Local core health: HTTP %s\n' "$local_status"
+  printf 'Local core health: HTTP 200\n'
   public_status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
     --max-time 15 https://cookbook.roadmaps.link/api/health || true)
   printf 'Public health: HTTP %s\n' "${public_status:-unavailable}"
