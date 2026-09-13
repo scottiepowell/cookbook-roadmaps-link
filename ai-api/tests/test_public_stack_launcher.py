@@ -10,6 +10,9 @@ def test_git_bash_public_stack_launcher_has_safe_startup_contract():
     assert "docker compose -f \"$COMPOSE_FILE\" up -d" in script
     assert "PUBLIC_CORE_ENV_FILE" in script
     assert "PUBLIC_CORE_OIDC_ENV_FILE" in script
+    assert "PUBLIC_AI_ENV_FILE" in script
+    assert "PUBLIC_AI_CONFIG_FILE" in script
+    assert "PUBLIC_RECIPE_DATASET_DIR" in script
     assert "cookbook-public-cloudflared" in script
     assert "dockerInference" in script
     assert "restart WslService as Administrator" in script

@@ -35,6 +35,9 @@ def enabled_local(monkeypatch, target="http://127.0.0.1:3000/"):
 def enabled_persistent_local(monkeypatch, target="http://127.0.0.1:3000/"):
     enabled_local(monkeypatch, target)
     monkeypatch.setenv("VANILLA_COOKBOOK_IMAGE", "local/vanilla-cookbook-adapter:0034g")
+    # This fixture models an operator-approved loopback run, not a CI runner.
+    for name in ("CI", "GITHUB_ACTIONS", "AWS_REGION", "CLOUDFLARE_TUNNEL_TOKEN", "TUNNEL_TOKEN"):
+        monkeypatch.delenv(name, raising=False)
 
 
 def test_demo_ui_contains_local_review_panel_and_no_production_claims():

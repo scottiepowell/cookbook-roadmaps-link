@@ -9,7 +9,7 @@ def test_public_compose_mounts_recipe_dataset_read_only_with_bounded_index():
 
     assert "RECIPE_DATASET_DIR: /app/recipe-dataset" in compose
     assert 'RECIPE_DATASET_INDEX_LIMIT: "5000"' in compose
-    assert "source: ./recipe-dataset" in compose
+    assert "source: ${PUBLIC_RECIPE_DATASET_DIR:-./recipe-dataset}" in compose
     assert "target: /app/recipe-dataset" in compose
     assert "read_only: true" in compose
     assert "create_host_path: false" in compose

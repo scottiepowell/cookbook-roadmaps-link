@@ -1,8 +1,12 @@
 # ADR: Hosted Free-Tier LLM Offload
 
-Status: proposed for an isolated evaluation; runtime use is not approved
+Status: bounded public/invented-data pilot implemented under `0035M`; private-data use remains unapproved
 
 Date: 2026-09-10
+
+Implementation status (2026-09-13): see
+[Groq advisory pilot](groq-advisory-pilot.md). The original task was
+documentation-only; `0035M` separately authorized the runtime implementation.
 
 Goal: [GitHub Issue #2](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/2), expanded by [GitHub Issue #4](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/4) and [GitHub Issue #6](https://github.com/scottiepowell/cookbook-roadmaps-link/issues/6)
 

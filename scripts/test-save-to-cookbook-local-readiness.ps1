@@ -88,15 +88,13 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     exit 2
 }
 
-if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
-    Write-Host "REFUSED: repository Python runtime is unavailable; no local write was attempted."
-    exit 2
-}
-
 $Docker = (Get-Command docker).Source
 try {
     Assert-LocalTarget
     $Stage = "runtime preflight"
+    if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
+        Stop-WithSafeError "repository Python runtime is unavailable"
+    }
     if (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("CLOUDFLARE_TUNNEL_TOKEN"))) {
         Stop-WithSafeError "tunnel configuration is not allowed"
     }
