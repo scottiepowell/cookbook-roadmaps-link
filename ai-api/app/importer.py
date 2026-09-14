@@ -20,6 +20,7 @@ from app.rag_context import (
     pack_importer_rag_context,
 )
 from app.rag_support_policy import assess_importer_rag_support
+from app.rag_offload import optimize_context
 from app.providers import LLMProvider, StructuredLLMRequest, get_provider
 from app.providers.errors import ProviderConfigError, ProviderError, extract_provider_debug_details
 from app.schemas import (
@@ -132,6 +133,11 @@ def import_recipe_text(
             usage=None,
             input_quality=input_quality.to_dict(),
         )
+    # Reserve baseline generation first: optional work must not consume its last call.
+    if provider_name == "openai":
+        context_pack = optimize_context(context_pack, session_state)
+        if retrieval is not None and context_pack is not None:
+            retrieval = retrieval.model_copy(update={"packed_context_chars": context_pack.packed_context_chars})
     # Explicit request-scoped providers are injected by the HTTP boundary.
     # Legacy callers retain the no-argument lookup used by existing budget tests.
     active_provider = provider or _get_configured_provider()

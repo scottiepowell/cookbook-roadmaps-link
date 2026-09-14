@@ -1,0 +1,331 @@
+{
+  "pricing_date": "2026-09-13",
+  "sample_count": 4,
+  "summary": {
+    "baseline": {
+      "nano_input": 4651,
+      "nano_output": 2583,
+      "groq_input": 0,
+      "groq_output": 0,
+      "groq_attempts": 0,
+      "valid": 4,
+      "p50_ms": 6282.82,
+      "p95_ms": 7085.55,
+      "estimated_usd": 0.00415895
+    },
+    "groq": {
+      "nano_input": 4548,
+      "nano_output": 2567,
+      "groq_input": 2913,
+      "groq_output": 1104,
+      "groq_attempts": 4,
+      "valid": 4,
+      "p50_ms": 5409.02,
+      "p95_ms": 6852.92,
+      "estimated_usd": 0.004668025
+    }
+  },
+  "rows": [
+    {
+      "fixture": 0,
+      "mode": "baseline",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1178,
+        "output_tokens": 505,
+        "total_tokens": 1683
+      },
+      "citation_ids": [
+        "13k-recipes.csv:3181",
+        "13k-recipes.csv:3681",
+        "13k-recipes.csv:4203"
+      ],
+      "context_chars": 1741,
+      "ingredient_names": [
+        "Carrots, shredded",
+        "Lettuce, thinly shredded",
+        "Red onion, thinly sliced",
+        "Olive oil",
+        "Apple cider vinegar (or white wine vinegar)",
+        "Dijon mustard",
+        "Honey (optional)",
+        "Kosher salt",
+        "Black pepper"
+      ],
+      "instruction_count": 6,
+      "servings": 4,
+      "duration_ms": 6282.82,
+      "groq_events": []
+    },
+    {
+      "fixture": 0,
+      "mode": "groq",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1149,
+        "output_tokens": 520,
+        "total_tokens": 1669
+      },
+      "citation_ids": [
+        "13k-recipes.csv:3181",
+        "13k-recipes.csv:3681",
+        "13k-recipes.csv:4203"
+      ],
+      "context_chars": 1734,
+      "ingredient_names": [
+        "Carrots, shredded",
+        "Lettuce, thinly sliced or shredded",
+        "Red onion, thinly sliced",
+        "Olive oil",
+        "Apple cider vinegar (or white wine vinegar)",
+        "Honey (or sugar)",
+        "Dijon mustard",
+        "Kosher salt",
+        "Black pepper"
+      ],
+      "instruction_count": 6,
+      "servings": 4,
+      "duration_ms": 4797.05,
+      "groq_events": [
+        {
+          "provider": "groq",
+          "task": "rag_dedup",
+          "status": "applied",
+          "duration_ms": 907.06,
+          "input_tokens": 739,
+          "output_tokens": 291,
+          "attempts": 1,
+          "responses": 1,
+          "usage_complete": true,
+          "context_chars_saved": 122
+        }
+      ]
+    },
+    {
+      "fixture": 1,
+      "mode": "baseline",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1142,
+        "output_tokens": 532,
+        "total_tokens": 1674
+      },
+      "citation_ids": [
+        "13k-recipes.csv:2045",
+        "13k-recipes.csv:4576",
+        "13k-recipes.csv:439"
+      ],
+      "context_chars": 1681,
+      "ingredient_names": [
+        "large eggs",
+        "salt",
+        "black pepper",
+        "butter",
+        "cheddar cheese (or similar cheese), shredded",
+        "milk (optional, for fluffier eggs)"
+      ],
+      "instruction_count": 4,
+      "servings": 4,
+      "duration_ms": 5136.83,
+      "groq_events": []
+    },
+    {
+      "fixture": 1,
+      "mode": "groq",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1118,
+        "output_tokens": 509,
+        "total_tokens": 1627
+      },
+      "citation_ids": [
+        "13k-recipes.csv:2045",
+        "13k-recipes.csv:4576",
+        "13k-recipes.csv:439"
+      ],
+      "context_chars": 1710,
+      "ingredient_names": [
+        "large eggs",
+        "cheese (shredded or small cubes, e.g., cheddar or Monterey Jack)",
+        "unsalted butter",
+        "salt",
+        "black pepper"
+      ],
+      "instruction_count": 4,
+      "servings": 4,
+      "duration_ms": 5218.68,
+      "groq_events": [
+        {
+          "provider": "groq",
+          "task": "rag_dedup",
+          "status": "applied",
+          "duration_ms": 487.92,
+          "input_tokens": 698,
+          "output_tokens": 245,
+          "attempts": 1,
+          "responses": 1,
+          "usage_complete": true,
+          "context_chars_saved": 86
+        }
+      ]
+    },
+    {
+      "fixture": 2,
+      "mode": "baseline",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1190,
+        "output_tokens": 705,
+        "total_tokens": 1895
+      },
+      "citation_ids": [
+        "13k-recipes.csv:4111",
+        "13k-recipes.csv:2025",
+        "13k-recipes.csv:3866"
+      ],
+      "context_chars": 1781,
+      "ingredient_names": [
+        "Dried spaghetti (or linguine)",
+        "Kosher salt",
+        "Pancetta or bacon",
+        "Black pepper (freshly ground)",
+        "Garlic",
+        "Eggs",
+        "Parmesan cheese, finely grated",
+        "Reserved pasta water"
+      ],
+      "instruction_count": 7,
+      "servings": 4,
+      "duration_ms": 4916.94,
+      "groq_events": []
+    },
+    {
+      "fixture": 2,
+      "mode": "groq",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1161,
+        "output_tokens": 696,
+        "total_tokens": 1857
+      },
+      "citation_ids": [
+        "13k-recipes.csv:4111",
+        "13k-recipes.csv:2025",
+        "13k-recipes.csv:3866"
+      ],
+      "context_chars": 1788,
+      "ingredient_names": [
+        "Dried spaghetti (or linguine)",
+        "Kosher salt",
+        "Pancetta or guanciale, diced (optional but traditional)",
+        "Black pepper, freshly ground",
+        "Large eggs",
+        "Parmesan cheese, finely grated",
+        "Pecorino Romano, finely grated (optional)",
+        "Garlic"
+      ],
+      "instruction_count": 7,
+      "servings": 4,
+      "duration_ms": 5409.02,
+      "groq_events": [
+        {
+          "provider": "groq",
+          "task": "rag_dedup",
+          "status": "applied",
+          "duration_ms": 667.0,
+          "input_tokens": 752,
+          "output_tokens": 300,
+          "attempts": 1,
+          "responses": 1,
+          "usage_complete": true,
+          "context_chars_saved": 108
+        }
+      ]
+    },
+    {
+      "fixture": 3,
+      "mode": "baseline",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1141,
+        "output_tokens": 841,
+        "total_tokens": 1982
+      },
+      "citation_ids": [
+        "13k-recipes.csv:339",
+        "13k-recipes.csv:2644",
+        "13k-recipes.csv:287"
+      ],
+      "context_chars": 1599,
+      "ingredient_names": [
+        "chicken thighs (boneless, skinless)",
+        "long-grain white rice (uncooked)",
+        "chicken broth (or stock)",
+        "yellow onion",
+        "carrots",
+        "garlic cloves",
+        "olive oil",
+        "salt",
+        "black pepper",
+        "dried thyme (or Italian seasoning)",
+        "dried parsley (optional)",
+        "butter (optional, for extra richness)",
+        "frozen peas (optional)",
+        "shredded cheddar cheese (optional)"
+      ],
+      "instruction_count": 5,
+      "servings": 4,
+      "duration_ms": 7085.55,
+      "groq_events": []
+    },
+    {
+      "fixture": 3,
+      "mode": "groq",
+      "valid": true,
+      "nano_usage": {
+        "input_tokens": 1120,
+        "output_tokens": 842,
+        "total_tokens": 1962
+      },
+      "citation_ids": [
+        "13k-recipes.csv:339",
+        "13k-recipes.csv:2644",
+        "13k-recipes.csv:287"
+      ],
+      "context_chars": 1625,
+      "ingredient_names": [
+        "boneless, skinless chicken thighs (or chicken breast)",
+        "long-grain white rice (uncooked)",
+        "yellow onion",
+        "carrots",
+        "celery",
+        "garlic",
+        "olive oil",
+        "chicken broth",
+        "cream of chicken soup",
+        "dried thyme",
+        "paprika",
+        "kosher salt",
+        "black pepper",
+        "frozen peas"
+      ],
+      "instruction_count": 5,
+      "servings": 4,
+      "duration_ms": 6852.92,
+      "groq_events": [
+        {
+          "provider": "groq",
+          "task": "rag_dedup",
+          "status": "applied",
+          "duration_ms": 623.32,
+          "input_tokens": 724,
+          "output_tokens": 268,
+          "attempts": 1,
+          "responses": 1,
+          "usage_complete": true,
+          "context_chars_saved": 89
+        }
+      ]
+    }
+  ]
+}

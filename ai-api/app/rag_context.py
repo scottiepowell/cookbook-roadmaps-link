@@ -65,7 +65,7 @@ class PackedImporterContext:
                     f"Matched fields: {', '.join(item.matched_fields) or 'none'}",
                     f"Key ingredients: {', '.join(item.key_ingredients) or 'none'}",
                     f"Instruction summary: {item.instruction_summary or 'none'}",
-                    f"Snippet: {item.snippet or 'none'}",
+                    *([f"Snippet: {item.snippet}"] if item.snippet else []),
                 ]
             )
         if self.context_budget_warning:
