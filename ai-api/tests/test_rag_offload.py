@@ -139,5 +139,7 @@ def test_catalog_endpoint_auth_and_metadata_only(monkeypatch):
     monkeypatch.setenv("AI_OPERATOR_GATE_ENABLED", "false")
     result = client.get("/ai/public-recipes").json()
     assert result["scope"] == "curated_catalog"
-    assert len(result["recipes"]) == 3
+    assert len(result["recipes"]) == 8
     assert all("instructions" not in item for item in result["recipes"])
+    assert all(item["url"].startswith("https://") and item["verified"] for item in result["recipes"])
+    assert len({item["uid"] for item in result["recipes"]}) == 8

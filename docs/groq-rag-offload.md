@@ -58,9 +58,9 @@ with no delta are deliberately unpriced rather than presented as savings.
 | Caching and batching | Repeated final generation, but requests are personalized | Visibility-scoped cache with invalidation; stale/private leakage risk | 0 or batched; unmeasured | Defer |
 
 Other hosted providers would add another paid call to the same small context;
-this experiment does not justify provisioning a second service. The higher-value
-next task is expanding verified public recipe links and improving local
-ingredient matching against canonical recipes, measured by search relevance.
+this experiment does not justify provisioning a second service. Recipe discovery
+quality is improved in 0035O through reviewed public links and deterministic
+matching, without a second hosted model.
 
 ## Runtime path and boundaries
 
@@ -114,6 +114,21 @@ Catalog entries were checked on 2026-09-13 at their original pages:
 - [Spring Vegetable Salad](https://www.foodnetwork.com/recipes/food-network-kitchen/spring-vegetable-salad-3364967), Food Network Kitchen.
 - [Carrot Soup](https://www.budgetbytes.com/carrot-soup/), Budget Bytes.
 - [Carrot Salad](https://www.loveandlemons.com/carrot-salad-recipe/), Love and Lemons.
+
+Five further metadata-only entries were checked on 2026-09-14:
+
+- [Carrot and Red Onion Salad](https://www.foodnetwork.com/fnk/recipes/carrot-and-red-onion-salad-10034791), Food Network / Hawa Hassan.
+- [Roasted Carrots and Red Leaf Lettuce Salad](https://www.foodnetwork.com/recipes/katie-lee/roasted-carrots-and-red-leaf-lettuce-salad-with-buttermilk-herb-dressing-3319689), Food Network / Katie Lee Biegel.
+- [Mediterranean Lentil Soup](https://www.budgetbytes.com/mediterranean-lentil-soup/), Budget Bytes.
+- [Greek Salad](https://www.loveandlemons.com/greek-salad-/), Love and Lemons.
+- [Cucumber Tomato Salad](https://www.loveandlemons.com/cucumber-tomato-salad/), Love and Lemons.
+
+Catalog maintenance: review the original page and its ingredient list before
+adding metadata; store a stable HTTPS URL, source attribution, a review date,
+and only ingredient keywords present on that page. Keep source-host validation
+in the core route synchronized. Recheck links periodically; remove dead or
+redirected entries instead of fabricating replacement URLs. This is an
+editorially reviewed list, not an exhaustive recipe index.
 
 ## Comparison pricing sources
 
