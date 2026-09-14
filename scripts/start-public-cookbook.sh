@@ -117,8 +117,14 @@ export PUBLIC_RECIPE_DATASET_DIR
 PUBLIC_RECIPE_DATASET_DIR=$(native_path "$DATASET_SOURCE")
 
 cd "$REPO_ROOT"
-docker compose -f "$COMPOSE_FILE" config --quiet
-docker compose -f "$COMPOSE_FILE" up -d
+if [[ -f "$REPO_ROOT/.env.reporting" ]]; then
+  REPORTING_FILE="$REPO_ROOT/docker-compose.reporting.yml"
+  docker compose -f "$COMPOSE_FILE" -f "$REPORTING_FILE" config --quiet
+  docker compose -f "$COMPOSE_FILE" -f "$REPORTING_FILE" up -d
+else
+  docker compose -f "$COMPOSE_FILE" config --quiet
+  docker compose -f "$COMPOSE_FILE" up -d
+fi
 
 if docker container inspect "$TUNNEL_CONTAINER" >/dev/null 2>&1; then
   tunnel_running=$(docker inspect --format '{{.State.Running}}' "$TUNNEL_CONTAINER")

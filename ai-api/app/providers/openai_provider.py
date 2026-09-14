@@ -9,6 +9,7 @@ from app.config import DEFAULT_AI_MAX_OUTPUT_TOKENS, DEFAULT_OPENAI_FALLBACK_MOD
 from app.providers.base import LLMProvider, LLMRequest, LLMResponse, StructuredLLMRequest, StructuredLLMResponse
 from app.providers.errors import ProviderCallError, ProviderConfigError, build_provider_call_error
 from app.providers.openai_schema import normalize_strict_json_schema
+from app.usage_reporting import record_usage
 
 
 class OpenAIProvider(LLMProvider):
@@ -42,8 +43,10 @@ class OpenAIProvider(LLMProvider):
                 temperature=request.temperature,
             )
         except Exception as exc:  # pragma: no cover - live provider path is manual-only.
+            record_usage(self.model, None, "failed")
             raise build_provider_call_error("OpenAI text generation failed.", exc) from exc
 
+        record_usage(self.model, _response_usage(response), "completed")
         return LLMResponse(
             text=_response_text(response),
             provider=self.name,
@@ -67,12 +70,14 @@ class OpenAIProvider(LLMProvider):
                 },
             )
         except Exception as exc:  # pragma: no cover - live provider path is manual-only.
+            record_usage(self.model, None, "failed")
             raise build_provider_call_error("OpenAI structured generation failed.", exc) from exc
 
         text = _response_text(response)
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:  # pragma: no cover - live provider path is manual-only.
+            record_usage(self.model, _response_usage(response), "failed")
             summary = _structured_json_error_summary(text, exc)
             raise ProviderCallError(
                 "OpenAI structured generation returned invalid JSON.",
@@ -81,6 +86,7 @@ class OpenAIProvider(LLMProvider):
                 safe_summary=summary["safe_summary"],
             ) from exc
 
+        record_usage(self.model, _response_usage(response), "completed")
         return StructuredLLMResponse(
             data=data,
             provider=self.name,
