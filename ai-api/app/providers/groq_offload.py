@@ -48,13 +48,15 @@ class GroqOffloadProvider:
         self._failures = 0
         self._open_until = 0.0
 
-    def generate(self, *, task: str, lines: list[dict[str, str]], task_key: str = "") -> tuple[list[dict[str, str]], dict[str, int]]:
+    def generate(self, *, task: str, lines: list[dict[str, str]], task_key: str = "", before_attempt=None, on_usage=None) -> tuple[list[dict[str, str]], dict[str, int]]:
         with self._lock:
             if time.monotonic() < self._open_until:
                 raise ProviderCallError("Groq offload is temporarily unavailable.", failure_category="circuit_open")
         prompt = json.dumps({"task": task, "sources": lines}, ensure_ascii=False, separators=(",", ":"))
         for attempt in range(2):
             try:
+                if before_attempt is not None:
+                    before_attempt()
                 response = self._client_instance().chat.completions.create(
                     model=self.model,
                     messages=[
@@ -72,16 +74,19 @@ class GroqOffloadProvider:
                     max_completion_tokens=500,
                     temperature=0,
                 )
-                content = response.choices[0].message.content
-                if response.choices[0].finish_reason != "stop" or not isinstance(content, str):
-                    raise ProviderCallError("Groq returned an incomplete advisory result.", failure_category="incomplete")
-                data = json.loads(content)
-                items = self._validate(data, lines, task_key)
                 usage = response.usage
                 metering = {
                     "input_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
                     "output_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
                 }
+                # Meter even responses subsequently rejected by local validation.
+                if on_usage is not None:
+                    on_usage(metering)
+                content = response.choices[0].message.content
+                if response.choices[0].finish_reason != "stop" or not isinstance(content, str):
+                    raise ProviderCallError("Groq returned an incomplete advisory result.", failure_category="incomplete")
+                data = json.loads(content)
+                items = self._validate(data, lines, task_key)
                 with self._lock:
                     self._failures = 0
                 return items, metering

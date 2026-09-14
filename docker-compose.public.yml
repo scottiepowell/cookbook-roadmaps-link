@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0035m}
+    image: ${PUBLIC_COOKBOOK_IMAGE:-local/vanilla-cookbook-adapter:0035n}
     container_name: cookbook-public-core
     env_file:
       - ${PUBLIC_CORE_ENV_FILE:?Set PUBLIC_CORE_ENV_FILE to the ignored core .env path}
@@ -25,7 +25,7 @@ services:
   ai-api:
     build:
       context: ./ai-api
-    image: local/cookbook-ai-sidecar:0035m
+    image: local/cookbook-ai-sidecar:0035n
     container_name: cookbook-public-ai
     env_file:
       - ${PUBLIC_AI_ENV_FILE:-./.env}
@@ -33,6 +33,8 @@ services:
     environment:
       AI_PROVIDER: openai
       AI_OFFLOAD_ENABLED: "true"
+      AI_RAG_GROQ_DEDUP_ENABLED: "false"
+      AI_RAG_DEDUP_ENABLED: "false"
       AI_OFFLOAD_PROVIDER: groq
       AI_OFFLOAD_ALLOWED_TASKS: recipe_titles,ingredient_parse,instruction_cleanup,substitution_ideas,shopping_group,pantry_ideas,meal_ideas,plain_language,query_expansion
       AI_MODEL: gpt-5.4-nano
